@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Test1
 {
-    public class Test1StepRunner
+    public class Test1StepRunner : IRunner
     {
         public string Name => "Test1";
 

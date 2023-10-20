@@ -4,6 +4,10 @@ public class Step
 {
     public Guid Id { get; set; }
     /// <summary>
+    /// 执行类
+    /// </summary>
+    public required string RunnerName { get; set; }
+    /// <summary>
     /// 名称
     /// </summary>
     public required string Name { get; set; }
