@@ -45,6 +45,10 @@ public class Step
     /// 前置任务
     /// </summary>
     public List<Guid> PreActions { get; set; } = new();
+    /// <summary>
+    /// 回退任务
+    /// </summary>
+    public Guid? Fallback { get; set; }
 
 }
 
@@ -80,4 +84,21 @@ public class OutputInfo
         Name = name;
         DisplayName = displayName;
     }
+}
+
+
+public class StepResult : Step
+{
+    /// <summary>
+    /// 已完成
+    /// </summary>
+    public bool Complete { get; set; }
+    /// <summary>
+    /// 已开始
+    /// </summary>
+    public bool Started { get; set; }
+    /// <summary>
+    /// 消耗的时间
+    /// </summary>
+    public TimeSpan? ConsumeTime { get; set; }
 }

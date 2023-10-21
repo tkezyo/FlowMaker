@@ -5,5 +5,5 @@ public interface IRunner
     string Name { get; }
 
     List<string> GetStepInfo();
-    Task RunAsync(string stepName, Dictionary<string, object> param);
+    Task RunAsync(string stepName, IReadOnlyDictionary<string, string> param, CancellationToken cancellationToken);
 }
