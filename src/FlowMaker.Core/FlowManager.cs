@@ -1,14 +1,13 @@
 ﻿using FlowMaker.Models;
 
-namespace FlowMaker
+namespace FlowMaker;
+
+public class FlowManager
 {
-    public class FlowManager
+    public Task Run(FlowDefinition flowInfo,RunningContext? context = null)
     {
-        public Task Run(FlowDefinition flowInfo,RunningContext? context = null)
-        {
 
 
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

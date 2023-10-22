@@ -5,7 +5,7 @@ using FlowMaker.Models;
 
 namespace Test1;
 
-public class Flow1 : IStep
+public partial class Flow1 : IStep
 {
     [Input("")]
     public int Prop1 { get; set; }
@@ -16,11 +16,19 @@ public class Flow1 : IStep
 
     [Input("")]
     public Data1? Data { get; set; }
+
     /// <summary>
-    /// 这个要自动生成
+    /// 执行的命令
     /// </summary>
-    /// <param name="keyValues"></param>
     /// <returns></returns>
+    public Task Run(RunningContext context, Step step, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
+}
+
+public partial class Flow1
+{
     public async Task WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
     {
         var keyProp1 = step.Inputs["Prop1"].Value;
@@ -35,14 +43,6 @@ public class Flow1 : IStep
         await Run(context, step, cancellationToken);
 
         context.Data[step.Outputs["Prop1"]] = Prop3.ToString();
-    }
-    /// <summary>
-    /// 执行的命令
-    /// </summary>
-    /// <returns></returns>
-    public Task Run(RunningContext context, Step step, CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
     }
 }
 
