@@ -2,7 +2,7 @@
 
 namespace FlowMaker.Models;
 
-public class FlowInfo
+public class FlowDefinition
 {
     public List<Step> Steps { get; set; } = new();
     public List<StepInput> Inputs { get; set; } = new();
@@ -17,7 +17,7 @@ public class StepInfo
     /// <summary>
     /// 执行类
     /// </summary>
-    public required string RunnerName { get; set; }
+    public required string ExcutorName { get; set; }
     /// <summary>
     /// 名称
     /// </summary>

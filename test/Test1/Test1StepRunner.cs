@@ -5,7 +5,7 @@ using Polly;
 
 namespace Test1
 {
-    public class Test1StepRunner : IRunner
+    public class Test1StepRunner : IStepExcutor
     {
         public string Name => "Test1";
 
@@ -30,17 +30,17 @@ namespace Test1
         /// <summary>
         /// 执行步骤
         /// </summary>
-        /// <param name="stepName"></param>
+        /// <param name="stepType"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        public async Task RunAsync(string stepName, RunningContext context)
+        public async Task RunAsync(Step stepType, RunningContext context, CancellationToken cancellationToken)
         {
             IStep step;
-            switch (stepName)
+            switch (stepType.Name)
             {
                 case "":
                     step = _serviceProvider.GetRequiredService<Flow1>();
-                    await step.WrapAsync(context);
+                    await step.WrapAsync(context, stepType, cancellationToken);
                     break;
                 default:
                     break;
@@ -48,14 +48,14 @@ namespace Test1
 
         }
 
-        public async Task<bool> CheckAsync(string stepName, RunningContext context)
+        public async Task<bool> CheckAsync(Step stepType, RunningContext context, CancellationToken cancellationToken)
         {
             IStep step;
-            switch (stepName)
+            switch (stepType.Name)
             {
                 case "":
                     step = _serviceProvider.GetRequiredService<Flow1>();
-                    await step.WrapAsync(context);
+                    await step.WrapAsync(context, stepType, cancellationToken);
                     break;
                 default:
                     break;

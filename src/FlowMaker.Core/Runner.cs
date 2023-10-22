@@ -7,10 +7,10 @@ namespace FlowMaker
 {
     public class Runner
     {
-        private readonly IEnumerable<IRunner> _runners;
+        private readonly IEnumerable<IStepExcutor> _runners;
         private readonly ILogger<Runner> _logger;
 
-        public Runner(IEnumerable<IRunner> runners)
+        public Runner(IEnumerable<IStepExcutor> runners)
         {
             this._runners = runners;
             this._logger = NullLogger<Runner>.Instance;
@@ -19,27 +19,19 @@ namespace FlowMaker
         /// 全局上下文
         /// </summary>
         public RunningContext Context { get; protected set; } = new RunningContext();
-        /// <summary>
-        /// 所有步骤的状态
-        /// </summary>
-        public Dictionary<Guid, StepResult> StepState { get; protected set; } = new();
-        public List<Guid> SuspendSteps { get; protected set; } = new();
-        /// <summary>
-        /// 所有步骤
-        /// </summary>
-        public List<Step> AllSteps { get; protected set; } = new();
-        public async Task RunStep(Step step)
+
+        protected async Task RunStep(Step step)
         {
             var runner = _runners.FirstOrDefault(c => c.Name == step.RunnerName);
-            if (runner is null)
+            if (runner is null || CancellationTokenSource is null)
             {
                 throw new Exception();
             }
-            await runner.RunAsync(step, Context);
+            await runner.RunAsync(step, Context, CancellationTokenSource.Token);
         }
-        public async Task RunStep(Guid stepId)
+        protected async Task RunStep(Guid stepId)
         {
-            var step = AllSteps.FirstOrDefault(c => c.Id == stepId);
+            var step = Context.AllSteps.FirstOrDefault(c => c.Id == stepId);
             if (step is null)
             {
                 throw new Exception();
@@ -48,24 +40,24 @@ namespace FlowMaker
             await RunStep(step);
         }
 
-        public async Task<bool> CheckStep(Guid stepId)
+        protected async Task<bool> CheckStep(Guid stepId)
         {
-            var step = AllSteps.FirstOrDefault(c => c.Id == stepId);
+            var step = Context.AllSteps.FirstOrDefault(c => c.Id == stepId);
             if (step is null)
             {
                 throw new Exception();
             }
 
             var runner = _runners.FirstOrDefault(c => c.Name == step.RunnerName);
-            if (runner is null)
+            if (runner is null || CancellationTokenSource is null)
             {
                 throw new Exception();
             }
-            return await runner.CheckAsync(step, Context);
+            return await runner.CheckAsync(step, Context, CancellationTokenSource.Token);
         }
         public CancellationTokenSource? CancellationTokenSource { get; protected set; }
         public RunnerState State { get; set; }
-        public void Run(FlowInfo flowInfo)
+        public void Run(FlowDefinition flowInfo)
         {
             if (State != RunnerState.Stop)
             {
@@ -80,9 +72,9 @@ namespace FlowMaker
             //初始化
             foreach (var item in flowInfo.Steps)
             {
-                StepState.Add(item.Id, new StepResult());
+                Context.StepState.Add(item.Id, new StepResult());
             }
-            AllSteps = flowInfo.Steps;
+            Context.AllSteps = flowInfo.Steps;
             ////设置输入
             //foreach (var item in flowInfo.Inputs)
             //{
@@ -125,12 +117,12 @@ namespace FlowMaker
         /// <param name="stepId"></param>
         public void Suspend(Guid stepId)
         {
-            if (StepState[stepId].Suspend)
+            if (Context.StepState[stepId].Suspend)
             {
                 return;
             }
-            StepState[stepId].Suspend = true;
-            SuspendSteps.Add(stepId);
+            Context.StepState[stepId].Suspend = true;
+            Context.SuspendSteps.Add(stepId);
         }
 
         /// <summary>
@@ -138,7 +130,7 @@ namespace FlowMaker
         /// </summary>
         public void CheckComplete()
         {
-            if (StepState.All(c => c.Value.Complete) && State == RunnerState.Running)
+            if (Context.StepState.All(c => c.Value.Complete) && State == RunnerState.Running)
             {
                 //全部完成
                 State = RunnerState.Stop;
@@ -148,15 +140,15 @@ namespace FlowMaker
         public void RunNext(Guid? preStepId, CancellationToken cancellationToken)
         {
             //获取所有依赖于preActionId的任务
-            var list = AllSteps.Where(c =>
+            var list = Context.AllSteps.Where(c =>
             {
                 if (preStepId.HasValue)
                 {
-                    return c.PreActions.Contains(preStepId.Value) && !StepState[c.Id].Started;
+                    return c.PreActions.Contains(preStepId.Value) && !Context.StepState[c.Id].Started;
                 }
                 else
                 {
-                    return !c.PreActions.Any() && !StepState[c.Id].Started;
+                    return !c.PreActions.Any() && !Context.StepState[c.Id].Started;
                 }
             });
 
@@ -166,7 +158,7 @@ namespace FlowMaker
                 //确定是否满足条件
                 foreach (var preAction in item.PreActions)
                 {
-                    if (!StepState[preAction].Complete)
+                    if (!Context.StepState[preAction].Complete)
                     {
                         canNext = false;
                         break;
@@ -181,15 +173,15 @@ namespace FlowMaker
                 {
                     return;
                 }
-                if (StepState[item.Id].Started)//已经开始执行了，不再执行
+                if (Context.StepState[item.Id].Started)//已经开始执行了，不再执行
                 {
                     return;
                 }
-                if (StepState[item.Id].Suspend)//已经暂停了，不再执行
+                if (Context.StepState[item.Id].Suspend)//已经暂停了，不再执行
                 {
                     return;
                 }
-                StepState[item.Id].Started = true;
+                Context.StepState[item.Id].Started = true;
                 //执行
                 _ = Run(item, cancellationToken);
             }
@@ -234,17 +226,17 @@ namespace FlowMaker
                     try
                     {
                         await policyWrap.ExecuteAsync(async c => await RunStep(step), cancellationToken);
-                        StepState[step.Id].CompleteTimes++;
+                        Context.StepState[step.Id].CompleteTimes++;
                     }
                     catch (Exception e)
                     {
-                        StepState[step.Id].ErrorTimes++;
+                        Context.StepState[step.Id].ErrorTimes++;
                         switch (step.ErrorHandling)
                         {
                             case ErrorHandling.Skip:
                                 break;
                             case ErrorHandling.Suspend:
-                                StepState[step.Id].Suspend = true;
+                                Context.StepState[step.Id].Suspend = true;
                                 return;
                             case ErrorHandling.Terminate:
                                 throw new Exception("异常停止", e);
@@ -256,8 +248,8 @@ namespace FlowMaker
                 }
 
 
-                StepState[step.Id].Complete = true;
-                StepState[step.Id].ConsumeTime = DateTime.Now - start;
+                Context.StepState[step.Id].Complete = true;
+                Context.StepState[step.Id].ConsumeTime = DateTime.Now - start;
 
                 CheckComplete();
                 //执行下一步
@@ -266,7 +258,7 @@ namespace FlowMaker
 
             catch (Exception e)
             {
-                StepState[step.Id].ConsumeTime = DateTime.Now - start;
+                Context.StepState[step.Id].ConsumeTime = DateTime.Now - start;
 
             }
         }
