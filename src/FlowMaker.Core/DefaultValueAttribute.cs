@@ -1,25 +1,34 @@
 ﻿namespace FlowMaker;
 
-[System.AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
-public sealed class StepProviderNameAttribute : Attribute
+
+[System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public sealed class FlowStepAttribute : Attribute
 {
     // See the attribute guidelines at 
     //  http://go.microsoft.com/fwlink/?LinkId=85236
-    readonly string name;
+    readonly string group;
+    readonly string displayName;
+    readonly bool checkStep;
 
     // This is a positional argument
-    public StepProviderNameAttribute(string name)
+    public FlowStepAttribute(string group, string displayName, bool checkStep)
     {
-        this.name = name;
-
-        // TODO: Implement code here
-
-        throw new NotImplementedException();
+        this.group = group;
+        this.checkStep = checkStep;
+        this.displayName = displayName;
     }
 
-    public string Name
+    public string Group
     {
-        get { return name; }
+        get { return group; }
+    }
+    public string DisplayName
+    {
+        get { return displayName; }
+    }
+    public bool CheckStep
+    {
+        get { return checkStep; }
     }
 
 }

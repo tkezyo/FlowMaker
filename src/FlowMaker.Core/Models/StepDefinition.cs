@@ -13,13 +13,11 @@ public class FlowDefinition
 public class StepDefinition
 {
     /// <summary>
-    /// 提供类
-    /// </summary>
-    public required string ProviderName { get; set; }
-    /// <summary>
     /// 名称
     /// </summary>
+    public required string DiaplayName { get; set; }
     public required string Name { get; set; }
+    public required Type Type { get; set; }
     public List<StepInputDefinition> Inputs { get; set; } = new();
     public List<StepOutputDefinition> Outputs { get; set; } = new();
 }
@@ -45,10 +43,10 @@ public class StepOutputDefinition
     public string DisplayName { get; set; }
     public string Type { get; set; }
 
-    public StepOutputDefinition(string name, string description, string type)
+    public StepOutputDefinition(string name, string displayName, string type)
     {
         Name = name;
-        DisplayName = description;
+        DisplayName = displayName;
         Type = type;
     }
 }
@@ -69,12 +67,12 @@ public class StepInputDefinition
 
     public InputDisplayType DisplayType { get; set; }
 
-    public StepInputDefinition(string name, string description, string type)
+    public StepInputDefinition(string name, string displayName, string type)
     {
         Name = name;
         Options = new List<OptionDefinition>();
         DisplayType = InputDisplayType.Text;
-        DisplayName = description;
+        DisplayName = displayName;
         Type = type;
     }
 }

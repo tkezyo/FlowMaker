@@ -1,11 +1,10 @@
 ﻿using FlowMaker;
 using FlowMaker.Models;
 
-[assembly: StepProviderName("123")]
-
 namespace Test1;
 
-public partial class Flow1 : IStep
+[FlowStep(nameof(Test1), "流程1", false)]
+public partial class Flow1
 {
     [Input("")]
     public int Prop1 { get; set; }
@@ -18,6 +17,27 @@ public partial class Flow1 : IStep
     [Input("")]
     public Data1? Data { get; set; }
 
+    public static StepDefinition GetDefinition()
+    {
+        return new StepDefinition
+        {
+            DiaplayName = "流程1",
+            Name = "Test1.Flow1",
+            Type = typeof(Flow1),
+            Inputs = new List<StepInputDefinition>
+                {
+                    new StepInputDefinition("","",""),
+                    new StepInputDefinition("","",""),
+
+                },
+            Outputs = new List<StepOutputDefinition>
+                {
+                    new StepOutputDefinition("","",""),
+                }
+        };
+    }
+
+ 
     /// <summary>
     /// 执行的命令
     /// </summary>

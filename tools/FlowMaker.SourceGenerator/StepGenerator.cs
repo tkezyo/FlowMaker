@@ -15,11 +15,15 @@ namespace FlowMaker.SourceGenerator
             if (node is ClassDeclarationSyntax ids)
             {
                 //判断ids是否继承了IStep
-                if (ids.BaseList is null)
+                //if (ids.BaseList is null)
+                //{
+                //    return false;
+                //}
+                //return ids.BaseList.Types.Any(c => c.Type is IdentifierNameSyntax ff && (ff.Identifier.Text == "IStep" || ff.Identifier.Text == "ICheckStep"));
+                if (ids.AttributeLists.Any(v => v.Attributes.Any(c => c.Name is IdentifierNameSyntax ff && ff.Identifier.Text == "FlowStep")))
                 {
-                    return false;
+                    return true;
                 }
-                return ids.BaseList.Types.Any(c => c.Type is IdentifierNameSyntax ff && ff.Identifier.Text == "IStep");
             }
             return false;
         }
@@ -36,13 +40,20 @@ namespace FlowMaker.SourceGenerator
         {
             context.RegisterSourceOutput(context.SyntaxProvider.CreateSyntaxProvider<SyntaxModel>(Condition, Transform), (c, item) =>
             {
-                StringBuilder inputStringBuilder = new StringBuilder();
-                StringBuilder outputStringBuilder = new StringBuilder();
+                var attrs = item.Option.GetAttributes();
+                var flowStep = attrs.FirstOrDefault(c => c.AttributeClass.Name == "FlowStepAttribute");
+
+                var group = flowStep.ConstructorArguments[0].Value.ToString();
+                var name = flowStep.ConstructorArguments[1].Value.ToString();
+                var isCheck = flowStep.ConstructorArguments[2].Value.ToString() == "true";
+
+                StringBuilder inputStringBuilder = new();
+                StringBuilder outputStringBuilder = new();
                 foreach (var member in item.Option.GetMembers())
                 {
                     if (member is IPropertySymbol property)
                     {
-                        var name = member.Name;
+                        var memberName = member.Name;
                         var propAttrs = property.GetAttributes();
                         var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
                         if (input is not null)
@@ -57,12 +68,12 @@ namespace FlowMaker.SourceGenerator
 
                             }
                             inputStringBuilder.AppendLine($$"""
-        var key{{name}} = step.Inputs["{{name}}"].Value;
-        if (step.Inputs["{{name}}"].UseGlobeData)
+        var key{{memberName}} = step.Inputs["{{memberName}}"].Value;
+        if (step.Inputs["{{memberName}}"].UseGlobeData)
         {
-            key{{name}} = context.Data[step.Inputs["{{name}}"].Value];
+            key{{memberName}} = context.Data[step.Inputs["{{memberName}}"].Value];
         }
-        {{name}} = Convert.ToInt32(key{{name}});
+        {{memberName}} = Convert.ToInt32(key{{memberName}});
 """);
                         }
 
@@ -76,24 +87,25 @@ namespace FlowMaker.SourceGenerator
                             {
                                 var defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
                                 inputStringBuilder.AppendLine($$"""
-        {{name}} = {{defaultValueValue}};
+        {{memberName}} = {{defaultValueValue}};
 """);
                             }
 
                             outputStringBuilder.AppendLine($$"""
-        context.Data[step.Outputs["{{name}}"]] = {{name}}.ToString();
+        context.Data[step.Outputs["{{memberName}}"]] = {{memberName}}.ToString();
 """);
                         }
                     }
                 }
 
-
-                string baseStr = $@"using FlowMaker;
+                if (!isCheck)
+                {
+                    string baseStr = $@"using FlowMaker;
 using FlowMaker.Models;
 
 namespace {item.Option.ContainingNamespace};
 
-public partial class {item.Option.MetadataName}
+public partial class {item.Option.MetadataName} : IStep
 {{
     public async Task WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
     {{
@@ -104,9 +116,29 @@ public partial class {item.Option.MetadataName}
 }}
 ";
 
+                    c.AddSource($"{item.Option.MetadataName}.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+                }
+                else
+                {
+                    string baseStr = $@"using FlowMaker;
+using FlowMaker.Models;
 
+namespace {item.Option.ContainingNamespace};
 
-                c.AddSource($"{item.Option.MetadataName}.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+public partial class {item.Option.MetadataName} : ICheckStep
+{{
+    public async Task<bool> WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
+    {{
+{inputStringBuilder}
+        var result = await Run(context, step, cancellationToken);
+{outputStringBuilder}
+        return result;
+    }}
+}}
+";
+
+                    c.AddSource($"{item.Option.MetadataName}.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+                }
             });
 
         }
