@@ -1,51 +1,162 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging.Abstractions;
 using Polly;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Volo.Abp;
 
 namespace FlowMaker
 {
     public class Runner
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly IEnumerable<IRunner> _runners;
         private readonly ILogger<Runner> _logger;
 
-        public Runner(IServiceProvider serviceProvider, IEnumerable<IRunner> runners, ILogger<Runner> logger)
+        public Runner(IEnumerable<IRunner> runners)
         {
-            this._serviceProvider = serviceProvider;
             this._runners = runners;
-            this._logger = logger;
+            this._logger = NullLogger<Runner>.Instance;
         }
-        public ConcurrentDictionary<string, string> Context { get; set; } = new ConcurrentDictionary<string, string>();
-        TaskCompletionSource taskCompletionSource = new TaskCompletionSource();
-        readonly Dictionary<Guid, StepResult> State = new();
-
-        public void RunNext(Guid? preStepId, List<Step> steps, CancellationToken cancellationToken)
+        /// <summary>
+        /// 全局上下文
+        /// </summary>
+        public RunningContext Context { get; protected set; } = new RunningContext();
+        /// <summary>
+        /// 所有步骤的状态
+        /// </summary>
+        public Dictionary<Guid, StepResult> StepState { get; protected set; } = new();
+        public List<Guid> SuspendSteps { get; protected set; } = new();
+        /// <summary>
+        /// 所有步骤
+        /// </summary>
+        public List<Step> AllSteps { get; protected set; } = new();
+        public async Task RunStep(Step step)
         {
-            if (cancellationToken.IsCancellationRequested)
+            var runner = _runners.FirstOrDefault(c => c.Name == step.RunnerName);
+            if (runner is null)
             {
-                taskCompletionSource?.TrySetCanceled(cancellationToken);
+                throw new Exception();
+            }
+            await runner.RunAsync(step, Context);
+        }
+        public async Task RunStep(Guid stepId)
+        {
+            var step = AllSteps.FirstOrDefault(c => c.Id == stepId);
+            if (step is null)
+            {
+                throw new Exception();
+            }
+
+            await RunStep(step);
+        }
+
+        public async Task<bool> CheckStep(Guid stepId)
+        {
+            var step = AllSteps.FirstOrDefault(c => c.Id == stepId);
+            if (step is null)
+            {
+                throw new Exception();
+            }
+
+            var runner = _runners.FirstOrDefault(c => c.Name == step.RunnerName);
+            if (runner is null)
+            {
+                throw new Exception();
+            }
+            return await runner.CheckAsync(step, Context);
+        }
+        public CancellationTokenSource? CancellationTokenSource { get; protected set; }
+        public RunnerState State { get; set; }
+        public void Run(FlowInfo flowInfo)
+        {
+            if (State != RunnerState.Stop)
+            {
+                throw new Exception("正在运行中");
+            }
+            State = RunnerState.Running;
+            if (CancellationTokenSource is not null)
+            {
+                CancellationTokenSource?.Cancel();
+            }
+            CancellationTokenSource = new CancellationTokenSource();
+            //初始化
+            foreach (var item in flowInfo.Steps)
+            {
+                StepState.Add(item.Id, new StepResult());
+            }
+            AllSteps = flowInfo.Steps;
+            ////设置输入
+            //foreach (var item in flowInfo.Inputs)
+            //{
+            //    Context.Data.Add(item.Name, item.Value);
+            //}
+            ////设置输出
+            //foreach (var item in flowInfo.Outputs)
+            //{
+            //    Context.Data.Add(item.Name, item.Value);
+            //}
+            //设置全局输入
+            foreach (var item in flowInfo.SetInputs)
+            {
+                Context.Data.Add(item.Key, item.Value);
+            }
+            //执行
+            RunNext(null, CancellationTokenSource.Token);
+        }
+        /// <summary>
+        /// 停止
+        /// </summary>
+        public void Stop()
+        {
+            if (CancellationTokenSource is not null)
+            {
+                CancellationTokenSource?.Cancel();
+            }
+            State = RunnerState.Stop;
+        }
+        /// <summary>
+        /// 恢复
+        /// </summary>
+        public void Resume()
+        {
+
+        }
+        /// <summary>
+        /// 暂停
+        /// </summary>
+        /// <param name="stepId"></param>
+        public void Suspend(Guid stepId)
+        {
+            if (StepState[stepId].Suspend)
+            {
                 return;
             }
+            StepState[stepId].Suspend = true;
+            SuspendSteps.Add(stepId);
+        }
+
+        /// <summary>
+        /// 检查是否全部完成
+        /// </summary>
+        public void CheckComplete()
+        {
+            if (StepState.All(c => c.Value.Complete) && State == RunnerState.Running)
+            {
+                //全部完成
+                State = RunnerState.Stop;
+            }
+        }
+
+        public void RunNext(Guid? preStepId, CancellationToken cancellationToken)
+        {
             //获取所有依赖于preActionId的任务
-            var list = steps.Where(c =>
+            var list = AllSteps.Where(c =>
             {
                 if (preStepId.HasValue)
                 {
-                    return c.PreActions.Contains(preStepId.Value) && !State[c.Id].Started;
+                    return c.PreActions.Contains(preStepId.Value) && !StepState[c.Id].Started;
                 }
                 else
                 {
-                    return !c.PreActions.Any() && !State[c.Id].Started;
+                    return !c.PreActions.Any() && !StepState[c.Id].Started;
                 }
             });
 
@@ -55,7 +166,7 @@ namespace FlowMaker
                 //确定是否满足条件
                 foreach (var preAction in item.PreActions)
                 {
-                    if (!State[preAction].Complete)
+                    if (!StepState[preAction].Complete)
                     {
                         canNext = false;
                         break;
@@ -68,111 +179,103 @@ namespace FlowMaker
                 //确定是否被取消
                 if (cancellationToken.IsCancellationRequested)
                 {
-                    taskCompletionSource?.TrySetCanceled(cancellationToken);
                     return;
                 }
-                if (State[item.Id].Started)
+                if (StepState[item.Id].Started)//已经开始执行了，不再执行
                 {
                     return;
                 }
-                State[item.Id].Started = true;
+                if (StepState[item.Id].Suspend)//已经暂停了，不再执行
+                {
+                    return;
+                }
+                StepState[item.Id].Started = true;
                 //执行
-                _ = Task.Run(async () =>
-                {
-                    DateTime start = DateTime.Now;
-                    try
-                    {
-                        var runner = _runners.FirstOrDefault(c => c.Name == item.RunnerName);
-                        if (runner is null)
-                        {
-                            throw new Exception();
-                        }
-
-                        //超时策略
-                        var timeoutPolicy = Policy.TimeoutAsync(item.TimeOut, Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        //重试策略
-                        var retryPolicy = Policy.Handle<Exception>().RetryAsync(item.Retry, (exception, retryCount) =>
-                          {
-                              _logger.LogWarning($"执行步骤{item.Name}失败，重试次数{retryCount}，异常信息{exception.Message}");
-                          });
-                        //回退策略
-                        var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync(async c =>
-                          {
-                              if (!item.Fallback.HasValue)
-                              {
-                                  return;
-                              }
-                              var fallback = steps.FirstOrDefault(c => c.Id == item.Fallback.Value);
-                              if (fallback is null)
-                              {
-                                  return;
-                              }
-                              await runner.RunAsync(fallback.Name, Context, c);
-                          });
-
-                        //组合策略
-                        var policyWrap = Policy.WrapAsync(timeoutPolicy, retryPolicy, fallbackPolicy);
-
-                        for (int i = 0; i < item.Repeat; i++)//重复执行
-                        {
-                            await policyWrap.ExecuteAsync(async c => await runner.RunAsync(item.Name, Context, c), cancellationToken);
-                        }
-
-
-                        State[item.Id].Complete = true;
-                        State[item.Id].ConsumeTime = DateTime.Now - start;
-                        //执行下一步
-                        RunNext(item.Id, steps, cancellationToken);
-
-                        //判断是否全部完成
-                        if (State.All(c => c.Value.Complete))
-                        {
-                            if (taskCompletionSource?.Task.Status != TaskStatus.RanToCompletion)
-                            {
-                                taskCompletionSource?.SetResult();
-                            }
-                        }
-                    }
-
-                    catch (Exception e)
-                    {
-                        State[item.Id].ConsumeTime = DateTime.Now - start;
-
-                        OnAction?.Invoke(this, new GanttActionArgs(item, GanttActionStatus.Error));
-
-                        if (e is BusinessException kHWarning)
-                        {
-                            if (kHWarning.GetLogLevel() > LogLevel.Warning)
-                            {
-                                TaskCompletionSource?.SetException(kHWarning);
-                            }
-                            else//如果不是严重错误就继续执行
-                            {
-                                State[item.Id].Complete = true;
-                                State[item.Id].ConsumeTime = DateTime.Now - start;
-                                //执行下一步
-                                StartNext(workflow, item.Id, actions, cancellationToken);
-
-                                //判断是否全部完成
-                                if (State.All(c => c.Value.Complete))
-                                {
-                                    if (TaskCompletionSource?.Task.Status != TaskStatus.RanToCompletion)
-                                    {
-                                        TaskCompletionSource?.SetResult();
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            TaskCompletionSource?.SetException(e);
-                        }
-                    }
-                }, cancellationToken);
+                _ = Run(item, cancellationToken);
             }
-
-            return Task.CompletedTask;
         }
 
+        private async Task Run(Step step, CancellationToken cancellationToken)
+        {
+            DateTime start = DateTime.Now;
+            try
+            {
+                //超时策略
+                var timeoutPolicy = Policy.TimeoutAsync(step.TimeOut, Polly.Timeout.TimeoutStrategy.Pessimistic);
+                //重试策略
+                var retryPolicy = Policy.Handle<Exception>().RetryAsync(step.Retry, (exception, retryCount) =>
+                {
+                    _logger.LogWarning($"执行步骤{step.Name}失败，重试次数{retryCount}，异常信息{exception.Message}");
+                });
+                //回退策略
+                var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync(async c =>
+                {
+                    if (!step.Compensate.HasValue)
+                    {
+                        return;
+                    }
+
+                    await RunStep(step.Compensate.Value);
+                });
+
+                //组合策略
+                var policyWrap = Policy.WrapAsync(timeoutPolicy, retryPolicy, fallbackPolicy);
+
+                for (int i = 0; i < step.Repeat; i++)//重复执行
+                {
+                    foreach (var item2 in step.CanExcute)
+                    {
+                        var result = await CheckStep(item2.Key);
+                        if (result != item2.Value)
+                        {
+                            continue;
+                        }
+                    }
+                    try
+                    {
+                        await policyWrap.ExecuteAsync(async c => await RunStep(step), cancellationToken);
+                        StepState[step.Id].CompleteTimes++;
+                    }
+                    catch (Exception e)
+                    {
+                        StepState[step.Id].ErrorTimes++;
+                        switch (step.ErrorHandling)
+                        {
+                            case ErrorHandling.Skip:
+                                break;
+                            case ErrorHandling.Suspend:
+                                StepState[step.Id].Suspend = true;
+                                return;
+                            case ErrorHandling.Terminate:
+                                throw new Exception("异常停止", e);
+                            default:
+                                break;
+                        }
+                    }
+
+                }
+
+
+                StepState[step.Id].Complete = true;
+                StepState[step.Id].ConsumeTime = DateTime.Now - start;
+
+                CheckComplete();
+                //执行下一步
+                RunNext(step.Id, cancellationToken);
+            }
+
+            catch (Exception e)
+            {
+                StepState[step.Id].ConsumeTime = DateTime.Now - start;
+
+            }
+        }
+    }
+
+    public enum RunnerState
+    {
+        Running,
+        Suspend,
+        Stop
     }
 }

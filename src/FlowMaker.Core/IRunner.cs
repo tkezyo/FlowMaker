@@ -1,9 +1,13 @@
-﻿namespace FlowMaker;
+﻿using FlowMaker.Models;
+
+namespace FlowMaker;
 
 public interface IRunner
 {
     string Name { get; }
 
     List<string> GetStepInfo();
-    Task RunAsync(string stepName, IReadOnlyDictionary<string, string> param, CancellationToken cancellationToken);
+
+    Task RunAsync(Step step, RunningContext context);
+    Task<bool> CheckAsync(Step step, RunningContext context);
 }

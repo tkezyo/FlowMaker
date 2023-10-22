@@ -2,6 +2,9 @@
 
 public class Step
 {
+    /// <summary>
+    /// 步骤唯一Id
+    /// </summary>
     public Guid Id { get; set; }
     /// <summary>
     /// 执行类
@@ -14,15 +17,11 @@ public class Step
     /// <summary>
     /// 输入
     /// </summary>
-    public List<InputInfo> Inputs { get; set; } = new();
+    public Dictionary<string, Input> Inputs { get; set; } = new();
     /// <summary>
     /// 输出
     /// </summary>
-    public List<OutputInfo> Outputs { get; set; } = new();
-    /// <summary>
-    /// 执行条件的处理方法，可以固定几个判断类型，< > == != 这种
-    /// </summary>
-    public string? ConditionFuncName { get; set; }
+    public Dictionary<string, string> Outputs { get; set; } = new();
 
     /// <summary>
     /// 超时
@@ -40,7 +39,7 @@ public class Step
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>
-    public ErrorHandlingType ErrorHandlingType { get; set; }
+    public ErrorHandling ErrorHandling { get; set; }
     /// <summary>
     /// 前置任务
     /// </summary>
@@ -48,46 +47,48 @@ public class Step
     /// <summary>
     /// 回退任务
     /// </summary>
-    public Guid? Fallback { get; set; }
+    public Guid? Compensate { get; set; }
+    /// <summary>
+    /// 是否可执行
+    /// </summary>
+    public Dictionary<Guid, bool> CanExcute { get; set; } = new();
+
+    //TODO 需要判断根据全局输入的参数是否满足执行条件
+    public Dictionary<string, bool> CanExcuteFromInput { get; set; } = new();
 
 }
 
-
-public enum ErrorHandlingType
+public class Input
 {
-    Retry,
+    public string Value { get; set; }
+    /// <summary>
+    /// 使用全局变量
+    /// </summary>
+    public bool UseGlobeData { get; set; }
+    public Input(string value)
+    {
+        Value = value;
+    }
+}
+
+public enum ErrorHandling
+{
+    /// <summary>
+    /// 跳过
+    /// </summary>
     Skip,
-    Throw,
-}
-
-public class InputInfo
-{
-    public string DisplayName { get; set; }
-    public string Name { get; set; }
-    public string? Value { get; set; }
-
-    public InputInfo(string name, string displayName)
-    {
-        Name = name;
-        DisplayName = displayName;
-    }
-}
-
-public class OutputInfo
-{
-    public string DisplayName { get; set; }
-    public string Name { get; set; }
-    public string? Value { get; set; }
-
-    public OutputInfo(string name, string displayName)
-    {
-        Name = name;
-        DisplayName = displayName;
-    }
+    /// <summary>
+    /// 暂停
+    /// </summary>
+    Suspend,
+    /// <summary>
+    /// 停止
+    /// </summary>
+    Terminate
 }
 
 
-public class StepResult : Step
+public class StepResult
 {
     /// <summary>
     /// 已完成
@@ -97,6 +98,18 @@ public class StepResult : Step
     /// 已开始
     /// </summary>
     public bool Started { get; set; }
+    /// <summary>
+    /// 暂停
+    /// </summary>
+    public bool Suspend { get; set; }
+    /// <summary>
+    /// 完成次数
+    /// </summary>
+    public int CompleteTimes { get; set; }
+    /// <summary>
+    /// 错误次数
+    /// </summary>
+    public int ErrorTimes { get; set; }
     /// <summary>
     /// 消耗的时间
     /// </summary>
