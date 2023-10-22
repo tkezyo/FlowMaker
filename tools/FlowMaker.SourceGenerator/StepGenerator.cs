@@ -36,11 +36,13 @@ namespace FlowMaker.SourceGenerator
         {
             context.RegisterSourceOutput(context.SyntaxProvider.CreateSyntaxProvider<SyntaxModel>(Condition, Transform), (c, item) =>
             {
-                StringBuilder stringBuilder = new StringBuilder();
+                StringBuilder inputStringBuilder = new StringBuilder();
+                StringBuilder outputStringBuilder = new StringBuilder();
                 foreach (var member in item.Option.GetMembers())
                 {
                     if (member is IPropertySymbol property)
                     {
+                        var name = member.Name;
                         var propAttrs = property.GetAttributes();
                         var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
                         if (input is not null)
@@ -54,14 +56,13 @@ namespace FlowMaker.SourceGenerator
                             {
 
                             }
-                            var name =  member.ToDisplayString() ;
-                            stringBuilder.AppendLine($$"""
-                        var key{{name}} = step.Inputs["{{name}}"].Value;
-                        if (step.Inputs["{{name}}"].UseGlobeData)
-                        {
-                            key{{name}} = context.Data[step.Inputs["{{name}}"].Value];
-                        }
-                        {{name}} = Convert.ToInt32(key{{name}});
+                            inputStringBuilder.AppendLine($$"""
+        var key{{name}} = step.Inputs["{{name}}"].Value;
+        if (step.Inputs["{{name}}"].UseGlobeData)
+        {
+            key{{name}} = context.Data[step.Inputs["{{name}}"].Value];
+        }
+        {{name}} = Convert.ToInt32(key{{name}});
 """);
                         }
 
@@ -71,6 +72,17 @@ namespace FlowMaker.SourceGenerator
                         {
                             var outputName = output.ConstructorArguments[0].Value.ToString();
                             var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
+                            if (defaultValue is not null)
+                            {
+                                var defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
+                                inputStringBuilder.AppendLine($$"""
+        {{name}} = {{defaultValueValue}};
+""");
+                            }
+
+                            outputStringBuilder.AppendLine($$"""
+        context.Data[step.Outputs["{{name}}"]] = {{name}}.ToString();
+""");
                         }
                     }
                 }
@@ -85,14 +97,16 @@ public partial class {item.Option.MetadataName}
 {{
     public async Task WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
     {{
+{inputStringBuilder}
         await Run(context, step, cancellationToken);
+{outputStringBuilder}
     }}
 }}
 ";
 
 
 
-                c.AddSource($"{item.Option.MetadataName.Substring(1)}CommandInfoProvider.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+                c.AddSource($"{item.Option.MetadataName}.g.cs", SourceText.From(baseStr, Encoding.UTF8));
             });
 
         }

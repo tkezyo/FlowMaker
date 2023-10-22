@@ -11,6 +11,7 @@ public partial class Flow1 : IStep
     public int Prop1 { get; set; }
     [Input("")]
     public int Prop2 { get; set; }
+    [DefaultValue("1")]
     [Output("")]
     public int Prop3 { get; set; }
 
@@ -27,24 +28,6 @@ public partial class Flow1 : IStep
     }
 }
 
-public partial class Flow1
-{
-    public async Task WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
-    {
-        var keyProp1 = step.Inputs["Prop1"].Value;
-        if (step.Inputs["Prop1"].UseGlobeData)
-        {
-            keyProp1 = context.Data[step.Inputs["Prop1"].Value];
-        }
-        Prop1 = Convert.ToInt32(keyProp1);
-
-        Prop2 = Convert.ToInt32(context.Data[""]);
-        Data = System.Text.Json.JsonSerializer.Deserialize<Data1>(context.Data[""]);
-        await Run(context, step, cancellationToken);
-
-        context.Data[step.Outputs["Prop1"]] = Prop3.ToString();
-    }
-}
 
 public class Data1
 {
