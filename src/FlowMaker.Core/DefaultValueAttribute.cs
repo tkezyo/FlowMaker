@@ -1,5 +1,28 @@
 ﻿namespace FlowMaker;
 
+[System.AttributeUsage(AttributeTargets.Assembly, Inherited = false, AllowMultiple = false)]
+public sealed class StepProviderNameAttribute : Attribute
+{
+    // See the attribute guidelines at 
+    //  http://go.microsoft.com/fwlink/?LinkId=85236
+    readonly string name;
+
+    // This is a positional argument
+    public StepProviderNameAttribute(string name)
+    {
+        this.name = name;
+
+        // TODO: Implement code here
+
+        throw new NotImplementedException();
+    }
+
+    public string Name
+    {
+        get { return name; }
+    }
+
+}
 
 [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
 public sealed class InputAttribute : Attribute
@@ -80,30 +103,4 @@ public sealed class DefaultValueAttribute : Attribute
     {
         get { return value; }
     }
-}
-
-
-[System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
-public sealed class ParameterValueAttribute : Attribute
-{
-    // See the attribute guidelines at 
-    //  http://go.microsoft.com/fwlink/?LinkId=85236
-    readonly ParameterType value;
-
-    // This is a positional argument
-    public ParameterValueAttribute(ParameterType value)
-    {
-        this.value = value;
-    }
-
-    public ParameterType Value
-    {
-        get { return value; }
-    }
-}
-
-public enum ParameterType
-{
-    String,
-    Int
 }

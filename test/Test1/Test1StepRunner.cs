@@ -1,11 +1,10 @@
 ﻿using FlowMaker;
 using FlowMaker.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Polly;
 
 namespace Test1
 {
-    public class Test1StepRunner : IStepExcutor
+    public class Test1StepRunner : IStepProvider
     {
         public string Name => "Test1";
 
@@ -19,14 +18,19 @@ namespace Test1
         /// 获取所有步骤信息，需要包含参数信息
         /// </summary>
         /// <returns></returns>
-        public List<string> GetStepInfo()
+        public List<StepDefinition> GetStepDefinitions()
         {
-            return new List<string>();
+            return new List<StepDefinition>();
         }
-        public List<string> GetCheckInfo()
+        public List<StepDefinition> GetCheckStepDefinitions()
         {
-            return new List<string>();
+            return new List<StepDefinition>();
         }
+        public List<ConvertorDefinition> GetConvertors()
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// 执行步骤
         /// </summary>
@@ -62,5 +66,7 @@ namespace Test1
             }
             return true;
         }
+
+     
     }
 }

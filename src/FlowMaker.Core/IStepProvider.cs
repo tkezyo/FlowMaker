@@ -2,11 +2,13 @@
 
 namespace FlowMaker;
 
-public interface IStepExcutor
+public interface IStepProvider
 {
     string Name { get; }
 
-    List<string> GetStepInfo();
+    List<StepDefinition> GetStepDefinitions();
+    List<StepDefinition> GetCheckStepDefinitions();
+    List<ConvertorDefinition> GetConvertors();
 
     Task RunAsync(Step step, RunningContext context, CancellationToken cancellationToken);
     Task<bool> CheckAsync(Step step, RunningContext context, CancellationToken cancellationToken);
