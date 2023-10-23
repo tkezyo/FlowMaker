@@ -1,14 +1,13 @@
-﻿namespace FlowMaker.Models;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace FlowMaker.Models;
 
 public class FlowDefinition
 {
-    public List<Step> Steps { get; set; } = new();
+    public List<FlowStep> Steps { get; set; } = new();
     public List<StepInputDefinition> Inputs { get; set; } = new();
     public List<StepOutputDefinition> Outputs { get; set; } = new();
-    /// <summary>
-    /// 批量设置输入,将所有步骤的输入设置为相同的值
-    /// </summary>
-    public Dictionary<string, string> SetInputs { get; set; } = new();
+ 
 }
 public class StepDefinition
 {
@@ -21,16 +20,20 @@ public class StepDefinition
     public List<StepInputDefinition> Inputs { get; set; } = new();
     public List<StepOutputDefinition> Outputs { get; set; } = new();
 }
-public class ConvertorDefinition
+public class ConverterDefinition
 {
+    public required string DiaplayName { get; set; }
     public string Name { get; set; }
-    public string From { get; set; }
-    public string To { get; set; }
-    public ConvertorDefinition(string name, string from, string to)
+    public required Type Type { get; set; }
+    public required string To { get; set; }
+    public List<StepInputDefinition> Inputs { get; set; } = new();
+    [SetsRequiredMembers]
+    public ConverterDefinition(string name, string diaplayName, string to, Type type)
     {
         Name = name;
-        From = from;
         To = to;
+        Type = type;
+        DiaplayName = diaplayName;
     }
 }
 public class StepOutputDefinition

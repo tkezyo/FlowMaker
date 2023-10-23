@@ -17,6 +17,17 @@
         /// <summary>
         /// 所有步骤
         /// </summary>
-        public List<Step> AllSteps { get; set; } = new();
+        public List<FlowStep> AllSteps { get; set; } = new();
+        public List<FlowConverter> AllConverters { get; set; } = new();
+
+        /// <summary>
+        /// 批量设置输入,将所有步骤的输入设置为相同的值
+        /// </summary>
+        public Dictionary<string, FlowInput> Inputs { get; set; } = new();
+    }
+
+    public class FlowGlobeParam
+    {
+        public string Name { get; set; }
     }
 }

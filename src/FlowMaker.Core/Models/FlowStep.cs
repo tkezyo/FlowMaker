@@ -1,15 +1,13 @@
 ﻿namespace FlowMaker.Models;
 
-public class Step
+public class FlowStep
 {
     /// <summary>
     /// 步骤唯一Id
     /// </summary>
     public Guid Id { get; set; }
-    /// <summary>
-    /// 执行类
-    /// </summary>
-    public required string RunnerName { get; set; }
+
+    public string? GroupName { get; set; }
     /// <summary>
     /// 名称
     /// </summary>
@@ -17,7 +15,7 @@ public class Step
     /// <summary>
     /// 输入
     /// </summary>
-    public Dictionary<string, Input> Inputs { get; set; } = new();
+    public Dictionary<string, FlowInput> Inputs { get; set; } = new();
     /// <summary>
     /// 输出
     /// </summary>
@@ -58,18 +56,49 @@ public class Step
 
 }
 
-public class Input
+public class FlowConverter
 {
-    public string Value { get; set; }
     /// <summary>
-    /// 使用全局变量
+    /// 转换器唯一Id
     /// </summary>
+    public Guid Id { get; set; }
+    /// <summary>
+    /// 名称
+    /// </summary>
+    public string Name { get; set; }
+    public FlowInput Input { get; set; }
+    public FlowConverter(string name, string defaultValue)
+    {
+        Name = name;
+        Input = new FlowInput( defaultValue);
+    }
+}
+
+public class FlowInput
+{
+    public string? GroupName { get; set; }
+    public string? Name { get; set; }
+    public List<FlowInputValue> Values { get; protected set; } = new();
+
+    public FlowInput( string defaultValue)
+    {
+        System.Text.Json.JsonSerializer.Deserialize<sbyte>("");
+        Values.Add(new FlowInputValue(defaultValue));
+    }
+}
+
+public class FlowInputValue
+{
     public bool UseGlobeData { get; set; }
-    public Input(string value)
+    public string Value { get; set; }
+    public string? PropName { get; set; }
+
+    public FlowInputValue(string value)
     {
         Value = value;
     }
 }
+
 
 public enum ErrorHandling
 {

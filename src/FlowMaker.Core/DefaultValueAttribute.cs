@@ -1,20 +1,19 @@
 ﻿namespace FlowMaker;
 
 
+
 [System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class FlowStepAttribute : Attribute
+public sealed class FlowConverterAttribute<T> : Attribute
 {
     // See the attribute guidelines at 
     //  http://go.microsoft.com/fwlink/?LinkId=85236
     readonly string group;
     readonly string displayName;
-    readonly bool checkStep;
 
     // This is a positional argument
-    public FlowStepAttribute(string group, string displayName, bool checkStep)
+    public FlowConverterAttribute(string group, string displayName)
     {
         this.group = group;
-        this.checkStep = checkStep;
         this.displayName = displayName;
     }
 
@@ -26,9 +25,32 @@ public sealed class FlowStepAttribute : Attribute
     {
         get { return displayName; }
     }
-    public bool CheckStep
+
+}
+
+
+[System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public sealed class FlowStepAttribute : Attribute
+{
+    // See the attribute guidelines at 
+    //  http://go.microsoft.com/fwlink/?LinkId=85236
+    readonly string group;
+    readonly string displayName;
+
+    // This is a positional argument
+    public FlowStepAttribute(string group, string displayName)
     {
-        get { return checkStep; }
+        this.group = group;
+        this.displayName = displayName;
+    }
+
+    public string Group
+    {
+        get { return group; }
+    }
+    public string DisplayName
+    {
+        get { return displayName; }
     }
 
 }

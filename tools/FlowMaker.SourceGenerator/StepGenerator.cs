@@ -20,7 +20,14 @@ namespace FlowMaker.SourceGenerator
                 //    return false;
                 //}
                 //return ids.BaseList.Types.Any(c => c.Type is IdentifierNameSyntax ff && (ff.Identifier.Text == "IStep" || ff.Identifier.Text == "ICheckStep"));
-                if (ids.AttributeLists.Any(v => v.Attributes.Any(c => c.Name is IdentifierNameSyntax ff && ff.Identifier.Text == "FlowStep")))
+                if (ids.AttributeLists.Any(v => v.Attributes.Any(c =>
+                {
+                    if (c.Name is IdentifierNameSyntax ff && ff.Identifier.Text == "FlowStep" || (c.Name is GenericNameSyntax fc && fc.Identifier.Text == "FlowConverter"))
+                    {
+                        return true;
+                    }
+                    return false;
+                })))
                 {
                     return true;
                 }
@@ -42,64 +49,61 @@ namespace FlowMaker.SourceGenerator
             {
                 var attrs = item.Option.GetAttributes();
                 var flowStep = attrs.FirstOrDefault(c => c.AttributeClass.Name == "FlowStepAttribute");
+                var flowConverter = attrs.FirstOrDefault(c => c.AttributeClass.Name == "FlowConverterAttribute");
 
-                var group = flowStep.ConstructorArguments[0].Value.ToString();
-                var name = flowStep.ConstructorArguments[1].Value.ToString();
-                var isCheck = flowStep.ConstructorArguments[2].Value.ToString() == "true";
-
-                StringBuilder inputStringBuilder = new();
-                StringBuilder outputStringBuilder = new();
-                foreach (var member in item.Option.GetMembers())
+                if (flowStep is not null)
                 {
-                    if (member is IPropertySymbol property)
+                    var group = flowStep.ConstructorArguments[0].Value.ToString();
+                    var name = flowStep.ConstructorArguments[1].Value.ToString();
+
+                    StringBuilder inputStringBuilder = new();
+                    StringBuilder outputStringBuilder = new();
+                    foreach (var member in item.Option.GetMembers())
                     {
-                        var memberName = member.Name;
-                        var propAttrs = property.GetAttributes();
-                        var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
-                        if (input is not null)
+                        if (member is IPropertySymbol property)
                         {
-                            var inputName = input.ConstructorArguments[0].Value.ToString();
-
-                            var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
-                            var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
-
-                            if (property.Type.SpecialType == SpecialType.System_Boolean)
+                            var memberName = member.Name;
+                            var propAttrs = property.GetAttributes();
+                            var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
+                            if (input is not null)
                             {
+                                var inputName = input.ConstructorArguments[0].Value.ToString();
 
-                            }
-                            inputStringBuilder.AppendLine($$"""
-        var key{{memberName}} = step.Inputs["{{memberName}}"].Value;
-        if (step.Inputs["{{memberName}}"].UseGlobeData)
-        {
-            key{{memberName}} = context.Data[step.Inputs["{{memberName}}"].Value];
-        }
-        {{memberName}} = Convert.ToInt32(key{{memberName}});
-""");
-                        }
+                                var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
+                                var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
 
+                                if (property.Type.SpecialType == SpecialType.System_Boolean)
+                                {
 
-                        var output = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
-                        if (output is not null)
-                        {
-                            var outputName = output.ConstructorArguments[0].Value.ToString();
-                            var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
-                            if (defaultValue is not null)
-                            {
-                                var defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
+                                }
+                                
                                 inputStringBuilder.AppendLine($$"""
+        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", serviceProvider, context, step.Inputs, s => System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+""");
+                            }
+
+
+                            var output = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
+                            if (output is not null)
+                            {
+                                var outputName = output.ConstructorArguments[0].Value.ToString();
+                                var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
+                                if (defaultValue is not null)
+                                {
+                                    var defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
+                                    inputStringBuilder.AppendLine($$"""
         {{memberName}} = {{defaultValueValue}};
 """);
-                            }
+                                }
 
-                            outputStringBuilder.AppendLine($$"""
-        context.Data[step.Outputs["{{memberName}}"]] = {{memberName}}.ToString();
+                                outputStringBuilder.AppendLine($$"""
+        context.Data[step.Outputs["{{memberName}}"]] = System.Text.Json.JsonSerializer.Serialize({{memberName}});
 """);
+                            }
                         }
                     }
-                }
 
-                if (!isCheck)
-                {
+
                     string baseStr = $@"using FlowMaker;
 using FlowMaker.Models;
 
@@ -107,37 +111,87 @@ namespace {item.Option.ContainingNamespace};
 
 public partial class {item.Option.MetadataName} : IStep
 {{
-    public async Task WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
+    public static string GroupName => ""{group}"";
+
+    public static string Name => ""{name}"";
+
+    public async Task WrapAsync(RunningContext context, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {{
 {inputStringBuilder}
         await Run(context, step, cancellationToken);
 {outputStringBuilder}
     }}
+
+    public static StepDefinition GetDefinition()
+    {{
+        throw new NotImplementedException();
+    }}
 }}
 ";
 
-                    c.AddSource($"{item.Option.MetadataName}.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+                    c.AddSource($"{item.Option.MetadataName}.s.g.cs", SourceText.From(baseStr, Encoding.UTF8));
                 }
-                else
+                if (flowConverter is not null)
                 {
+                    //获取flowConverter中的泛型参数
+                    var type = flowConverter.AttributeClass.TypeArguments[0] as INamedTypeSymbol;
+
+                    var group = flowConverter.ConstructorArguments[0].Value.ToString();
+                    var name = flowConverter.ConstructorArguments[1].Value.ToString();
+
+                    StringBuilder inputStringBuilder = new();
+
+                    foreach (var member in item.Option.GetMembers())
+                    {
+                        if (member is IPropertySymbol property)
+                        {
+                            var memberName = member.Name;
+                            var propAttrs = property.GetAttributes();
+                            var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
+                            if (input is not null)
+                            {
+                                var inputName = input.ConstructorArguments[0].Value.ToString();
+
+                                var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
+                                var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
+
+                                if (property.Type.SpecialType == SpecialType.System_Boolean)
+                                {
+
+                                }
+                                inputStringBuilder.AppendLine($$"""
+        {{memberName}} = IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", context, input, s=> System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s));
+""");
+                            }
+                        }
+                    }
+
+
                     string baseStr = $@"using FlowMaker;
 using FlowMaker.Models;
 
 namespace {item.Option.ContainingNamespace};
 
-public partial class {item.Option.MetadataName} : ICheckStep
+public partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDisplayString()}>
 {{
-    public async Task<bool> WrapAsync(RunningContext context, Step step, CancellationToken cancellationToken)
+    public static string GroupName => ""{group}"";
+
+    public static string Name => ""{name}"";
+
+    public async Task<{type.ToDisplayString()}> WrapAsync(RunningContext context, FlowInput input, CancellationToken cancellationToken)
     {{
 {inputStringBuilder}
-        var result = await Run(context, step, cancellationToken);
-{outputStringBuilder}
-        return result;
+        return await Convert(context, input, cancellationToken);
+    }}
+
+    public static ConverterDefinition GetDefinition()
+    {{
+        throw new NotImplementedException();
     }}
 }}
 ";
 
-                    c.AddSource($"{item.Option.MetadataName}.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+                    c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));
                 }
             });
 

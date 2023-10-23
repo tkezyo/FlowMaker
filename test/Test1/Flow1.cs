@@ -3,7 +3,7 @@ using FlowMaker.Models;
 
 namespace Test1;
 
-[FlowStep(nameof(Test1), "流程1", false)]
+[FlowStep("test1", "流程1")]
 public partial class Flow1
 {
     [Input("")]
@@ -17,32 +17,32 @@ public partial class Flow1
     [Input("")]
     public Data1? Data { get; set; }
 
-    public static StepDefinition GetDefinition()
-    {
-        return new StepDefinition
-        {
-            DiaplayName = "流程1",
-            Name = "Test1.Flow1",
-            Type = typeof(Flow1),
-            Inputs = new List<StepInputDefinition>
-                {
-                    new StepInputDefinition("","",""),
-                    new StepInputDefinition("","",""),
+    //public static StepDefinition GetDefinition()
+    //{
+    //    return new StepDefinition
+    //    {
+    //        DiaplayName = "流程1",
+    //        Name = "Test1.Flow1",
+    //        Type = typeof(Flow1),
+    //        Inputs = new List<StepInputDefinition>
+    //            {
+    //                new StepInputDefinition("","",""),
+    //                new StepInputDefinition("","",""),
 
-                },
-            Outputs = new List<StepOutputDefinition>
-                {
-                    new StepOutputDefinition("","",""),
-                }
-        };
-    }
+    //            },
+    //        Outputs = new List<StepOutputDefinition>
+    //            {
+    //                new StepOutputDefinition("","",""),
+    //            }
+    //    };
+    //}
 
- 
+
     /// <summary>
     /// 执行的命令
     /// </summary>
     /// <returns></returns>
-    public Task Run(RunningContext context, Step step, CancellationToken cancellationToken)
+    public Task Run(RunningContext context, FlowStep step, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
     }
@@ -54,12 +54,17 @@ public class Data1
 
 }
 
-public class ValueConverter : IStepValueConverter<string, int>
+[FlowConverter<int>(nameof(Test1), "流程1")]
+public partial class ValueConverter
 {
-    public string Name => "123";
+    [Input("")]
+    public int Prop1 { get; set; }
+    [Input("")]
+    public int Prop2 { get; set; }
 
-    public int ConvertTo(string from)
+    public async Task<int> Convert(RunningContext context, FlowInput step, CancellationToken cancellationToken)
     {
-        return Convert.ToInt32(from);
+        await Task.CompletedTask;
+        return Prop1 + Prop2;
     }
 }

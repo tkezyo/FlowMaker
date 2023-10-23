@@ -15,13 +15,29 @@ public class FlowMakerOption
         }
         return group;
     }
+    public ConverterDefinition? GetConverter(string groupName, string name)
+    {
+        if (Group.TryGetValue(groupName, out var group))
+        {
+            return group.ConverterDefinitions.FirstOrDefault(c => c.Name == name);
+        }
+        return null;
+    }
+    public StepDefinition? GetStep(string groupName, string name)
+    {
+        if (Group.TryGetValue(groupName, out var group))
+        {
+            return group.StepDefinitions.FirstOrDefault(c => c.Name == name);
+        }
+        return null;
+    }
+
 }
 
 public class FlowMakerOptionGroup
 {
     public List<StepDefinition> StepDefinitions { get; set; } = new();
-    public List<StepDefinition> CheckStepDefinitions { get; set; } = new();
-    public List<ConvertorDefinition> ConvertorDefinitions { get; set; } = new();
+    public List<ConverterDefinition> ConverterDefinitions { get; set; } = new();
 }
 
 public static class FlowMakerExtention
@@ -33,30 +49,22 @@ public static class FlowMakerExtention
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
             var group = c.GetOrAddGroup(T.GroupName);
-            if (typeof(T) is IExcuteStep)
+            if (typeof(T) is IStep)
             {
                 group.StepDefinitions.Add(T.GetDefinition());
             }
-            if (typeof(T) is ICheckStep)
-            {
-                group.CheckStepDefinitions.Add(T.GetDefinition());
-            }
         });
     }
-    public static void AddFlowStep<T>(this IServiceCollection serviceDescriptors)
-        where T : class, IStep
+    public static void AddFlowConverter<T, TConvertTo>(this IServiceCollection serviceDescriptors)
+        where T : class, IFlowValueConverter<TConvertTo>
     {
         serviceDescriptors.AddTransient<T>();
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
             var group = c.GetOrAddGroup(T.GroupName);
-            if (typeof(T) is IExcuteStep)
+            if (typeof(T) is IFlowValueConverter<TConvertTo>)
             {
-                group.StepDefinitions.Add(T.GetDefinition());
-            }
-            if (typeof(T) is ICheckStep)
-            {
-                group.CheckStepDefinitions.Add(T.GetDefinition());
+                group.ConverterDefinitions.Add(T.GetDefinition());
             }
         });
     }

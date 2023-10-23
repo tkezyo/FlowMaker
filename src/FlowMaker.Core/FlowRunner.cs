@@ -1,33 +1,39 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Polly;
 
 namespace FlowMaker;
 
 public class FlowRunner
 {
-    private readonly IEnumerable<IStepProvider> _runners;
     private readonly ILogger<FlowRunner> _logger;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly FlowMakerOption _flowMakerOption;
 
-    public FlowRunner(IEnumerable<IStepProvider> runners)
+    public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option)
     {
-        this._runners = runners;
         this._logger = NullLogger<FlowRunner>.Instance;
+        _flowMakerOption = option.Value;
+        this._serviceProvider = serviceProvider;
     }
     /// <summary>
     /// 全局上下文
     /// </summary>
     public RunningContext Context { get; protected set; } = new RunningContext();
 
-    protected async Task RunStep(Step step)
+    protected async Task RunStep(FlowStep step)
     {
-        var runner = _runners.FirstOrDefault(c => c.Name == step.RunnerName);
-        if (runner is null || CancellationTokenSource is null)
+        var stepDefinition = _flowMakerOption.GetStep(step.GroupName, step.Name);
+        var stepObj = _serviceProvider.GetService(stepDefinition.Type);
+
+        if (stepObj is not IStep stepService || CancellationTokenSource is null)
         {
             throw new Exception();
         }
-        await runner.RunAsync(step, Context, CancellationTokenSource.Token);
+
+        await stepService.WrapAsync(Context, step, _serviceProvider, CancellationTokenSource.Token);
     }
     protected async Task RunStep(Guid stepId)
     {
@@ -40,20 +46,21 @@ public class FlowRunner
         await RunStep(step);
     }
 
-    protected async Task<bool> CheckStep(Guid stepId)
+    protected async Task<bool> CheckStep(Guid convertId)
     {
-        var step = Context.AllSteps.FirstOrDefault(c => c.Id == stepId);
-        if (step is null)
+        var converter = Context.AllConverters.FirstOrDefault(c => c.Id == convertId);
+        if (converter is null)
         {
             throw new Exception();
         }
+        var converterDefinition = _flowMakerOption.GetConverter(converter.Input.GroupName, converter.Input.Name);
+        var converterObj = _serviceProvider.GetService(converterDefinition.Type);
 
-        var runner = _runners.FirstOrDefault(c => c.Name == step.RunnerName);
-        if (runner is null || CancellationTokenSource is null)
+        if (converterObj is not IFlowValueConverter<bool> convertService || CancellationTokenSource is null)
         {
             throw new Exception();
         }
-        return await runner.CheckAsync(step, Context, CancellationTokenSource.Token);
+        return await convertService.WrapAsync(Context, converter.Input, CancellationTokenSource.Token);
     }
     public CancellationTokenSource? CancellationTokenSource { get; protected set; }
     public RunnerState State { get; set; }
@@ -86,10 +93,10 @@ public class FlowRunner
         //    Context.Data.Add(item.Name, item.Value);
         //}
         //设置全局输入
-        foreach (var item in flowInfo.SetInputs)
-        {
-            Context.Data.Add(item.Key, item.Value);
-        }
+        //foreach (var item in flowInfo.SetInputs)
+        //{
+        //    Context.Data.Add(item.Key, item.Value);
+        //}
         //执行
         RunNext(null, CancellationTokenSource.Token);
     }
@@ -187,7 +194,7 @@ public class FlowRunner
         }
     }
 
-    private async Task Run(Step step, CancellationToken cancellationToken)
+    private async Task Run(FlowStep step, CancellationToken cancellationToken)
     {
         DateTime start = DateTime.Now;
         try
