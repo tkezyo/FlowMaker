@@ -9,33 +9,34 @@ public partial class Flow1
     [Input("")]
     public int Prop1 { get; set; }
     [Input("")]
+    [Option("123","3")]
     public int Prop2 { get; set; }
     [DefaultValue("1")]
-    [Output("")]
+    [Output("333")]
     public int Prop3 { get; set; }
 
-    [Input("")]
+    [Input("123")]
     public Data1? Data { get; set; }
 
-    //public static StepDefinition GetDefinition()
-    //{
-    //    return new StepDefinition
-    //    {
-    //        DiaplayName = "流程1",
-    //        Name = "Test1.Flow1",
-    //        Type = typeof(Flow1),
-    //        Inputs = new List<StepInputDefinition>
-    //            {
-    //                new StepInputDefinition("","",""),
-    //                new StepInputDefinition("","",""),
-
-    //            },
-    //        Outputs = new List<StepOutputDefinition>
-    //            {
-    //                new StepOutputDefinition("","",""),
-    //            }
-    //    };
-    //}
+    public static StepDefinition GetDefinition2()
+    {
+        return new StepDefinition
+        {
+            DisplayGroup = "",
+            DisplayName = "流程1",
+            Name = "Test1.Flow1",
+            Type = typeof(Flow1),
+            Inputs = new List<StepInputDefinition>
+                {
+                    new StepInputDefinition("","",""),
+                    new StepInputDefinition("","",""),
+                },
+            Outputs = new List<StepOutputDefinition>
+                {
+                    new StepOutputDefinition("","",""),
+                }
+        };
+    }
 
 
     /// <summary>
@@ -67,4 +68,6 @@ public partial class ValueConverter
         await Task.CompletedTask;
         return Prop1 + Prop2;
     }
+
+   
 }

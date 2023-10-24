@@ -70,7 +70,7 @@ public class FlowConverter
     public FlowConverter(string name, string defaultValue)
     {
         Name = name;
-        Input = new FlowInput( defaultValue);
+        Input = new FlowInput(defaultValue);
     }
 }
 
@@ -79,8 +79,8 @@ public class FlowInput
     public string? GroupName { get; set; }
     public string? Name { get; set; }
     public List<FlowInputValue> Values { get; protected set; } = new();
-
-    public FlowInput( string defaultValue)
+    public InputDisplayType InputDisplayType { get; set; }
+    public FlowInput(string defaultValue)
     {
         System.Text.Json.JsonSerializer.Deserialize<sbyte>("");
         Values.Add(new FlowInputValue(defaultValue));

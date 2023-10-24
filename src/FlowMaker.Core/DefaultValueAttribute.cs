@@ -98,22 +98,22 @@ public sealed class OptionAttribute : Attribute
     // See the attribute guidelines at 
     //  http://go.microsoft.com/fwlink/?LinkId=85236
     readonly string displayName;
-    readonly string name;
+    readonly string value;
 
     // This is a positional argument
-    public OptionAttribute(string displayname, string name)
+    public OptionAttribute(string displayname, string value)
     {
         this.displayName = displayname;
-        this.name = name;
+        this.value = value;
     }
 
     public string DisplayName
     {
         get { return displayName; }
     }
-    public string Name
+    public string Value
     {
-        get { return name; }
+        get { return value; }
     }
 }
 

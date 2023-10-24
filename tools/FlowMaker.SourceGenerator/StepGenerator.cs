@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -58,6 +59,11 @@ namespace FlowMaker.SourceGenerator
 
                     StringBuilder inputStringBuilder = new();
                     StringBuilder outputStringBuilder = new();
+
+                    StringBuilder inputDefStringBuilder = new();
+                    StringBuilder outputDefStringBuilder = new();
+                    List<string> inputs = new List<string>();
+                    List<string> outputs = new List<string>();
                     foreach (var member in item.Option.GetMembers())
                     {
                         if (member is IPropertySymbol property)
@@ -72,14 +78,24 @@ namespace FlowMaker.SourceGenerator
                                 var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
                                 var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
 
-                                if (property.Type.SpecialType == SpecialType.System_Boolean)
-                                {
 
-                                }
-                                
                                 inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", serviceProvider, context, step.Inputs, s => System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", serviceProvider, context, step.Inputs, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
 """);
+                                inputDefStringBuilder.AppendLine($$"""
+        var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValue}}");
+""");
+                                inputs.Add($"{property.Name}InputProp");
+
+                                if (options.Any())
+                                {
+                                    foreach (var option in options)
+                                    {
+                                        inputDefStringBuilder.AppendLine($$"""
+        {{property.Name}}InputProp.Options.Add(new OptionDefinition("{{option.ConstructorArguments[0].Value}}", "{{option.ConstructorArguments[1].Value}}"));
+""");
+                                    }
+                                }
                             }
 
 
@@ -88,24 +104,30 @@ namespace FlowMaker.SourceGenerator
                             {
                                 var outputName = output.ConstructorArguments[0].Value.ToString();
                                 var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
+                                string defaultValueValue = string.Empty;
                                 if (defaultValue is not null)
                                 {
-                                    var defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
+                                    defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
                                     inputStringBuilder.AppendLine($$"""
         {{memberName}} = {{defaultValueValue}};
 """);
                                 }
 
                                 outputStringBuilder.AppendLine($$"""
-        context.Data[step.Outputs["{{memberName}}"]] = System.Text.Json.JsonSerializer.Serialize({{memberName}});
+        context.Data[step.Outputs["{{memberName}}"]] = JsonSerializer.Serialize({{memberName}});
 """);
+
+                                outputDefStringBuilder.AppendLine($$"""
+        var {{property.Name}}OutputProp = new StepOutputDefinition("{{property.Name}}", "{{outputName}}", "{{property.Type.ToDisplayString()}}", "{{defaultValueValue}}");
+""");
+                                outputs.Add($"{property.Name}OutputProp");
                             }
                         }
                     }
 
-
                     string baseStr = $@"using FlowMaker;
 using FlowMaker.Models;
+using System.Text.Json;
 
 namespace {item.Option.ContainingNamespace};
 
@@ -124,7 +146,23 @@ public partial class {item.Option.MetadataName} : IStep
 
     public static StepDefinition GetDefinition()
     {{
-        throw new NotImplementedException();
+{inputDefStringBuilder}
+{outputDefStringBuilder}
+        return new StepDefinition
+        {{
+            DisplayGroup = ""{group}"",
+            DisplayName = ""{name}"",
+            Name = ""{item.Option.ContainingNamespace}.{item.Option.Name}"",
+            Type = typeof({item.Option.Name}),
+            Inputs = new List<StepInputDefinition>
+            {{
+                {string.Join(", ", inputs)}
+            }},
+            Outputs = new List<StepOutputDefinition>
+            {{
+                {string.Join(", ", outputs)}
+            }}
+        }};
     }}
 }}
 ";
@@ -141,6 +179,8 @@ public partial class {item.Option.MetadataName} : IStep
 
                     StringBuilder inputStringBuilder = new();
 
+                    StringBuilder inputDefStringBuilder = new();
+                    List<string> inputs = new List<string>();
                     foreach (var member in item.Option.GetMembers())
                     {
                         if (member is IPropertySymbol property)
@@ -155,13 +195,24 @@ public partial class {item.Option.MetadataName} : IStep
                                 var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
                                 var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
 
-                                if (property.Type.SpecialType == SpecialType.System_Boolean)
-                                {
-
-                                }
+                               
                                 inputStringBuilder.AppendLine($$"""
         {{memberName}} = IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", context, input, s=> System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s));
 """);
+                                inputDefStringBuilder.AppendLine($$"""
+        var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValue}}");
+""");
+                                inputs.Add($"{property.Name}InputProp");
+
+                                if (options.Any())
+                                {
+                                    foreach (var option in options)
+                                    {
+                                        inputDefStringBuilder.AppendLine($$"""
+        {{property.Name}}InputProp.Options.Add(new OptionDefinition("{{option.ConstructorArguments[0].Value}}", "{{option.ConstructorArguments[1].Value}}"));
+""");
+                                    }
+                                }
                             }
                         }
                     }
@@ -184,9 +235,22 @@ public partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDi
         return await Convert(context, input, cancellationToken);
     }}
 
+
     public static ConverterDefinition GetDefinition()
     {{
-        throw new NotImplementedException();
+{inputDefStringBuilder}
+        return new ConverterDefinition
+        {{
+            DisplayGroup = ""{group}"",
+            DisplayName = ""{name}"",
+            Name = ""{item.Option.ContainingNamespace}.{item.Option.Name}"",
+            Type = typeof({item.Option.Name}),
+            Output = ""{type.ToDisplayString()}"",
+            Inputs = new List<StepInputDefinition>
+            {{
+                {string.Join(", ", inputs)}
+            }}
+        }};
     }}
 }}
 ";
