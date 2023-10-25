@@ -18,27 +18,6 @@ public partial class Flow1
     [Input("123")]
     public Data1? Data { get; set; }
 
-    public static StepDefinition GetDefinition2()
-    {
-        return new StepDefinition
-        {
-            DisplayGroup = "",
-            DisplayName = "流程1",
-            Name = "Test1.Flow1",
-            Type = typeof(Flow1),
-            Inputs = new List<StepInputDefinition>
-                {
-                    new StepInputDefinition("","",""),
-                    new StepInputDefinition("","",""),
-                },
-            Outputs = new List<StepOutputDefinition>
-                {
-                    new StepOutputDefinition("","",""),
-                }
-        };
-    }
-
-
     /// <summary>
     /// 执行的命令
     /// </summary>

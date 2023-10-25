@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0-windows10.0.17763</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<RootNamespace>FlowMaker</RootNamespace>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\LICENSE" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="HandyControl" Version="3.4.0" />
+		<PackageReference Include="ReactiveUI.Fody" Version="19.5.1" />
+		<PackageReference Include="ReactiveUI.WPF" Version="19.5.1" />
+		<PackageReference Include="gong-wpf-dragdrop" Version="3.2.1" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.39" />
+		<PackageReference Include="WindowsAPICodePack" Version="7.0.4" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+	  <ProjectReference Include="..\FlowMaker.UIBase\FlowMaker.UIBase.csproj" />
+	</ItemGroup>
+
+</Project>

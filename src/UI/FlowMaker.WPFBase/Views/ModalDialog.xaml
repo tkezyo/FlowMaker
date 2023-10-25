@@ -1,0 +1,23 @@
+﻿<rxui:ReactiveWindow x:Class="FlowMaker.Views.ModalDialog"
+        xmlns:rxui="http://reactiveui.net"
+        x:TypeArguments="vms:ModalDialogViewModel"
+        xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FlowMaker.Views"
+         xmlns:app="clr-namespace:FlowMaker" d:DataContext="{d:DesignInstance Type=vms:ModalDialogViewModel}"
+                     mc:Ignorable="d"
+        Title="{Binding Title}" Height="{Binding Height}" Width="{Binding Width}" WindowStartupLocation="CenterScreen">
+    <rxui:RoutedViewHost Grid.Row="0" Router="{Binding Router}">
+        <rxui:RoutedViewHost.DefaultContent>
+            <TextBlock Text="载入中。。"
+					   HorizontalAlignment="Center"
+					   VerticalAlignment="Center" />
+        </rxui:RoutedViewHost.DefaultContent>
+        <rxui:RoutedViewHost.ViewLocator>
+            <app:AppViewLocator />
+        </rxui:RoutedViewHost.ViewLocator>
+    </rxui:RoutedViewHost>
+</rxui:ReactiveWindow>

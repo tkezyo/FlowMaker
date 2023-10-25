@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<RootNamespace>FlowMaker</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\LICENSE" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ReactiveUI.Fody" Version="19.5.1" />
+		<PackageReference Include="ReactiveUI" Version="19.5.1" />
+		<PackageReference Include="ReactiveUI.Validation" Version="3.1.7" />
+		<PackageReference Include="Volo.Abp.AutoMapper" Version="7.4.0" />
+		<PackageReference Include="Volo.Abp.Autofac" Version="7.4.0" />
+		<PackageReference Include="Volo.Abp.ObjectMapping" Version="7.4.0" />
+		<PackageReference Include="Volo.Abp.UI.Navigation" Version="7.4.0" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\..\tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj" />
+	</ItemGroup>
+
+</Project>

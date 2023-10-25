@@ -3,11 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34202.233
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker", "src\FlowMaker\FlowMaker.csproj", "{7CC4F9BA-520E-4D2E-92A5-8B91BFA08CBF}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{25D4C66E-2173-478D-ABBE-0E9FC0E93B57}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.Core", "src\FlowMaker.Core\FlowMaker.Core.csproj", "{BFA931B7-993F-4841-BF8C-2304E5FF6B80}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tools", "tools", "{0DA449A1-F73F-4304-9476-28D6E4645AD3}"
 EndProject
@@ -15,7 +11,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{9CC280C1-F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test1", "test\Test1\Test1.csproj", "{5BD95B81-6EC1-436E-8BD0-19822691FDDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowMaker.SourceGenerator", "tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj", "{D98CF7DA-53D5-4B5D-9F33-5E79A488B881}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.SourceGenerator", "tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj", "{D98CF7DA-53D5-4B5D-9F33-5E79A488B881}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UI", "UI", "{A7E4C2F0-AF31-49AE-A74C-8F9B58CFF636}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.UIBase", "src\UI\FlowMaker.UIBase\FlowMaker.UIBase.csproj", "{C1EF05FF-93DA-4F76-9055-1742EC5E2CEC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.ViewLocator.SourceGenerator", "tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj", "{F46F742D-4845-4D59-84B0-19D206091D5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowMaker.WPFBase", "src\UI\FlowMaker.WPFBase\FlowMaker.WPFBase.csproj", "{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker", "src\FlowMaker\FlowMaker.csproj", "{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,14 +29,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7CC4F9BA-520E-4D2E-92A5-8B91BFA08CBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7CC4F9BA-520E-4D2E-92A5-8B91BFA08CBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7CC4F9BA-520E-4D2E-92A5-8B91BFA08CBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7CC4F9BA-520E-4D2E-92A5-8B91BFA08CBF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BFA931B7-993F-4841-BF8C-2304E5FF6B80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BFA931B7-993F-4841-BF8C-2304E5FF6B80}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BFA931B7-993F-4841-BF8C-2304E5FF6B80}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BFA931B7-993F-4841-BF8C-2304E5FF6B80}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BD95B81-6EC1-436E-8BD0-19822691FDDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5BD95B81-6EC1-436E-8BD0-19822691FDDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BD95B81-6EC1-436E-8BD0-19822691FDDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,15 +37,34 @@ Global
 		{D98CF7DA-53D5-4B5D-9F33-5E79A488B881}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D98CF7DA-53D5-4B5D-9F33-5E79A488B881}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D98CF7DA-53D5-4B5D-9F33-5E79A488B881}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1EF05FF-93DA-4F76-9055-1742EC5E2CEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1EF05FF-93DA-4F76-9055-1742EC5E2CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1EF05FF-93DA-4F76-9055-1742EC5E2CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1EF05FF-93DA-4F76-9055-1742EC5E2CEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F46F742D-4845-4D59-84B0-19D206091D5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F46F742D-4845-4D59-84B0-19D206091D5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F46F742D-4845-4D59-84B0-19D206091D5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F46F742D-4845-4D59-84B0-19D206091D5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{7CC4F9BA-520E-4D2E-92A5-8B91BFA08CBF} = {25D4C66E-2173-478D-ABBE-0E9FC0E93B57}
-		{BFA931B7-993F-4841-BF8C-2304E5FF6B80} = {25D4C66E-2173-478D-ABBE-0E9FC0E93B57}
 		{5BD95B81-6EC1-436E-8BD0-19822691FDDC} = {9CC280C1-FD54-49C4-BE02-607A09B684BD}
 		{D98CF7DA-53D5-4B5D-9F33-5E79A488B881} = {0DA449A1-F73F-4304-9476-28D6E4645AD3}
+		{A7E4C2F0-AF31-49AE-A74C-8F9B58CFF636} = {25D4C66E-2173-478D-ABBE-0E9FC0E93B57}
+		{C1EF05FF-93DA-4F76-9055-1742EC5E2CEC} = {A7E4C2F0-AF31-49AE-A74C-8F9B58CFF636}
+		{F46F742D-4845-4D59-84B0-19D206091D5D} = {0DA449A1-F73F-4304-9476-28D6E4645AD3}
+		{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7} = {A7E4C2F0-AF31-49AE-A74C-8F9B58CFF636}
+		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE} = {25D4C66E-2173-478D-ABBE-0E9FC0E93B57}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FEB44B6F-4720-4F06-A598-10C1D50EA1D9}
