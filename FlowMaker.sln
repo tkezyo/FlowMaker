@@ -19,9 +19,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.UIBase", "src\UI\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.ViewLocator.SourceGenerator", "tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj", "{F46F742D-4845-4D59-84B0-19D206091D5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowMaker.WPFBase", "src\UI\FlowMaker.WPFBase\FlowMaker.WPFBase.csproj", "{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker.WPFBase", "src\UI\FlowMaker.WPFBase\FlowMaker.WPFBase.csproj", "{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlowMaker", "src\FlowMaker\FlowMaker.csproj", "{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test1.UI", "test\Test1.UI\Test1.UI.csproj", "{75C6979E-557B-42B8-BB84-BE920175D8B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,6 +55,10 @@ Global
 		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75C6979E-557B-42B8-BB84-BE920175D8B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75C6979E-557B-42B8-BB84-BE920175D8B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75C6979E-557B-42B8-BB84-BE920175D8B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75C6979E-557B-42B8-BB84-BE920175D8B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -65,6 +71,7 @@ Global
 		{F46F742D-4845-4D59-84B0-19D206091D5D} = {0DA449A1-F73F-4304-9476-28D6E4645AD3}
 		{3A3FDD17-1C60-4C97-A3DA-603B1C1783C7} = {A7E4C2F0-AF31-49AE-A74C-8F9B58CFF636}
 		{BBF19484-3D20-44EC-A1DB-96B5FA290DBE} = {25D4C66E-2173-478D-ABBE-0E9FC0E93B57}
+		{75C6979E-557B-42B8-BB84-BE920175D8B0} = {9CC280C1-FD54-49C4-BE02-607A09B684BD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FEB44B6F-4720-4F06-A598-10C1D50EA1D9}
