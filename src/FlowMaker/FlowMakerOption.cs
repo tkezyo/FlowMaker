@@ -6,26 +6,26 @@ namespace FlowMaker;
 public class FlowMakerOption
 {
     public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = new();
-    public FlowMakerOptionGroup GetOrAddGroup(string groupName)
+    public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
-        if (!Group.TryGetValue(groupName, out var group))
+        if (!Group.TryGetValue(category, out var group))
         {
             group = new FlowMakerOptionGroup();
-            Group.Add(groupName, group);
+            Group.Add(category, group);
         }
         return group;
     }
-    public ConverterDefinition? GetConverter(string groupName, string name)
+    public ConverterDefinition? GetConverter(string category, string name)
     {
-        if (Group.TryGetValue(groupName, out var group))
+        if (Group.TryGetValue(category, out var group))
         {
             return group.ConverterDefinitions.FirstOrDefault(c => c.Name == name);
         }
         return null;
     }
-    public StepDefinition? GetStep(string groupName, string name)
+    public StepDefinition? GetStep(string category, string name)
     {
-        if (Group.TryGetValue(groupName, out var group))
+        if (Group.TryGetValue(category, out var group))
         {
             return group.StepDefinitions.FirstOrDefault(c => c.Name == name);
         }
@@ -48,24 +48,20 @@ public static class FlowMakerExtention
         serviceDescriptors.AddTransient<T>();
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
-            var group = c.GetOrAddGroup(T.GroupName);
-            if (typeof(T) is IStep)
-            {
-                group.StepDefinitions.Add(T.GetDefinition());
-            }
+            var group = c.GetOrAddGroup(T.Category);
+
+            group.StepDefinitions.Add(T.GetDefinition());
         });
     }
-    public static void AddFlowConverter<T, TConvertTo>(this IServiceCollection serviceDescriptors)
-        where T : class, IFlowValueConverter<TConvertTo>
+    public static void AddFlowConverter<T>(this IServiceCollection serviceDescriptors)
+        where T : class, IFlowValueConverter
     {
         serviceDescriptors.AddTransient<T>();
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
-            var group = c.GetOrAddGroup(T.GroupName);
-            if (typeof(T) is IFlowValueConverter<TConvertTo>)
-            {
-                group.ConverterDefinitions.Add(T.GetDefinition());
-            }
+            var group = c.GetOrAddGroup(T.Category);
+
+            group.ConverterDefinitions.Add(T.GetDefinition());
         });
     }
 

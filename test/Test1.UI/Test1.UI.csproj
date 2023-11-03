@@ -18,6 +18,7 @@
 		<PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />
 		<PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
+		<PackageReference Include="ReactiveUI.Fody" Version="19.5.1" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -29,8 +30,8 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\src\UI\FlowMaker.WPFBase\FlowMaker.WPFBase.csproj" />
-	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false"  Include="..\..\tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj" />
-	  <ProjectReference  Include="..\Test1\Test1.csproj" />
+	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj" />
+	  <ProjectReference Include="..\Test1\Test1.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -30,7 +30,7 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         MainWindow = new MainWindow();
-        MainWindow.DataContext = new MainWindowViewModel() { Title = "模拟器" };
+        MainWindow.DataContext = new MainWindowViewModel() { Title = "流程设计" };
         MainWindow.Show();
 
         List<LogFilter> filters = new List<LogFilter>();
@@ -102,6 +102,7 @@ public partial class App : Application
                 if (MainWindow.DataContext is MainWindowViewModel windowViewModel)
                 {
                     var login = _abpApplication.ServiceProvider.GetRequiredService<FlowMakerListViewModel>();
+                    login.SetScreen(windowViewModel);
                     //var login = _abpApplication.ServiceProvider.GetRequiredService<SerialPortViewModel>();
                     await windowViewModel.Router.Navigate.Execute(login);
                 }

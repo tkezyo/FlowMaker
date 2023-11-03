@@ -10,6 +10,9 @@ public class UIModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddFlowStep<Flow1>();
+        context.Services.AddFlowStep<Flow2>();
+        context.Services.AddFlowConverter<ValueConverter>();
         Configure<ViewForMatch>(options =>
         {
             options.Add(Test1UIViewLocatorMatcher.Match);

@@ -7,19 +7,19 @@ public sealed class FlowConverterAttribute<T> : Attribute
 {
     // See the attribute guidelines at 
     //  http://go.microsoft.com/fwlink/?LinkId=85236
-    readonly string group;
+    readonly string category;
     readonly string displayName;
 
     // This is a positional argument
-    public FlowConverterAttribute(string group, string displayName)
+    public FlowConverterAttribute(string category, string displayName)
     {
-        this.group = group;
+        this.category = category;
         this.displayName = displayName;
     }
 
-    public string Group
+    public string Category
     {
-        get { return group; }
+        get { return category; }
     }
     public string DisplayName
     {
@@ -34,19 +34,19 @@ public sealed class FlowStepAttribute : Attribute
 {
     // See the attribute guidelines at 
     //  http://go.microsoft.com/fwlink/?LinkId=85236
-    readonly string group;
+    readonly string category;
     readonly string displayName;
 
     // This is a positional argument
-    public FlowStepAttribute(string group, string displayName)
+    public FlowStepAttribute(string category, string displayName)
     {
-        this.group = group;
+        this.category = category;
         this.displayName = displayName;
     }
 
-    public string Group
+    public string Category
     {
-        get { return group; }
+        get { return category; }
     }
     public string DisplayName
     {

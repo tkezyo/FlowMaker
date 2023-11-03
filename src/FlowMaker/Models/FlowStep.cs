@@ -6,10 +6,16 @@ public class FlowStep
     /// 步骤唯一Id
     /// </summary>
     public Guid Id { get; set; }
-
-    public string? GroupName { get; set; }
     /// <summary>
-    /// 名称
+    /// 显示名称
+    /// </summary>
+    public required string DisplayName { get; set; }
+    /// <summary>
+    /// 步骤的类别
+    /// </summary>
+    public required string Category { get; set; }
+    /// <summary>
+    /// 步骤的名称
     /// </summary>
     public required string Name { get; set; }
     /// <summary>
@@ -19,12 +25,12 @@ public class FlowStep
     /// <summary>
     /// 输出
     /// </summary>
-    public Dictionary<string, string> Outputs { get; set; } = new();
+    public Dictionary<string, FlowOutput> Outputs { get; set; } = new();
 
     /// <summary>
-    /// 超时
+    /// 超时,秒
     /// </summary>
-    public TimeSpan TimeOut { get; set; }
+    public double TimeOut { get; set; }
 
     /// <summary>
     /// 重试
@@ -41,62 +47,47 @@ public class FlowStep
     /// <summary>
     /// 前置任务
     /// </summary>
-    public List<Guid> PreActions { get; set; } = new();
+    public List<Guid> PreSteps { get; set; } = new();
+
     /// <summary>
     /// 回退任务
     /// </summary>
     public Guid? Compensate { get; set; }
+
     /// <summary>
     /// 是否可执行
     /// </summary>
     public Dictionary<Guid, bool> CanExcute { get; set; } = new();
-
-    //TODO 需要判断根据全局输入的参数是否满足执行条件
-    public Dictionary<string, bool> CanExcuteFromInput { get; set; } = new();
-
 }
 
-public class FlowConverter
+public class FlowChecker : FlowInput
 {
-    /// <summary>
-    /// 转换器唯一Id
-    /// </summary>
     public Guid Id { get; set; }
-    /// <summary>
-    /// 名称
-    /// </summary>
-    public string Name { get; set; }
-    public FlowInput Input { get; set; }
-    public FlowConverter(string name, string defaultValue)
-    {
-        Name = name;
-        Input = new FlowInput(defaultValue);
-    }
+    public required string CheckerName { get; set; }
 }
 
 public class FlowInput
 {
-    public string? GroupName { get; set; }
-    public string? Name { get; set; }
-    public List<FlowInputValue> Values { get; protected set; } = new();
-    public InputDisplayType InputDisplayType { get; set; }
-    public FlowInput(string defaultValue)
-    {
-        System.Text.Json.JsonSerializer.Deserialize<sbyte>("");
-        Values.Add(new FlowInputValue(defaultValue));
-    }
+    public string? ConverterCategory { get; set; }
+    public string? ConverterName { get; set; }
+
+    public bool UseGlobeData { get; set; }
+    public string? Value { get; set; }
+    public Dictionary<string, FlowInput> Inputs { get; protected set; } = new();
 }
 
-public class FlowInputValue
+public class FlowOutput
 {
-    public bool UseGlobeData { get; set; }
-    public string Value { get; set; }
-    public string? PropName { get; set; }
+    public string? ConverterCategory { get; set; }
+    public string? ConverterName { get; set; }
+    public string? InputKey { get; set; }
 
-    public FlowInputValue(string value)
-    {
-        Value = value;
-    }
+
+    public string? ConvertToType { get; set; }
+    public required string Type { get; set; }
+
+    public required string GlobeDataName { get; set; }
+    public Dictionary<string, FlowInput> Inputs { get; protected set; } = new();
 }
 
 

@@ -54,7 +54,7 @@ namespace FlowMaker.SourceGenerator
 
                 if (flowStep is not null)
                 {
-                    var group = flowStep.ConstructorArguments[0].Value.ToString();
+                    var category = flowStep.ConstructorArguments[0].Value.ToString();
                     var name = flowStep.ConstructorArguments[1].Value.ToString();
 
                     StringBuilder inputStringBuilder = new();
@@ -77,13 +77,17 @@ namespace FlowMaker.SourceGenerator
 
                                 var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
                                 var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
-
+                                string defaultValueValue = string.Empty;
+                                if (defaultValue is not null)
+                                {
+                                    defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
+                                }
 
                                 inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", serviceProvider, context, step.Inputs, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue(step.Inputs["{{memberName}}"], serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
 """);
                                 inputDefStringBuilder.AppendLine($$"""
-        var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValue}}");
+        var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValueValue}}");
 """);
                                 inputs.Add($"{property.Name}InputProp");
 
@@ -103,22 +107,13 @@ namespace FlowMaker.SourceGenerator
                             if (output is not null)
                             {
                                 var outputName = output.ConstructorArguments[0].Value.ToString();
-                                var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
-                                string defaultValueValue = string.Empty;
-                                if (defaultValue is not null)
-                                {
-                                    defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
-                                    inputStringBuilder.AppendLine($$"""
-        {{memberName}} = {{defaultValueValue}};
-""");
-                                }
 
                                 outputStringBuilder.AppendLine($$"""
-        context.Data[step.Outputs["{{memberName}}"]] = JsonSerializer.Serialize({{memberName}});
+        await IFlowValueConverter.SetValue(step.Outputs["{{memberName}}"], {{memberName}}, serviceProvider, context, cancellationToken);
 """);
 
                                 outputDefStringBuilder.AppendLine($$"""
-        var {{property.Name}}OutputProp = new StepOutputDefinition("{{property.Name}}", "{{outputName}}", "{{property.Type.ToDisplayString()}}", "{{defaultValueValue}}");
+        var {{property.Name}}OutputProp = new StepOutputDefinition("{{property.Name}}", "{{outputName}}", "{{property.Type.ToDisplayString()}}");
 """);
                                 outputs.Add($"{property.Name}OutputProp");
                             }
@@ -131,9 +126,11 @@ using System.Text.Json;
 
 namespace {item.Option.ContainingNamespace};
 
+#nullable enable
+
 public partial class {item.Option.MetadataName} : IStep
 {{
-    public static string GroupName => ""{group}"";
+    public static string Category => ""{category}"";
 
     public static string Name => ""{name}"";
 
@@ -141,6 +138,7 @@ public partial class {item.Option.MetadataName} : IStep
     {{
 {inputStringBuilder}
         await Run(context, step, cancellationToken);
+
 {outputStringBuilder}
     }}
 
@@ -150,7 +148,7 @@ public partial class {item.Option.MetadataName} : IStep
 {outputDefStringBuilder}
         return new StepDefinition
         {{
-            DisplayGroup = ""{group}"",
+            Category = ""{category}"",
             DisplayName = ""{name}"",
             Name = ""{item.Option.ContainingNamespace}.{item.Option.Name}"",
             Type = typeof({item.Option.Name}),
@@ -165,6 +163,7 @@ public partial class {item.Option.MetadataName} : IStep
         }};
     }}
 }}
+#nullable restore
 ";
 
                     c.AddSource($"{item.Option.MetadataName}.s.g.cs", SourceText.From(baseStr, Encoding.UTF8));
@@ -174,7 +173,7 @@ public partial class {item.Option.MetadataName} : IStep
                     //获取flowConverter中的泛型参数
                     var type = flowConverter.AttributeClass.TypeArguments[0] as INamedTypeSymbol;
 
-                    var group = flowConverter.ConstructorArguments[0].Value.ToString();
+                    var category = flowConverter.ConstructorArguments[0].Value.ToString();
                     var name = flowConverter.ConstructorArguments[1].Value.ToString();
 
                     StringBuilder inputStringBuilder = new();
@@ -197,7 +196,7 @@ public partial class {item.Option.MetadataName} : IStep
 
                                
                                 inputStringBuilder.AppendLine($$"""
-        {{memberName}} = IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue("{{memberName}}", context, input, s=> System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s));
+        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue(inputs["{{memberName}}"], serviceProvider, context, s=> System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
 """);
                                 inputDefStringBuilder.AppendLine($$"""
         var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValue}}");
@@ -220,19 +219,28 @@ public partial class {item.Option.MetadataName} : IStep
 
                     string baseStr = $@"using FlowMaker;
 using FlowMaker.Models;
+using System.Text.Json;
 
 namespace {item.Option.ContainingNamespace};
 
-public partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDisplayString()}>
+#nullable enable
+
+partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDisplayString()}>
 {{
-    public static string GroupName => ""{group}"";
+    public static string Category => ""{category}"";
 
     public static string Name => ""{name}"";
 
-    public async Task<{type.ToDisplayString()}> WrapAsync(RunningContext context, FlowInput input, CancellationToken cancellationToken)
+    public async Task<{type.ToDisplayString()}> WrapAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {{
 {inputStringBuilder}
-        return await Convert(context, input, cancellationToken);
+        return await Convert(context, inputs, cancellationToken);
+    }}
+
+    public async Task<string> GetStringResultAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    {{
+        var result  = await WrapAsync(context, inputs, serviceProvider, cancellationToken);
+        return JsonSerializer.Serialize(result);
     }}
 
 
@@ -241,7 +249,7 @@ public partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDi
 {inputDefStringBuilder}
         return new ConverterDefinition
         {{
-            DisplayGroup = ""{group}"",
+            Category = ""{category}"",
             DisplayName = ""{name}"",
             Name = ""{item.Option.ContainingNamespace}.{item.Option.Name}"",
             Type = typeof({item.Option.Name}),
@@ -253,6 +261,7 @@ public partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDi
         }};
     }}
 }}
+#nullable restore
 ";
 
                     c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));

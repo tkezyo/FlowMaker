@@ -21,11 +21,11 @@ public class FlowRunner
     /// <summary>
     /// 全局上下文
     /// </summary>
-    public RunningContext Context { get; protected set; } = new RunningContext();
+    public RunningContext Context { get; protected set; } = null!;
 
     protected async Task RunStep(FlowStep step)
     {
-        var stepDefinition = _flowMakerOption.GetStep(step.GroupName, step.Name);
+        var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name);
         var stepObj = _serviceProvider.GetService(stepDefinition.Type);
 
         if (stepObj is not IStep stepService || CancellationTokenSource is null)
@@ -35,9 +35,9 @@ public class FlowRunner
 
         await stepService.WrapAsync(Context, step, _serviceProvider, CancellationTokenSource.Token);
     }
-    protected async Task RunStep(Guid stepId)
+    protected async Task RunCompensateStep(Guid stepId)
     {
-        var step = Context.AllSteps.FirstOrDefault(c => c.Id == stepId);
+        var step = Context.FlowDefinition.CompensateSteps.FirstOrDefault(c => c.Id == stepId);
         if (step is null)
         {
             throw new Exception();
@@ -46,26 +46,20 @@ public class FlowRunner
         await RunStep(step);
     }
 
-    protected async Task<bool> CheckStep(Guid convertId)
+    protected async Task<bool> CheckStep(Guid convertId, CancellationToken cancellationToken)
     {
-        var converter = Context.AllConverters.FirstOrDefault(c => c.Id == convertId);
+        var converter = Context.FlowDefinition.ExcuteCheckers.FirstOrDefault(c => c.Id == convertId);
         if (converter is null)
         {
             throw new Exception();
         }
-        var converterDefinition = _flowMakerOption.GetConverter(converter.Input.GroupName, converter.Input.Name);
-        var converterObj = _serviceProvider.GetService(converterDefinition.Type);
-
-        if (converterObj is not IFlowValueConverter<bool> convertService || CancellationTokenSource is null)
-        {
-            throw new Exception();
-        }
-        return await convertService.WrapAsync(Context, converter.Input, CancellationTokenSource.Token);
+        return await IFlowValueConverter<bool>.GetValue(converter, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
     }
     public CancellationTokenSource? CancellationTokenSource { get; protected set; }
     public RunnerState State { get; set; }
     public void Run(FlowDefinition flowInfo)
     {
+        Context = new RunningContext(flowInfo);
         if (State != RunnerState.Stop)
         {
             throw new Exception("正在运行中");
@@ -81,7 +75,6 @@ public class FlowRunner
         {
             Context.StepState.Add(item.Id, new StepResult());
         }
-        Context.AllSteps = flowInfo.Steps;
         ////设置输入
         //foreach (var item in flowInfo.Inputs)
         //{
@@ -147,15 +140,15 @@ public class FlowRunner
     public void RunNext(Guid? preStepId, CancellationToken cancellationToken)
     {
         //获取所有依赖于preActionId的任务
-        var list = Context.AllSteps.Where(c =>
+        var list = Context.FlowDefinition.Steps.Where(c =>
         {
             if (preStepId.HasValue)
             {
-                return c.PreActions.Contains(preStepId.Value) && !Context.StepState[c.Id].Started;
+                return c.PreSteps.Contains(preStepId.Value) && !Context.StepState[c.Id].Started;
             }
             else
             {
-                return !c.PreActions.Any() && !Context.StepState[c.Id].Started;
+                return !c.PreSteps.Any() && !Context.StepState[c.Id].Started;
             }
         });
 
@@ -163,7 +156,7 @@ public class FlowRunner
         {
             bool canNext = true;
             //确定是否满足条件
-            foreach (var preAction in item.PreActions)
+            foreach (var preAction in item.PreSteps)
             {
                 if (!Context.StepState[preAction].Complete)
                 {
@@ -200,7 +193,7 @@ public class FlowRunner
         try
         {
             //超时策略
-            var timeoutPolicy = Policy.TimeoutAsync(step.TimeOut, Polly.Timeout.TimeoutStrategy.Pessimistic);
+            var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(step.TimeOut), Polly.Timeout.TimeoutStrategy.Pessimistic);
             //重试策略
             var retryPolicy = Policy.Handle<Exception>().RetryAsync(step.Retry, (exception, retryCount) =>
             {
@@ -214,7 +207,7 @@ public class FlowRunner
                     return;
                 }
 
-                await RunStep(step.Compensate.Value);
+                await RunCompensateStep(step.Compensate.Value);
             });
 
             //组合策略
@@ -224,7 +217,7 @@ public class FlowRunner
             {
                 foreach (var item2 in step.CanExcute)
                 {
-                    var result = await CheckStep(item2.Key);
+                    var result = await CheckStep(item2.Key, cancellationToken);
                     if (result != item2.Value)
                     {
                         continue;

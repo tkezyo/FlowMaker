@@ -1,0 +1,131 @@
+﻿<rxui:ReactiveUserControl  x:Class="Test1.Views.FlowMakerEditStepView"
+              xmlns:rxui="http://reactiveui.net"
+                    xmlns:vms="clr-namespace:Test1.ViewModels"
+                x:TypeArguments="vms:FlowMakerEditStepViewModel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Test1.Views" 
+                           xmlns:hc="https://handyorg.github.io/handycontrol"
+                           d:DataContext="{d:DesignInstance Type=vms:FlowMakerEditStepViewModel}"
+                    xmlns:converters="clr-namespace:Test1.Converters"
+                           mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}"></Style>
+        <Style TargetType="hc:NumericUpDown" BasedOn="{StaticResource NumericUpDownExtend}"></Style>
+        <converters:EqualToBoolConverter x:Key="EqualConverter" />
+        <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
+        <converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
+    </UserControl.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Margin="10">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+
+                <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="步骤分组"  SelectedItem="{Binding Model.Category}"></ComboBox>
+                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding StepDefinitions}" hc:InfoElement.Title="步骤" SelectedValue="{Binding Model.Name}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+            </StackPanel>
+            <TextBox Text="{Binding Model.TimeOut}" hc:InfoElement.Title="超时时间" />
+            <TextBox Text="{Binding Model.Repeat}" hc:InfoElement.Title="重复次数" />
+            <TextBox Text="{Binding Model.Retry}" hc:InfoElement.Title="错误重试次数" />
+
+            <ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding Model.ErrorHandling}"></ComboBox>
+
+
+        </StackPanel>
+        <StackPanel Grid.Column="1" Margin="10">
+            <TextBlock>输入</TextBlock>
+            <ItemsControl ItemsSource="{Binding Inputs}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+                                <RadioButton Content="{x:Static vms:InputMode.Normal}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
+                                <RadioButton Content="{x:Static vms:InputMode.Option}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Option}}" GroupName="{Binding Id}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                <RadioButton Content="{x:Static vms:InputMode.Globe}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Globe}}" GroupName="{Binding Id}" Visibility="{Binding HasGlobe,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                <RadioButton Content="{x:Static vms:InputMode.Converter}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Converter}}" GroupName="{Binding Id}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                            </StackPanel>
+
+
+                            <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Normal}}" Text="{Binding Value}" />
+
+                            <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Option}}" ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
+
+                            <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="Name" />
+
+                            <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+
+                                <ComboBox  ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
+                                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                            </StackPanel>
+
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock>输出</TextBlock>
+            <ItemsControl ItemsSource="{Binding Outputs}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+                                <RadioButton Content="{x:Static vms:OutputMode.Drop}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.Drop}}" GroupName="{Binding Name}"></RadioButton>
+                                <RadioButton Content="{x:Static vms:OutputMode.Globe}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.Globe}}" GroupName="{Binding Name}" ></RadioButton>
+                                <RadioButton Content="{x:Static vms:OutputMode.GlobeWithConverter}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}" GroupName="{Binding Name}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                            </StackPanel>
+
+                            <TextBox Text="{Binding GlobeDataName}" />
+
+                            <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+
+                                <ComboBox  ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
+                                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding InputKeys}" hc:InfoElement.Title="属性" SelectedValue="{Binding InputKey}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
+
+                            </StackPanel>
+                            <ItemsControl ItemsSource="{Binding AllInputs}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+                                                <RadioButton Content="{x:Static vms:InputMode.Normal}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
+                                                <RadioButton Content="{x:Static vms:InputMode.Option}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Option}}" GroupName="{Binding Id}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                                <RadioButton Content="{x:Static vms:InputMode.Globe}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Globe}}" GroupName="{Binding Id}" Visibility="{Binding HasGlobe,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                                <RadioButton Content="{x:Static vms:InputMode.Converter}" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:InputMode.Converter}}" GroupName="{Binding Id}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                            </StackPanel>
+
+
+                                            <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Normal}}" Text="{Binding Value}" />
+
+                                            <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Option}}" ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
+
+                                            <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="Name" />
+
+                                            <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+
+                                                <ComboBox  ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
+                                                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                                            </StackPanel>
+
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </Grid>
+</rxui:ReactiveUserControl>

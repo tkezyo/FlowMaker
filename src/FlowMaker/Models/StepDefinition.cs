@@ -1,17 +1,27 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace FlowMaker.Models;
+﻿namespace FlowMaker.Models;
 
 public class FlowDefinition
 {
+    /// <summary>
+    /// 同一个流程里可以保护多个子流程
+    /// </summary>
+    public required string Category { get; set; }
+    /// <summary>
+    /// 子流程名称,如果为空代表是主流程
+    /// </summary>
+    public string? Name { get; set; }
+
     public List<FlowStep> Steps { get; set; } = new();
+    public List<FlowStep> CompensateSteps { get; set; } = new();
+    public List<FlowChecker> ExcuteCheckers { get; set; } = new();
+
     public List<StepInputDefinition> Inputs { get; set; } = new();
     public List<StepOutputDefinition> Outputs { get; set; } = new();
 
 }
 public class StepDefinition
 {
-    public required string DisplayGroup { get; set; }
+    public required string Category { get; set; }
     /// <summary>
     /// 名称
     /// </summary>
@@ -23,7 +33,7 @@ public class StepDefinition
 }
 public class ConverterDefinition
 {
-    public required string DisplayGroup { get; set; }
+    public required string Category { get; set; }
     public required string DisplayName { get; set; }
     public required string Name { get; set; }
     public required Type Type { get; set; }
@@ -39,14 +49,12 @@ public class StepOutputDefinition
     /// </summary>
     public string DisplayName { get; set; }
     public string Type { get; set; }
-    public string? DefaultValue { get; set; }
 
-    public StepOutputDefinition(string name, string displayName, string type, string? defaultValue = null)
+    public StepOutputDefinition(string name, string displayName, string type)
     {
         Name = name;
         DisplayName = displayName;
         Type = type;
-        DefaultValue = defaultValue;
     }
 }
 

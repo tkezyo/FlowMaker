@@ -1,67 +1,98 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 namespace FlowMaker;
 
 public interface IStep
 {
-    static abstract string GroupName { get; }
+    static abstract string Category { get; }
     static abstract string Name { get; }
     static abstract StepDefinition GetDefinition();
     protected Task Run(RunningContext context, FlowStep step, CancellationToken cancellationToken);
     Task WrapAsync(RunningContext context, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
-
-public interface IFlowValueConverter<T>
+public interface IFlowValueConverter
 {
-    static abstract string GroupName { get; }
+    static abstract string Category { get; }
     static abstract string Name { get; }
     static abstract ConverterDefinition GetDefinition();
-    protected Task<T> Convert(RunningContext context, FlowInput inputValues, CancellationToken cancellationToken);
-    Task<T> WrapAsync(RunningContext context, FlowInput inputValues, CancellationToken cancellationToken);
-
-    public static async Task<T> GetValue(string propName, IServiceProvider serviceProvider, RunningContext context, Dictionary<string, FlowInput> inputs, Func<string, T> convert, CancellationToken cancellationToken)
+    Task<string> GetStringResultAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    public static async Task SetValue<TValue>(FlowOutput output, TValue value, IServiceProvider serviceProvider, RunningContext context, CancellationToken cancellationToken)
     {
-        var input = inputs[propName];
-        if (!string.IsNullOrEmpty(input.GroupName) && !string.IsNullOrEmpty(input.Name))
+        var valueStr = JsonSerializer.Serialize(value);
+        if (!string.IsNullOrEmpty(output.ConverterCategory) && !string.IsNullOrEmpty(output.ConverterName) && !string.IsNullOrEmpty(output.InputKey))
         {
             var option = serviceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
-            var converterDefinition = option.Value.GetConverter(input.GroupName, input.Name);
+            var converterDefinition = option.Value.GetConverter(output.ConverterCategory, output.ConverterName);
 
-            if (converterDefinition != null)
+            if (converterDefinition == null)
             {
-                var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
-                if (converterObj is IFlowValueConverter<T> converter)
+                throw new InvalidOperationException();
+            }
+            var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
+            if (converterObj is IFlowValueConverter converter)
+            {
+                output.Inputs[output.InputKey] = new FlowInput()
                 {
-                    return await converter.WrapAsync(context, input, cancellationToken);
-                }
+                    Value = valueStr,
+                    UseGlobeData = false,
+                    ConverterCategory = null,
+                    ConverterName = null
+                };
+                var result = await converter.GetStringResultAsync(context, output.Inputs, serviceProvider, cancellationToken);
+                context.Data[output.GlobeDataName].Value = result;
+
+            }
+            else
+            {
+                throw new InvalidOperationException();
             }
         }
-
-        return GetValue(propName, context, inputs, convert);
-    }
-    public static T GetValue(string propName, RunningContext context, Dictionary<string, FlowInput> inputs, Func<string, T> convert)
-    {
-        var input = inputs[propName];
-
-        var value = input.Values[0].Value;
-        if (input.Values[0].UseGlobeData)
+        else
         {
-            value = context.Data[value];
+            context.Data[output.GlobeDataName].Value = valueStr;
         }
-        return convert(value);
     }
-    public static T GetValue(string propName, RunningContext context, FlowInput input, Func<string, T> convert)
-    {
-        var inputa = input.Values.FirstOrDefault(c => c.PropName == propName);
+}
+public interface IFlowValueConverter<T> : IFlowValueConverter
+{
+    protected Task<T> Convert(RunningContext context, IDictionary<string, FlowInput> inputs, CancellationToken cancellationToken);
+    Task<T> WrapAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 
-        var value = inputa.Value;
-        if (input.Values[0].UseGlobeData)
+    public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, RunningContext context, Func<string, T> convert, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
         {
-            value = context.Data[value];
+            var option = serviceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
+            var converterDefinition = option.Value.GetConverter(input.ConverterCategory, input.ConverterName);
+
+            if (converterDefinition == null)
+            {
+                throw new InvalidOperationException();
+            }
+            var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
+            if (converterObj is IFlowValueConverter<T> converter)
+            {
+                return await converter.WrapAsync(context, input.Inputs, serviceProvider, cancellationToken);
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
         }
-        return convert(value);
+        else
+        {
+            if (input.UseGlobeData && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
+            {
+                return convert.Invoke(data.Value ?? string.Empty);
+            }
+            else
+            {
+                return convert.Invoke(input.Value ?? string.Empty);
+            }
+        }
     }
 }

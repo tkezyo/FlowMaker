@@ -1,33 +1,37 @@
-﻿namespace FlowMaker.Models
+﻿using System.Collections.Concurrent;
+
+namespace FlowMaker.Models;
+
+public class RunningContext
 {
-    public class RunningContext
+    public FlowDefinition FlowDefinition { get; set; }
+
+    public RunningContext(FlowDefinition flowDefinition)
     {
-        /// <summary>
-        /// 全局数据
-        /// </summary>
-        public Dictionary<string, string> Data { get; set; } = new Dictionary<string, string>();
-
-        /// <summary>
-        /// 所有步骤的状态
-        /// </summary>
-        public Dictionary<Guid, StepResult> StepState { get; protected set; } = new();
-
-        public List<Guid> SuspendSteps { get; protected set; } = new();
-
-        /// <summary>
-        /// 所有步骤
-        /// </summary>
-        public List<FlowStep> AllSteps { get; set; } = new();
-        public List<FlowConverter> AllConverters { get; set; } = new();
-
-        /// <summary>
-        /// 批量设置输入,将所有步骤的输入设置为相同的值
-        /// </summary>
-        public Dictionary<string, FlowInput> Inputs { get; set; } = new();
+        FlowDefinition = flowDefinition;
     }
 
-    public class FlowGlobeParam
+    /// <summary>
+    /// 所有步骤的状态
+    /// </summary>
+    public Dictionary<Guid, StepResult> StepState { get; protected set; } = new();
+
+    public List<Guid> SuspendSteps { get; protected set; } = new();
+    public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
+}
+
+public class FlowGlobeData
+{
+    public string Name { get; set; }
+
+    public FlowGlobeData(string name, string type, string value)
     {
-        public string Name { get; set; }
+        Name = name;
+        Type = type;
+        Value = value;
     }
+
+    public string Type { get; set; }
+    public string Value { get; set; }
+
 }
