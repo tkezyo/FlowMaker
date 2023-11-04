@@ -21,11 +21,11 @@ public class FlowStep
     /// <summary>
     /// 输入
     /// </summary>
-    public Dictionary<string, FlowInput> Inputs { get; set; } = new();
+    public List<FlowInput> Inputs { get; set; } = new();
     /// <summary>
     /// 输出
     /// </summary>
-    public Dictionary<string, FlowOutput> Outputs { get; set; } = new();
+    public List<FlowOutput> Outputs { get; set; } = new();
 
     /// <summary>
     /// 超时,秒
@@ -37,7 +37,7 @@ public class FlowStep
     /// </summary>
     public int Retry { get; set; }
     /// <summary>
-    /// 重复
+    /// 重复,如果是负数，则一直重复
     /// </summary>
     public int Repeat { get; set; }
     /// <summary>
@@ -50,34 +50,36 @@ public class FlowStep
     public List<Guid> PreSteps { get; set; } = new();
 
     /// <summary>
-    /// 回退任务
+    /// 回退任务,stepdId
     /// </summary>
-    public Guid? Compensate { get; set; }
+    public Guid? Catch { get; set; }
+
+
 
     /// <summary>
-    /// 是否可执行
+    /// 是否可执行，同时可作为Break的条件
     /// </summary>
-    public Dictionary<Guid, bool> CanExcute { get; set; } = new();
+    public Dictionary<Guid, bool> If { get; set; } = new();
+    public List<FlowInput> Checkers { get; set; } = new();
 }
 
-public class FlowChecker : FlowInput
-{
-    public Guid Id { get; set; }
-    public required string CheckerName { get; set; }
-}
 
 public class FlowInput
 {
+    public required string Name { get; set; }
+    public required Guid Id { get; set; }
     public string? ConverterCategory { get; set; }
     public string? ConverterName { get; set; }
 
     public bool UseGlobeData { get; set; }
     public string? Value { get; set; }
-    public Dictionary<string, FlowInput> Inputs { get; protected set; } = new();
+    public List<FlowInput> Inputs { get; protected set; } = new();
 }
 
 public class FlowOutput
 {
+    public required string Name { get; set; }
+
     public string? ConverterCategory { get; set; }
     public string? ConverterName { get; set; }
     public string? InputKey { get; set; }
@@ -87,7 +89,7 @@ public class FlowOutput
     public required string Type { get; set; }
 
     public required string GlobeDataName { get; set; }
-    public Dictionary<string, FlowInput> Inputs { get; protected set; } = new();
+    public List<FlowInput> Inputs { get; protected set; } = new();
 }
 
 

@@ -10,8 +10,8 @@ public interface IStep
     static abstract string Category { get; }
     static abstract string Name { get; }
     static abstract StepDefinition GetDefinition();
-    protected Task Run(RunningContext context, FlowStep step, CancellationToken cancellationToken);
-    Task WrapAsync(RunningContext context, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    protected Task Run(FlowContext context, StepContext step, CancellationToken cancellationToken);
+    Task WrapAsync(FlowContext context, StepContext step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
 public interface IFlowValueConverter
@@ -19,8 +19,8 @@ public interface IFlowValueConverter
     static abstract string Category { get; }
     static abstract string Name { get; }
     static abstract ConverterDefinition GetDefinition();
-    Task<string> GetStringResultAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
-    public static async Task SetValue<TValue>(FlowOutput output, TValue value, IServiceProvider serviceProvider, RunningContext context, CancellationToken cancellationToken)
+    Task<string> GetStringResultAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    public static async Task SetValue<TValue>(FlowOutput output, TValue value, IServiceProvider serviceProvider, FlowContext context, CancellationToken cancellationToken)
     {
         var valueStr = JsonSerializer.Serialize(value);
         if (!string.IsNullOrEmpty(output.ConverterCategory) && !string.IsNullOrEmpty(output.ConverterName) && !string.IsNullOrEmpty(output.InputKey))
@@ -35,13 +35,17 @@ public interface IFlowValueConverter
             var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
             if (converterObj is IFlowValueConverter converter)
             {
-                output.Inputs[output.InputKey] = new FlowInput()
+                output.Inputs.RemoveAll(x => x.Name == output.InputKey);
+                output.Inputs.Add(new FlowInput
                 {
+                    Id = Guid.NewGuid(),
+                    Name = output.InputKey,
                     Value = valueStr,
                     UseGlobeData = false,
                     ConverterCategory = null,
                     ConverterName = null
-                };
+                });
+
                 var result = await converter.GetStringResultAsync(context, output.Inputs, serviceProvider, cancellationToken);
                 context.Data[output.GlobeDataName].Value = result;
 
@@ -59,10 +63,10 @@ public interface IFlowValueConverter
 }
 public interface IFlowValueConverter<T> : IFlowValueConverter
 {
-    protected Task<T> Convert(RunningContext context, IDictionary<string, FlowInput> inputs, CancellationToken cancellationToken);
-    Task<T> WrapAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    protected Task<T> Convert(FlowContext context, IReadOnlyList<FlowInput> inputs, CancellationToken cancellationToken);
+    Task<T> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 
-    public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, RunningContext context, Func<string, T> convert, CancellationToken cancellationToken)
+    public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
         {

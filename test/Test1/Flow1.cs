@@ -24,7 +24,7 @@ public partial class Flow1
     /// 执行的命令
     /// </summary>
     /// <returns></returns>
-    public Task Run(RunningContext context, FlowStep step, CancellationToken cancellationToken)
+    public Task Run(FlowContext context, StepContext step, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
     }
@@ -44,7 +44,7 @@ public partial class ValueConverter
     [Input("问1")]
     public int Prop2 { get; set; }
 
-    public async Task<int> Convert(RunningContext context, IDictionary<string, FlowInput> inputs, CancellationToken cancellationToken)
+    public async Task<int> Convert(FlowContext context, IReadOnlyList<FlowInput> inputs, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
         return Prop1 + Prop2;

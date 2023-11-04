@@ -4,7 +4,7 @@ namespace FlowMaker;
 
 public class FlowManager
 {
-    public Task Run(FlowDefinition flowInfo,RunningContext? context = null)
+    public Task Run(FlowDefinition flowInfo,FlowContext? context = null)
     {
 
 

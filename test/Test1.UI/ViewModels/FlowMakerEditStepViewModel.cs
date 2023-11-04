@@ -154,11 +154,11 @@ namespace Test1.ViewModels
                     GlobeDatas.Clear();
                     foreach (var item in _flowDefinition.Steps.SelectMany(c => c.Outputs))
                     {
-                        var dataType = item.Value.ConvertToType ?? item.Value.Type;
+                        var dataType = item.ConvertToType ?? item.Type;
 
                         if (dataType == type)
                         {
-                            GlobeDatas.Add(item.Value);
+                            GlobeDatas.Add(item);
                         }
                     }
                     HasGlobe = GlobeDatas.Any();

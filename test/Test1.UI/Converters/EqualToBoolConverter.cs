@@ -12,7 +12,7 @@ namespace Test1.Converters
             return value.Equals(parameter);
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             bool isChecked = (bool)value;
             if (!isChecked)

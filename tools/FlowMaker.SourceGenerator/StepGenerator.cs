@@ -84,7 +84,7 @@ namespace FlowMaker.SourceGenerator
                                 }
 
                                 inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue(step.Inputs["{{memberName}}"], serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue(step.Inputs.First(v=> v.Name == "{{memberName}}", serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
 """);
                                 inputDefStringBuilder.AppendLine($$"""
         var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValueValue}}");
@@ -134,7 +134,7 @@ public partial class {item.Option.MetadataName} : IStep
 
     public static string Name => ""{name}"";
 
-    public async Task WrapAsync(RunningContext context, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    public async Task WrapAsync(FlowContext context, StepContext step, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {{
 {inputStringBuilder}
         await Run(context, step, cancellationToken);
@@ -196,7 +196,7 @@ public partial class {item.Option.MetadataName} : IStep
 
                                
                                 inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue(inputs["{{memberName}}"], serviceProvider, context, s=> System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{memberName}} = await IFlowValueConverter<{{property.Type.ToDisplayString()}}>.GetValue(inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, context, s=> System.Text.Json.JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
 """);
                                 inputDefStringBuilder.AppendLine($$"""
         var {{property.Name}}InputProp = new StepInputDefinition("{{property.Name}}", "{{inputName}}", "{{property.Type.ToDisplayString().Trim()}}", "{{defaultValue}}");
@@ -231,13 +231,13 @@ partial class {item.Option.MetadataName} : IFlowValueConverter<{type.ToDisplaySt
 
     public static string Name => ""{name}"";
 
-    public async Task<{type.ToDisplayString()}> WrapAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    public async Task<{type.ToDisplayString()}> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {{
 {inputStringBuilder}
         return await Convert(context, inputs, cancellationToken);
     }}
 
-    public async Task<string> GetStringResultAsync(RunningContext context, IDictionary<string, FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    public async Task<string> GetStringResultAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {{
         var result  = await WrapAsync(context, inputs, serviceProvider, cancellationToken);
         return JsonSerializer.Serialize(result);

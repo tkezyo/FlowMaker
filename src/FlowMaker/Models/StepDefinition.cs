@@ -13,7 +13,7 @@ public class FlowDefinition
 
     public List<FlowStep> Steps { get; set; } = new();
     public List<FlowStep> CompensateSteps { get; set; } = new();
-    public List<FlowChecker> ExcuteCheckers { get; set; } = new();
+    public List<FlowInput> ExcuteCheckers { get; set; } = new();
 
     public List<StepInputDefinition> Inputs { get; set; } = new();
     public List<StepOutputDefinition> Outputs { get; set; } = new();

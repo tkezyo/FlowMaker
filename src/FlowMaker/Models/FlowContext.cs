@@ -2,11 +2,11 @@
 
 namespace FlowMaker.Models;
 
-public class RunningContext
+public class FlowContext
 {
     public FlowDefinition FlowDefinition { get; set; }
 
-    public RunningContext(FlowDefinition flowDefinition)
+    public FlowContext(FlowDefinition flowDefinition)
     {
         FlowDefinition = flowDefinition;
     }
@@ -18,6 +18,16 @@ public class RunningContext
 
     public List<Guid> SuspendSteps { get; protected set; } = new();
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
+}
+
+public class StepContext : FlowStep
+{
+    public int CurrentIndex { get; set; }
+
+    public StepContext(List<FlowInput> inputs)
+    {
+        Inputs = inputs;
+    }
 }
 
 public class FlowGlobeData
@@ -33,5 +43,4 @@ public class FlowGlobeData
 
     public string Type { get; set; }
     public string Value { get; set; }
-
 }

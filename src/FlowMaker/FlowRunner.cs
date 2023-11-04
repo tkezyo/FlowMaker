@@ -21,9 +21,9 @@ public class FlowRunner
     /// <summary>
     /// 全局上下文
     /// </summary>
-    public RunningContext Context { get; protected set; } = null!;
+    public FlowContext Context { get; protected set; } = null!;
 
-    protected async Task RunStep(FlowStep step)
+    protected async Task RunStep(StepContext step)
     {
         var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name);
         var stepObj = _serviceProvider.GetService(stepDefinition.Type);
@@ -43,7 +43,7 @@ public class FlowRunner
             throw new Exception();
         }
 
-        await RunStep(step);
+        await RunStep();
     }
 
     protected async Task<bool> CheckStep(Guid convertId, CancellationToken cancellationToken)
@@ -59,7 +59,7 @@ public class FlowRunner
     public RunnerState State { get; set; }
     public void Run(FlowDefinition flowInfo)
     {
-        Context = new RunningContext(flowInfo);
+        Context = new FlowContext(flowInfo);
         if (State != RunnerState.Stop)
         {
             throw new Exception("正在运行中");
@@ -200,22 +200,22 @@ public class FlowRunner
                 _logger.LogWarning($"执行步骤{step.Name}失败，重试次数{retryCount}，异常信息{exception.Message}");
             });
             //回退策略
-            var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync(async c =>
+            var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync((Func<CancellationToken, Task>)(async c =>
             {
-                if (!step.Compensate.HasValue)
+                if (!step.Catch.HasValue)
                 {
                     return;
                 }
 
-                await RunCompensateStep(step.Compensate.Value);
-            });
+                await RunCompensateStep(step.Catch.Value);
+            }));
 
             //组合策略
             var policyWrap = Policy.WrapAsync(timeoutPolicy, retryPolicy, fallbackPolicy);
 
             for (int i = 0; i < step.Repeat; i++)//重复执行
             {
-                foreach (var item2 in step.CanExcute)
+                foreach (var item2 in step.If)
                 {
                     var result = await CheckStep(item2.Key, cancellationToken);
                     if (result != item2.Value)
