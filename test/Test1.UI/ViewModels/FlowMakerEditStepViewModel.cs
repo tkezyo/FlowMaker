@@ -11,6 +11,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
 using Volo.Abp;
 
@@ -22,6 +23,7 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
     public FlowMakerEditStepViewModel(IOptions<FlowMakerOption> options)
     {
         _flowMakerOption = options.Value;
+        AddCheckerCommand = ReactiveCommand.Create(AddChecker);
         foreach (var item in _flowMakerOption.Group)
         {
             StepGroups.Add(item.Key);
@@ -57,7 +59,7 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
 
                 foreach (var item in stepDef.Inputs)
                 {
-                    var input = new FlowStepInputViewModel(Guid.NewGuid().ToString(), item.Name, item.DisplayName, item.Type, Inputs, _flowMakerOption, _flowDefinition);
+                    var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerOption, _flowDefinition);
                     if (item.Options.Any())
                     {
                         input.Mode = InputMode.Option;
@@ -106,6 +108,12 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
     public ObservableCollection<StepDefinition> StepDefinitions { get; set; } = new ObservableCollection<StepDefinition>();
     public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = new();
 
+    public ReactiveCommand<Unit, Unit> AddCheckerCommand { get; }
+    public void AddChecker()
+    {
+        Checkers.Add(new FlowStepInputViewModel("", "", "", _flowMakerOption, _flowDefinition!));
+    }
+
     [Reactive]
     public FlowStepViewModel Model { get; set; } = new();
 }
@@ -113,25 +121,29 @@ public class FlowStepInputViewModel : ReactiveObject
 {
     private readonly FlowMakerOption _flowMakerOption;
     private readonly FlowDefinition _flowDefinition;
-
-    public FlowStepInputViewModel(string id, string name, string displayName, string type, ObservableCollection<FlowStepInputViewModel> allInputs, FlowMakerOption flowMakerOption, FlowDefinition flowDefinition)
+    [Reactive]
+    public Guid Id { get; set; }
+    public FlowStepInputViewModel(string name, string displayName, string type, FlowMakerOption flowMakerOption, FlowDefinition flowDefinition)
     {
-        Id = id;
+        Id = Guid.NewGuid();
         Name = name;
-        DisplayName = displayName + $"({type})";
+        DisplayName = displayName;
         Type = type;
-        AllInputs = allInputs;
         _flowMakerOption = flowMakerOption;
         this._flowDefinition = flowDefinition;
-        foreach (var item in _flowMakerOption.Group.Where(v => v.Value.ConverterDefinitions.Any(x => x.Output == type)))
-        {
-            HasConverter = true;
-            ConverterCategorys.Add(item.Key);
-        }
 
+        this.WhenAnyValue(c => c.Type).WhereNotNull().Subscribe(c =>
+        {
+            ConverterCategorys.Clear();
+            foreach (var item in _flowMakerOption.Group.Where(v => v.Value.ConverterDefinitions.Any(x => x.Output == c)))
+            {
+                HasConverter = true;
+                ConverterCategorys.Add(item.Key);
+            }
+        });
         this.WhenAnyValue(c => c.ConverterCategory).Skip(1).WhereNotNull().Subscribe(c =>
         {
-            AllInputs.RemoveMany(AllInputs.Where(c => c.Id.StartsWith(Id) && c.Id != Id));
+            SubInputs.Clear();
             ConverterDefinitions.Clear();
 
             foreach (var item in _flowMakerOption.Group[c].ConverterDefinitions.Where(v => v.Output == type))
@@ -142,14 +154,14 @@ public class FlowStepInputViewModel : ReactiveObject
 
         this.WhenAnyValue(c => c.ConverterName).Skip(1).WhereNotNull().Subscribe(c =>
         {
-            AllInputs.RemoveMany(AllInputs.Where(c => c.Id.StartsWith(Id) && c.Id != Id));
+            SubInputs.Clear();
 
             InsertConverterInput();
         });
 
         this.WhenAnyValue(c => c.Mode).Subscribe(c =>
         {
-            AllInputs.RemoveMany(AllInputs.Where(c => c.Id.StartsWith(Id) && c.Id != Id));
+            SubInputs.Clear();
             InsertConverterInput();
             if (c == InputMode.Globe && !GlobeDatas.Any())
             {
@@ -179,12 +191,10 @@ public class FlowStepInputViewModel : ReactiveObject
             {
                 return;
             }
-            var index = AllInputs.IndexOf(this);
             for (int i = 0; i < converter.Inputs.Count; i++)
             {
                 var item = converter.Inputs[i];
-                var id = Guid.NewGuid().ToString();
-                var input = new FlowStepInputViewModel(Id + id, item.Name, DisplayName + "." + item.DisplayName, item.Type, AllInputs, _flowMakerOption, _flowDefinition);
+                var input = new FlowStepInputViewModel(item.Name, DisplayName + "." + item.DisplayName, item.Type, _flowMakerOption, _flowDefinition);
                 if (item.Options.Any())
                 {
                     input.HasOption = true;
@@ -196,7 +206,7 @@ public class FlowStepInputViewModel : ReactiveObject
                 }
 
 
-                AllInputs.Insert(index + i + 1, input);
+                SubInputs.Add(input);
             }
         }
     }
@@ -229,7 +239,6 @@ public class FlowStepInputViewModel : ReactiveObject
     public string? ConverterCategory { get; set; }
     [Reactive]
     public string? ConverterName { get; set; }
-    public string Id { get; set; }
     [Reactive]
     public bool Disable { get; set; }
 
@@ -241,7 +250,8 @@ public class FlowStepInputViewModel : ReactiveObject
 
     }
 
-    public ObservableCollection<FlowStepInputViewModel> AllInputs { get; set; }
+    [Reactive]
+    public ObservableCollection<FlowStepInputViewModel> SubInputs { get; set; } = new();
 
 
 
@@ -291,7 +301,7 @@ public class FlowStepOutputViewModel : ReactiveObject
     public FlowStepOutputViewModel(string name, string displayName, string type, FlowMakerOption flowMakerOption, FlowDefinition flowDefinition)
     {
         Name = name;
-        DisplayName = displayName + $"({type})";
+        DisplayName = displayName;
         Type = type;
         _flowMakerOption = flowMakerOption;
         this._flowDefinition = flowDefinition;
@@ -323,16 +333,9 @@ public class FlowStepOutputViewModel : ReactiveObject
         });
         this.WhenAnyValue(c => c.InputKey).WhereNotNull().Subscribe(c =>
         {
-            var selected = AllInputs.FirstOrDefault(v => v.Name == InputKey);
-            if (selected is null)
-            {
-                return;
-            }
-            selected.Mode = InputMode.Normal;
-            AllInputs.RemoveMany(AllInputs.Where(v => v.Id.StartsWith(selected.Id) && v.Id != selected.Id));
             foreach (var item in AllInputs)
             {
-                if (item.Id == selected.Id)
+                if (item.Name == InputKey)
                 {
                     item.SetDisable();
                 }
@@ -357,8 +360,7 @@ public class FlowStepOutputViewModel : ReactiveObject
             for (int i = 0; i < converter.Inputs.Count; i++)
             {
                 var item = converter.Inputs[i];
-                var id = Guid.NewGuid().ToString();
-                var input = new FlowStepInputViewModel(id, item.Name, item.DisplayName, item.Type, AllInputs, _flowMakerOption, _flowDefinition);
+                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerOption, _flowDefinition);
                 if (item.Options.Any())
                 {
                     input.HasOption = true;
