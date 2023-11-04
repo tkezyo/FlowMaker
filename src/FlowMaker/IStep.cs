@@ -10,8 +10,8 @@ public interface IStep
     static abstract string Category { get; }
     static abstract string Name { get; }
     static abstract StepDefinition GetDefinition();
-    protected Task Run(FlowContext context, StepContext step, CancellationToken cancellationToken);
-    Task WrapAsync(FlowContext context, StepContext step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    protected Task Run(FlowContext context, StepContext stepContext, FlowStep step,  CancellationToken cancellationToken);
+    Task WrapAsync(FlowContext context, StepContext stepContext, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
 public interface IFlowValueConverter

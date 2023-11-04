@@ -24,7 +24,7 @@ public partial class Flow1
     /// 执行的命令
     /// </summary>
     /// <returns></returns>
-    public Task Run(FlowContext context, StepContext step, CancellationToken cancellationToken)
+    public Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
     }

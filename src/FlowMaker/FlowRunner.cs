@@ -23,7 +23,7 @@ public class FlowRunner
     /// </summary>
     public FlowContext Context { get; protected set; } = null!;
 
-    protected async Task RunStep(StepContext step)
+    protected async Task RunStep(FlowStep step, StepContext stepContext)
     {
         var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name);
         var stepObj = _serviceProvider.GetService(stepDefinition.Type);
@@ -33,17 +33,17 @@ public class FlowRunner
             throw new Exception();
         }
 
-        await stepService.WrapAsync(Context, step, _serviceProvider, CancellationTokenSource.Token);
+        await stepService.WrapAsync(Context, stepContext, step, _serviceProvider, CancellationTokenSource.Token);
     }
-    protected async Task RunCompensateStep(Guid stepId)
+    protected async Task RunCompensateStep(Guid stepId, StepContext stepContext)
     {
-        var step = Context.FlowDefinition.CompensateSteps.FirstOrDefault(c => c.Id == stepId);
+        var step = Context.FlowDefinition.Steps.FirstOrDefault(c => c.Id == stepId && c.IsCompensateStep);
         if (step is null)
         {
             throw new Exception();
         }
 
-        await RunStep();
+        await RunStep(step, stepContext);
     }
 
     protected async Task<bool> CheckStep(Guid convertId, CancellationToken cancellationToken)
@@ -142,6 +142,10 @@ public class FlowRunner
         //获取所有依赖于preActionId的任务
         var list = Context.FlowDefinition.Steps.Where(c =>
         {
+            if (c.IsCompensateStep)
+            {
+                return false;
+            }
             if (preStepId.HasValue)
             {
                 return c.PreSteps.Contains(preStepId.Value) && !Context.StepState[c.Id].Started;
@@ -192,6 +196,7 @@ public class FlowRunner
         DateTime start = DateTime.Now;
         try
         {
+            StepContext stepContext = new StepContext();
             //超时策略
             var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(step.TimeOut), Polly.Timeout.TimeoutStrategy.Pessimistic);
             //重试策略
@@ -200,15 +205,15 @@ public class FlowRunner
                 _logger.LogWarning($"执行步骤{step.Name}失败，重试次数{retryCount}，异常信息{exception.Message}");
             });
             //回退策略
-            var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync((Func<CancellationToken, Task>)(async c =>
+            var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync(async c =>
             {
-                if (!step.Catch.HasValue)
+                if (!step.Compensate.HasValue)
                 {
                     return;
                 }
 
-                await RunCompensateStep(step.Catch.Value);
-            }));
+                await RunCompensateStep(step.Compensate.Value, stepContext);
+            });
 
             //组合策略
             var policyWrap = Policy.WrapAsync(timeoutPolicy, retryPolicy, fallbackPolicy);
@@ -225,7 +230,7 @@ public class FlowRunner
                 }
                 try
                 {
-                    await policyWrap.ExecuteAsync(async c => await RunStep(step), cancellationToken);
+                    await policyWrap.ExecuteAsync(async c => await RunStep(step, stepContext), cancellationToken);
                     Context.StepState[step.Id].CompleteTimes++;
                 }
                 catch (Exception e)

@@ -20,14 +20,11 @@ public class FlowContext
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
 }
 
-public class StepContext : FlowStep
+public class StepContext
 {
     public int CurrentIndex { get; set; }
 
-    public StepContext(List<FlowInput> inputs)
-    {
-        Inputs = inputs;
-    }
+
 }
 
 public class FlowGlobeData

@@ -18,6 +18,8 @@ public class FlowStep
     /// 步骤的名称
     /// </summary>
     public required string Name { get; set; }
+   
+    public bool IsCompensateStep { get; set; }
     /// <summary>
     /// 输入
     /// </summary>
@@ -52,7 +54,7 @@ public class FlowStep
     /// <summary>
     /// 回退任务,stepdId
     /// </summary>
-    public Guid? Catch { get; set; }
+    public Guid? Compensate { get; set; }
 
 
 
