@@ -32,6 +32,15 @@ namespace Test1.Controls
             get { return (FlowStepInputViewModel)GetValue(FlowInputProperty); }
             set { SetValue(FlowInputProperty, value); }
         }
+        public static readonly DependencyProperty EditModeProperty =
+    DependencyProperty.Register(
+ "EditMode", typeof(bool), typeof(FlowInputView));
+
+        public bool EditMode
+        {
+            get { return (bool)GetValue(EditModeProperty); }
+            set { SetValue(EditModeProperty, value); }
+        }
 
         public FlowInputView()
         {

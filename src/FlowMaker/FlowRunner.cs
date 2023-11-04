@@ -48,7 +48,7 @@ public class FlowRunner
 
     protected async Task<bool> CheckStep(Guid convertId, CancellationToken cancellationToken)
     {
-        var converter = Context.FlowDefinition.ExcuteCheckers.FirstOrDefault(c => c.Id == convertId);
+        var converter = Context.FlowDefinition.Checkers.FirstOrDefault(c => c.Id == convertId);
         if (converter is null)
         {
             throw new Exception();

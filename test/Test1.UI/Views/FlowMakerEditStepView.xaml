@@ -11,6 +11,7 @@
                            d:DataContext="{d:DesignInstance Type=vms:FlowMakerEditStepViewModel}"
                     xmlns:converters="clr-namespace:Test1.Converters" xmlns:controls="clr-namespace:Test1.Controls"
                            mc:Ignorable="d" 
+                           x:Name="page"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
@@ -29,8 +30,8 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0" Margin="10">
+            <TextBox Text="{Binding Model.DisplayName}" hc:InfoElement.Title="显示名称" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-
                 <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="步骤分组"  SelectedItem="{Binding Model.Category}"></ComboBox>
                 <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding StepDefinitions}" hc:InfoElement.Title="步骤" SelectedValue="{Binding Model.Name}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
             </StackPanel>
@@ -42,63 +43,81 @@
 
 
         </StackPanel>
-        <StackPanel Grid.Column="1" Margin="10">
-            <TextBlock>输入</TextBlock>
-            <ItemsControl ItemsSource="{Binding Inputs}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <controls:FlowInputView FlowInput="{Binding .}"></controls:FlowInputView>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock>输出</TextBlock>
-            <ItemsControl ItemsSource="{Binding Outputs}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
-                                <TextBlock Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
-                                <RadioButton Content="丢弃" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.Drop}}" GroupName="{Binding Name}"></RadioButton>
-                                <RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.Globe}}" GroupName="{Binding Name}" ></RadioButton>
-                                <RadioButton Content="全局变量转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}" GroupName="{Binding Name}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
-                            </StackPanel>
-
-                            <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.Globe}}"  Text="{Binding GlobeDataName}" />
-
-                            <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}"  Text="{Binding GlobeDataName}" />
-
-                            <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
-
-                                <ComboBox  ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
-                                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
-                                <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding InputKeys}" hc:InfoElement.Title="属性" SelectedValue="{Binding InputKey}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
-
-                            </StackPanel>
-                            <ItemsControl ItemsSource="{Binding AllInputs}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <controls:FlowInputView FlowInput="{Binding .}" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <TextBlock>条件</TextBlock>
-            <Button Command="{Binding AddCheckerCommand}">添加</Button>
-            <ItemsControl ItemsSource="{Binding Checkers}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <TextBox Text="{Binding DisplayName}"/>
-                            <TextBox Text="{Binding Type}"/>
+        <ScrollViewer  Grid.Column="1" Margin="10">
+            <StackPanel>
+                <TextBlock>输入</TextBlock>
+                <ItemsControl ItemsSource="{Binding Inputs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
                             <controls:FlowInputView FlowInput="{Binding .}"></controls:FlowInputView>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock>输出</TextBlock>
+                <ItemsControl ItemsSource="{Binding Outputs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+                                    <TextBlock Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+                                    <RadioButton Content="丢弃" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.Drop}}" GroupName="{Binding Name}"></RadioButton>
+                                    <RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.Globe}}" GroupName="{Binding Name}" ></RadioButton>
+                                    <RadioButton Content="全局变量转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}" GroupName="{Binding Name}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                </StackPanel>
+
+                                <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.Globe}}"  Text="{Binding GlobeDataName}" />
+
+                                <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}"  Text="{Binding GlobeDataName}" />
+
+                                <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:OutputMode.GlobeWithConverter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+
+                                    <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
+                                    <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                                    <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding InputKeys}" hc:InfoElement.Title="属性" SelectedValue="{Binding InputKey}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
+
+                                </StackPanel>
+                                <ItemsControl ItemsSource="{Binding AllInputs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <controls:FlowInputView FlowInput="{Binding .}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock>自定义检查项</TextBlock>
+                    <Button Command="{Binding AddCheckerCommand}" Style="{StaticResource ButtonInfo.Small}">添加</Button>
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding Checkers}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}">删除</Button>
+                                <controls:FlowInputView FlowInput="{Binding .}" EditMode="True"></controls:FlowInputView>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock>执行条件</TextBlock>
+                    <Button Command="{Binding LoadIfCommand}" Style="{StaticResource ButtonInfo.Small}">载入</Button>
+                </StackPanel>
+                <ItemsControl ItemsSource="{Binding Ifs}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}"></CheckBox>
+                                <CheckBox Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
     </Grid>
 </rxui:ReactiveUserControl>

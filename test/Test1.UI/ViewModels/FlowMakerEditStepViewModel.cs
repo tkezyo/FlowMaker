@@ -24,6 +24,8 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
     {
         _flowMakerOption = options.Value;
         AddCheckerCommand = ReactiveCommand.Create(AddChecker);
+        RemoveCheckerCommand = ReactiveCommand.Create<FlowStepInputViewModel>(RemoveChecker);
+        LoadIfCommand = ReactiveCommand.Create(LoadIf);
         foreach (var item in _flowMakerOption.Group)
         {
             StepGroups.Add(item.Key);
@@ -93,29 +95,62 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
     }
 
     [Reactive]
-    public FlowStep? FlowStep { get; set; }
-
-    [Reactive]
     public ObservableCollection<FlowStepOutputViewModel> Outputs { get; set; } = new();
     [Reactive]
     public ObservableCollection<FlowStepInputViewModel> Inputs { get; set; } = new();
     [Reactive]
     public ObservableCollection<FlowStepInputViewModel> Checkers { get; set; } = new();
+    [Reactive]
+    public ObservableCollection<FlowIfViewModel> Ifs { get; set; } = new();
+
+    public ReactiveCommand<Unit, Unit> LoadIfCommand { get; }
+    public void LoadIf()
+    {
+        Ifs.Clear();
+        foreach (var item in Checkers.Where(c => c.Type == "bool"))
+        {
+            Ifs.Add(new FlowIfViewModel
+            {
+                Id = item.Id,
+                IsTrue = true,
+                DisplayName = item.DisplayName,
+            });
+        }
+    }
 
     [Reactive]
     public ObservableCollection<string> StepGroups { get; set; } = new ObservableCollection<string>();
     [Reactive]
     public ObservableCollection<StepDefinition> StepDefinitions { get; set; } = new ObservableCollection<StepDefinition>();
+    [Reactive]
     public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = new();
+
 
     public ReactiveCommand<Unit, Unit> AddCheckerCommand { get; }
     public void AddChecker()
     {
-        Checkers.Add(new FlowStepInputViewModel("", "", "", _flowMakerOption, _flowDefinition!));
+        Checkers.Add(new FlowStepInputViewModel("", "", "bool", _flowMakerOption, _flowDefinition!));
+    }
+    public ReactiveCommand<FlowStepInputViewModel, Unit> RemoveCheckerCommand { get; }
+    public void RemoveChecker(FlowStepInputViewModel input)
+    {
+        Checkers.Remove(input);
     }
 
     [Reactive]
     public FlowStepViewModel Model { get; set; } = new();
+}
+
+public class FlowIfViewModel : ReactiveObject
+{
+    [Reactive]
+    public Guid Id { get; set; }
+    [Reactive]
+    public bool Enable { get; set; }
+    [Reactive]
+    public bool IsTrue { get; set; }
+    [Reactive]
+    public string? DisplayName { get; set; }
 }
 public class FlowStepInputViewModel : ReactiveObject
 {
@@ -137,22 +172,23 @@ public class FlowStepInputViewModel : ReactiveObject
             ConverterCategorys.Clear();
             foreach (var item in _flowMakerOption.Group.Where(v => v.Value.ConverterDefinitions.Any(x => x.Output == c)))
             {
-                HasConverter = true;
                 ConverterCategorys.Add(item.Key);
             }
+            HasConverter = ConverterCategorys.Any();
+            LoadGlobe();
         });
-        this.WhenAnyValue(c => c.ConverterCategory).Skip(1).WhereNotNull().Subscribe(c =>
+        this.WhenAnyValue(c => c.ConverterCategory).WhereNotNull().Subscribe(c =>
         {
             SubInputs.Clear();
             ConverterDefinitions.Clear();
 
-            foreach (var item in _flowMakerOption.Group[c].ConverterDefinitions.Where(v => v.Output == type))
+            foreach (var item in _flowMakerOption.Group[c].ConverterDefinitions.Where(v => v.Output == Type))
             {
                 ConverterDefinitions.Add(item);
             }
         });
 
-        this.WhenAnyValue(c => c.ConverterName).Skip(1).WhereNotNull().Subscribe(c =>
+        this.WhenAnyValue(c => c.ConverterName).WhereNotNull().Subscribe(c =>
         {
             SubInputs.Clear();
 
@@ -163,23 +199,23 @@ public class FlowStepInputViewModel : ReactiveObject
         {
             SubInputs.Clear();
             InsertConverterInput();
-            if (c == InputMode.Globe && !GlobeDatas.Any())
-            {
-                GlobeDatas.Clear();
-                foreach (var item in _flowDefinition.Steps.SelectMany(c => c.Outputs))
-                {
-                    var dataType = item.ConvertToType ?? item.Type;
 
-                    if (dataType == type)
-                    {
-                        GlobeDatas.Add(item);
-                    }
-                }
-                HasGlobe = GlobeDatas.Any();
-            }
         });
-        HasGlobe = false;
+    }
 
+    public void LoadGlobe()
+    {
+        GlobeDatas.Clear();
+        foreach (var item in _flowDefinition.Steps.SelectMany(c => c.Outputs))
+        {
+            var dataType = item.ConvertToType ?? item.Type;
+
+            if (dataType == Type)
+            {
+                GlobeDatas.Add(item);
+            }
+        }
+        HasGlobe = GlobeDatas.Any();
     }
 
     public void InsertConverterInput()
@@ -194,7 +230,7 @@ public class FlowStepInputViewModel : ReactiveObject
             for (int i = 0; i < converter.Inputs.Count; i++)
             {
                 var item = converter.Inputs[i];
-                var input = new FlowStepInputViewModel(item.Name, DisplayName + "." + item.DisplayName, item.Type, _flowMakerOption, _flowDefinition);
+                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerOption, _flowDefinition);
                 if (item.Options.Any())
                 {
                     input.HasOption = true;
@@ -422,11 +458,6 @@ public class FlowStepViewModel : ReactiveObject
     [Reactive]
     public string? Category { get; set; }
     /// <summary>
-    /// 父级Id
-    /// </summary>
-    [Reactive]
-    public Guid? ParentStepId { get; set; }
-    /// <summary>
     /// 名称
     /// </summary>
     [Reactive]
@@ -456,15 +487,16 @@ public class FlowStepViewModel : ReactiveObject
     /// <summary>
     /// 前置任务
     /// </summary>
-    public List<Guid> PreActions { get; set; } = new();
+    public List<Guid> PreSteps { get; set; } = new();
     /// <summary>
     /// 回退任务
     /// </summary>
     public Guid? Compensate { get; set; }
     /// <summary>
-    /// 是否可执行
+    /// 是否可执行，同时可作为Break的条件
     /// </summary>
-    public Dictionary<Guid, bool> CanExcute { get; set; } = new();
+    public Dictionary<Guid, bool> If { get; set; } = new();
+    public List<FlowInput> Checkers { get; set; } = new();
     /// <summary>
     /// 步骤位置
     /// </summary>
@@ -480,6 +512,7 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public StepStatus Status { get; set; }
+ 
 }
 
 public enum StepStatus
