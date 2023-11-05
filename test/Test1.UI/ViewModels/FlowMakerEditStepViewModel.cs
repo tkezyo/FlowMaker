@@ -3,6 +3,7 @@ using DynamicData;
 using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -14,9 +15,11 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using Volo.Abp;
+using Volo.Abp.DependencyInjection;
 
 namespace Test1.ViewModels;
 
+[Dependency(ServiceLifetime.Transient)]
 public class FlowMakerEditStepViewModel : RoutableViewModelBase
 {
     private readonly FlowMakerOption _flowMakerOption;
