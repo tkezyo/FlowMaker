@@ -9,7 +9,18 @@
                            xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:local="clr-namespace:Test1.Views" d:DataContext="{d:DesignInstance Type=vms:FlowMakerEditViewModel}"
                           mc:Ignorable="d" 
+                           xmlns:converters="clr-namespace:Test1.Converters"
              d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:LeftToMarginConverter x:Key="marginConverter" />
+        <converters:LeftToWidthConverter x:Key="widthConverter"/>
+        <converters:ColorToBrushConverter x:Key="colorToBrushConverter"/>
+        <Style TargetType="Button" x:Key="actionBtn" >
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="BorderBrush" Value="#534fbc"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -26,7 +37,64 @@
             <CheckBox Content="变量"  Name="showData"/>
             <Button Command="{Binding CreateGlobeDataCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showData}">创建变量</Button>
         </ToolBar>
-
+        <ScrollViewer x:Name="viewer"  Grid.Row="3" HorizontalScrollBarVisibility="Visible">
+            <Grid  Margin="2">
+                <ItemsControl ItemsSource="{Binding Steps}"  VerticalAlignment="Top">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel>
+                            </StackPanel>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Visibility="{Binding Visibility,Converter={StaticResource Boolean2VisibilityConverter}}" Orientation="Horizontal">
+                                <Button x:Name="btn" Content="{Binding Name}" Foreground="White" Command="{Binding DataContext.ChangePreCommand,ElementName=page}"   CommandParameter="{Binding .}" Style="{StaticResource actionBtn}" Background="{Binding ColorBrush,Converter={StaticResource colorToBrushConverter}}">
+                                    <Button.Width>
+                                        <MultiBinding Converter="{StaticResource widthConverter}">
+                                            <Binding Path="Time"/>
+                                            <Binding Path="DataContext.Scale" ElementName="page"/>
+                                        </MultiBinding>
+                                    </Button.Width>
+                                    <Button.Margin>
+                                        <MultiBinding Converter="{StaticResource marginConverter}">
+                                            <Binding Path="PreTime"/>
+                                            <Binding Path="DataContext.Scale" ElementName="page"/>
+                                        </MultiBinding>
+                                    </Button.Margin>
+                                </Button>
+                                <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>
+                                <Button Margin="8,0,0,0" Visibility="{Binding Selected,Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Content="编辑" Command="{Binding DataContext.EditActionCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource MaterialDesignFlatButton}"></Button>
+                                <Button Margin="8,0,0,0" Visibility="{Binding Selected,Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Content="删除" Command="{Binding DataContext.DeleteActionCommand,ElementName=page}" Style="{StaticResource MaterialDesignFlatButton}"></Button>
+                                <Button Margin="8,0,0,0" Visibility="{Binding Selected,Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource MaterialDesignFlatButton}"></Button>
+                                <Button Margin="8,0,0,0" Visibility="{Binding Selected,Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource MaterialDesignFlatButton}"></Button>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl Margin="0,0,0,0" ItemsSource="{Binding DateAxis}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid></Grid>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel  HorizontalAlignment="Left">
+                                <StackPanel.Margin>
+                                    <MultiBinding Converter="{StaticResource marginConverter}">
+                                        <Binding Path="."/>
+                                        <Binding Path="DataContext.Scale" ElementName="page"/>
+                                    </MultiBinding>
+                                </StackPanel.Margin>
+                                <Line  HorizontalAlignment="Left" X1="0" X2="0" Y1="0" Y2="{Binding Path=ActualHeight,ElementName=gantee}" Stroke="#aa635fe2"  StrokeThickness="1"></Line>
+                                <TextBlock Text="{Binding .,StringFormat={}{0:mm\\:ss}}"></TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </ScrollViewer>
         <DataGrid ItemsSource="{Binding GlobeDatas}" AutoGenerateColumns="False" CanUserReorderColumns="False" CanUserDeleteRows="False" SelectionMode="Extended"
                       Grid.Row="1" Grid.Column="2" 
                       Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showData}">

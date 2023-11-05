@@ -26,6 +26,7 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
         AddCheckerCommand = ReactiveCommand.Create(AddChecker);
         RemoveCheckerCommand = ReactiveCommand.Create<FlowStepInputViewModel>(RemoveChecker);
         LoadIfCommand = ReactiveCommand.Create(LoadIf);
+        SaveCommand = ReactiveCommand.Create(Save);
         foreach (var item in _flowMakerOption.Group)
         {
             StepGroups.Add(item.Key);
@@ -98,18 +99,14 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
     public ObservableCollection<FlowStepOutputViewModel> Outputs { get; set; } = new();
     [Reactive]
     public ObservableCollection<FlowStepInputViewModel> Inputs { get; set; } = new();
-    [Reactive]
-    public ObservableCollection<FlowStepInputViewModel> Checkers { get; set; } = new();
-    [Reactive]
-    public ObservableCollection<FlowIfViewModel> Ifs { get; set; } = new();
 
     public ReactiveCommand<Unit, Unit> LoadIfCommand { get; }
     public void LoadIf()
     {
-        Ifs.Clear();
-        foreach (var item in Checkers.Where(c => c.Type == "bool"))
+        Model.Ifs.Clear();
+        foreach (var item in Model.Checkers.Where(c => c.Type == "bool"))
         {
-            Ifs.Add(new FlowIfViewModel
+            Model.Ifs.Add(new FlowIfViewModel
             {
                 Id = item.Id,
                 IsTrue = true,
@@ -129,16 +126,25 @@ public class FlowMakerEditStepViewModel : RoutableViewModelBase
     public ReactiveCommand<Unit, Unit> AddCheckerCommand { get; }
     public void AddChecker()
     {
-        Checkers.Add(new FlowStepInputViewModel("", "", "bool", _flowMakerOption, _flowDefinition!));
+        Model.Checkers.Add(new FlowStepInputViewModel("", "", "bool", _flowMakerOption, _flowDefinition!));
     }
     public ReactiveCommand<FlowStepInputViewModel, Unit> RemoveCheckerCommand { get; }
     public void RemoveChecker(FlowStepInputViewModel input)
     {
-        Checkers.Remove(input);
+        Model.Checkers.Remove(input);
     }
 
     [Reactive]
     public FlowStepViewModel Model { get; set; } = new();
+
+    public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+    public void Save()
+    {
+
+
+        CloseModal(true);
+    }
+
 }
 
 public class FlowIfViewModel : ReactiveObject
@@ -491,12 +497,18 @@ public class FlowStepViewModel : ReactiveObject
     /// <summary>
     /// 回退任务
     /// </summary>
-    public Guid? Compensate { get; set; }
+    public FlowStepViewModel? Compensate { get; set; }
     /// <summary>
     /// 是否可执行，同时可作为Break的条件
     /// </summary>
     public Dictionary<Guid, bool> If { get; set; } = new();
-    public List<FlowInput> Checkers { get; set; } = new();
+
+    [Reactive]
+    public ObservableCollection<FlowIfViewModel> Ifs { get; set; } = new();
+
+    [Reactive]
+    public ObservableCollection<FlowStepInputViewModel> Checkers { get; set; } = new();
+
     /// <summary>
     /// 步骤位置
     /// </summary>
@@ -512,7 +524,15 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public StepStatus Status { get; set; }
- 
+
+    /// <summary>
+    /// 持续时间
+    /// </summary>
+    [Reactive]
+    public TimeSpan Time { get; set; } = TimeSpan.FromSeconds(1);
+    [Reactive]
+    public TimeSpan PreTime { get; set; }
+
 }
 
 public enum StepStatus

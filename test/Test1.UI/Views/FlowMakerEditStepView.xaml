@@ -29,6 +29,10 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <StackPanel Grid.Column="0" Margin="10">
             <TextBox Text="{Binding Model.DisplayName}" hc:InfoElement.Title="显示名称" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
@@ -92,7 +96,7 @@
                     <TextBlock>自定义检查项</TextBlock>
                     <Button Command="{Binding AddCheckerCommand}" Style="{StaticResource ButtonInfo.Small}">添加</Button>
                 </StackPanel>
-                <ItemsControl ItemsSource="{Binding Checkers}">
+                <ItemsControl ItemsSource="{Binding Model.Checkers}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
@@ -106,7 +110,7 @@
                     <TextBlock>执行条件</TextBlock>
                     <Button Command="{Binding LoadIfCommand}" Style="{StaticResource ButtonInfo.Small}">载入</Button>
                 </StackPanel>
-                <ItemsControl ItemsSource="{Binding Ifs}">
+                <ItemsControl ItemsSource="{Binding Model.Ifs}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -118,6 +122,9 @@
                 </ItemsControl>
             </StackPanel>
         </ScrollViewer>
-
+        <StackPanel HorizontalAlignment="Center" Margin="10" Orientation="Horizontal" Grid.Row="1" Grid.ColumnSpan="2">
+            <Button Style="{StaticResource ButtonSuccess}" Margin="10,0">保存</Button>
+            <Button Margin="10,0">取消</Button>
+        </StackPanel>
     </Grid>
 </rxui:ReactiveUserControl>
