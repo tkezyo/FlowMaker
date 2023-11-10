@@ -208,8 +208,12 @@ namespace FlowMaker
                     tcs.SetResult(c);
                     disposable?.Dispose();
                 });
-                var ownerWindow = GetCurrentWindow(interaction.Input.OwnerTitle);
-                window.Owner = ownerWindow;
+                if (interaction.Input.OwnerTitle is not null)
+                {
+                    var ownerWindow = GetCurrentWindow(interaction.Input.OwnerTitle);
+                    window.Owner = ownerWindow;
+                }
+
                 window.Show();
             }
             var r = await tcs.Task;

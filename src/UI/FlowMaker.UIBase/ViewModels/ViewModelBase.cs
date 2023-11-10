@@ -101,7 +101,7 @@ namespace FlowMaker.ViewModels
             setValue?.Invoke(viewModel);
             return viewModel;
         }
-        public IFlowMakerRoutableViewModel Navigate<T>(IScreen screen, Action<T>? setValue = null, string? pageName = null)
+        public T Navigate<T>(IScreen screen, Action<T>? setValue = null, string? pageName = null)
           where T : IFlowMakerRoutableViewModel
         {
             var viewModel = GetService<T>();

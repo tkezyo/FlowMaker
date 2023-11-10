@@ -18,8 +18,7 @@ public class FlowStep
     /// 步骤的名称
     /// </summary>
     public required string Name { get; set; }
-   
-    public bool IsCompensateStep { get; set; }
+
     /// <summary>
     /// 输入
     /// </summary>
@@ -46,13 +45,9 @@ public class FlowStep
     /// 出现错误时处理方式
     /// </summary>
     public ErrorHandling ErrorHandling { get; set; }
-    /// <summary>
-    /// 前置任务
-    /// </summary>
-    public List<Guid> PreSteps { get; set; } = new();
 
     /// <summary>
-    /// 回退任务,stepdId
+    /// 谁的回退任务,stepdId
     /// </summary>
     public Guid? Compensate { get; set; }
 
@@ -61,8 +56,19 @@ public class FlowStep
     /// <summary>
     /// 是否可执行，同时可作为Break的条件
     /// </summary>
-    public Dictionary<Guid, bool> If { get; set; } = new();
+    public Dictionary<Guid, bool> Ifs { get; set; } = new();
     public List<FlowInput> Checkers { get; set; } = new();
+    /// <summary>
+    /// 等待事件
+    /// </summary>
+    public List<FlowWait> WaitEvents { get; set; } = new();
+}
+
+public class FlowWait
+{
+    public EventType Type { get; set; }
+    public Guid? StepId { get; set; }
+    public string? EventName { get; set; }
 }
 
 
@@ -73,11 +79,21 @@ public class FlowInput
     public string? ConverterCategory { get; set; }
     public string? ConverterName { get; set; }
 
-    public bool UseGlobeData { get; set; }
+    public InputMode Mode { get; set; }
+    /// <summary>
+    /// Globe模式下为全局变量, 普通或选项为具体的值,Wait为事件名称
+    /// </summary>
     public string? Value { get; set; }
     public List<FlowInput> Inputs { get; protected set; } = new();
 }
-
+public enum InputMode
+{
+    Normal,
+    Option,
+    Globe,
+    Converter,
+    Event
+}
 public class FlowOutput
 {
     public required string Name { get; set; }
@@ -86,14 +102,20 @@ public class FlowOutput
     public string? ConverterName { get; set; }
     public string? InputKey { get; set; }
 
+    public OutputMode Mode { get; set; }
 
     public string? ConvertToType { get; set; }
     public required string Type { get; set; }
 
-    public required string GlobeDataName { get; set; }
+    public string? GlobeDataName { get; set; }
     public List<FlowInput> Inputs { get; protected set; } = new();
 }
-
+public enum OutputMode
+{
+    Drop,
+    Globe,
+    GlobeWithConverter,
+}
 
 public enum ErrorHandling
 {
@@ -112,30 +134,3 @@ public enum ErrorHandling
 }
 
 
-public class StepResult
-{
-    /// <summary>
-    /// 已完成
-    /// </summary>
-    public bool Complete { get; set; }
-    /// <summary>
-    /// 已开始
-    /// </summary>
-    public bool Started { get; set; }
-    /// <summary>
-    /// 暂停
-    /// </summary>
-    public bool Suspend { get; set; }
-    /// <summary>
-    /// 完成次数
-    /// </summary>
-    public int CompleteTimes { get; set; }
-    /// <summary>
-    /// 错误次数
-    /// </summary>
-    public int ErrorTimes { get; set; }
-    /// <summary>
-    /// 消耗的时间
-    /// </summary>
-    public TimeSpan? ConsumeTime { get; set; }
-}

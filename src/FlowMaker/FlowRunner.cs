@@ -3,6 +3,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Polly;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 
 namespace FlowMaker;
 
@@ -11,12 +14,44 @@ public class FlowRunner
     private readonly ILogger<FlowRunner> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly FlowMakerOption _flowMakerOption;
-
+    private Subject<ExcuteStep> ExcuteStepSubject { get; } = new();
+    private readonly Subject<Unit> _locker = new();
     public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option)
     {
         this._logger = NullLogger<FlowRunner>.Instance;
         _flowMakerOption = option.Value;
         this._serviceProvider = serviceProvider;
+        ExcuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
+        {
+            var key = c.Type + c.Type switch
+            {
+                EventType.Step => c.StepId?.ToString(),
+                EventType.Event => c.EventName,
+                EventType.Debug => c.EventName,
+                EventType.StartFlow => "",
+                _ => ""
+            };
+            if (Context.ExcuteStepIds.TryGetValue(key, out var steps))
+            {
+                foreach (var item in steps)
+                {
+                    Context.StepState[item].Waits.Remove(key);
+                    if (!Context.StepState[item].Waits.Any())
+                    {
+                        var step = Context.FlowDefinition.Steps.First(c => c.Id == item);
+
+                        _ = Run(step, CancellationTokenSource!.Token);
+                    }
+                }
+            }
+            if (Context.StepState.All(c => c.Value.Complete) && State == RunnerState.Running)
+            {
+                //全部完成
+                State = RunnerState.Stop;
+            }
+
+            _locker.OnNext(Unit.Default);
+        });
     }
     /// <summary>
     /// 全局上下文
@@ -26,7 +61,13 @@ public class FlowRunner
     protected async Task RunStep(FlowStep step, StepContext stepContext)
     {
         var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name);
+        if (stepDefinition is null)
+        {
+            throw new Exception();
+        }
         var stepObj = _serviceProvider.GetService(stepDefinition.Type);
+
+        //TODO 这里如果找不到步骤就获取所以流程,再执行流程
 
         if (stepObj is not IStep stepService || CancellationTokenSource is null)
         {
@@ -37,10 +78,10 @@ public class FlowRunner
     }
     protected async Task RunCompensateStep(Guid stepId, StepContext stepContext)
     {
-        var step = Context.FlowDefinition.Steps.FirstOrDefault(c => c.Id == stepId && c.IsCompensateStep);
+        var step = Context.FlowDefinition.Steps.FirstOrDefault(c => c.Compensate == stepId);
         if (step is null)
         {
-            throw new Exception();
+            return;
         }
 
         await RunStep(step, stepContext);
@@ -53,13 +94,13 @@ public class FlowRunner
         {
             throw new Exception();
         }
-        return await IFlowValueConverter<bool>.GetValue(converter, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
+        return await IDataConverter<bool>.GetValue(converter, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
     }
     public CancellationTokenSource? CancellationTokenSource { get; protected set; }
     public RunnerState State { get; set; }
     public void Run(FlowDefinition flowInfo)
     {
-        Context = new FlowContext(flowInfo);
+
         if (State != RunnerState.Stop)
         {
             throw new Exception("正在运行中");
@@ -70,11 +111,10 @@ public class FlowRunner
             CancellationTokenSource?.Cancel();
         }
         CancellationTokenSource = new CancellationTokenSource();
-        //初始化
-        foreach (var item in flowInfo.Steps)
-        {
-            Context.StepState.Add(item.Id, new StepResult());
-        }
+
+
+        Context = new FlowContext(flowInfo);
+        Context.InitState();
         ////设置输入
         //foreach (var item in flowInfo.Inputs)
         //{
@@ -91,7 +131,11 @@ public class FlowRunner
         //    Context.Data.Add(item.Key, item.Value);
         //}
         //执行
-        RunNext(null, CancellationTokenSource.Token);
+
+        ExcuteStepSubject.OnNext(new ExcuteStep
+        {
+            Type = EventType.StartFlow
+        });
     }
     /// <summary>
     /// 停止
@@ -104,99 +148,13 @@ public class FlowRunner
         }
         State = RunnerState.Stop;
     }
-    /// <summary>
-    /// 恢复
-    /// </summary>
-    public void Resume()
-    {
-
-    }
-    /// <summary>
-    /// 暂停
-    /// </summary>
-    /// <param name="stepId"></param>
-    public void Suspend(Guid stepId)
-    {
-        if (Context.StepState[stepId].Suspend)
-        {
-            return;
-        }
-        Context.StepState[stepId].Suspend = true;
-        Context.SuspendSteps.Add(stepId);
-    }
-
-    /// <summary>
-    /// 检查是否全部完成
-    /// </summary>
-    public void CheckComplete()
-    {
-        if (Context.StepState.All(c => c.Value.Complete) && State == RunnerState.Running)
-        {
-            //全部完成
-            State = RunnerState.Stop;
-        }
-    }
-
-    public void RunNext(Guid? preStepId, CancellationToken cancellationToken)
-    {
-        //获取所有依赖于preActionId的任务
-        var list = Context.FlowDefinition.Steps.Where(c =>
-        {
-            if (c.IsCompensateStep)
-            {
-                return false;
-            }
-            if (preStepId.HasValue)
-            {
-                return c.PreSteps.Contains(preStepId.Value) && !Context.StepState[c.Id].Started;
-            }
-            else
-            {
-                return !c.PreSteps.Any() && !Context.StepState[c.Id].Started;
-            }
-        });
-
-        foreach (var item in list)
-        {
-            bool canNext = true;
-            //确定是否满足条件
-            foreach (var preAction in item.PreSteps)
-            {
-                if (!Context.StepState[preAction].Complete)
-                {
-                    canNext = false;
-                    break;
-                }
-            }
-            if (!canNext)
-            {
-                continue;
-            }
-            //确定是否被取消
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            if (Context.StepState[item.Id].Started)//已经开始执行了，不再执行
-            {
-                return;
-            }
-            if (Context.StepState[item.Id].Suspend)//已经暂停了，不再执行
-            {
-                return;
-            }
-            Context.StepState[item.Id].Started = true;
-            //执行
-            _ = Run(item, cancellationToken);
-        }
-    }
 
     private async Task Run(FlowStep step, CancellationToken cancellationToken)
     {
         DateTime start = DateTime.Now;
         try
         {
-            StepContext stepContext = new StepContext();
+            StepContext stepContext = new();
             //超时策略
             var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(step.TimeOut), Polly.Timeout.TimeoutStrategy.Pessimistic);
             //重试策略
@@ -207,12 +165,7 @@ public class FlowRunner
             //回退策略
             var fallbackPolicy = Policy.Handle<Exception>().FallbackAsync(async c =>
             {
-                if (!step.Compensate.HasValue)
-                {
-                    return;
-                }
-
-                await RunCompensateStep(step.Compensate.Value, stepContext);
+                await RunCompensateStep(step.Id, stepContext);
             });
 
             //组合策略
@@ -220,22 +173,29 @@ public class FlowRunner
 
             for (int i = 0; i < step.Repeat; i++)//重复执行
             {
-                foreach (var item2 in step.If)
+                stepContext.CurrentIndex = i;
+                foreach (var item2 in step.Ifs)
                 {
                     var result = await CheckStep(item2.Key, cancellationToken);
                     if (result != item2.Value)
                     {
+                        Context.StepState[step.Id].Complete = true;
+                        ExcuteStepSubject.OnNext(new ExcuteStep
+                        {
+                            Type = EventType.Step,
+                            StepId = step.Id,
+                        });
                         continue;
                     }
                 }
                 try
                 {
                     await policyWrap.ExecuteAsync(async c => await RunStep(step, stepContext), cancellationToken);
-                    Context.StepState[step.Id].CompleteTimes++;
+                    Context.StepState[step.Id].Results.Add(true);
                 }
                 catch (Exception e)
                 {
-                    Context.StepState[step.Id].ErrorTimes++;
+                    Context.StepState[step.Id].Results.Add(false);
                     switch (step.ErrorHandling)
                     {
                         case ErrorHandling.Skip:
@@ -256,19 +216,46 @@ public class FlowRunner
             Context.StepState[step.Id].Complete = true;
             Context.StepState[step.Id].ConsumeTime = DateTime.Now - start;
 
-            CheckComplete();
             //执行下一步
-            RunNext(step.Id, cancellationToken);
+            ExcuteStepSubject.OnNext(new ExcuteStep
+            {
+                Type = EventType.Step,
+                StepId = step.Id,
+            });
         }
 
         catch (Exception e)
         {
             Context.StepState[step.Id].ConsumeTime = DateTime.Now - start;
-
         }
     }
-}
 
+
+}
+/// <summary>
+/// 事件
+/// </summary>
+public class ExcuteStep
+{
+    public EventType Type { get; set; }
+    public Guid? StepId { get; set; }
+    public string? EventName { get; set; }
+    public string? EventData { get; set; }
+}
+/// <summary>
+/// 事件类型
+/// </summary>
+public enum EventType
+{
+    Step,
+    Event,
+    EventData,
+    Debug,
+    StartFlow,
+}
+/// <summary>
+/// 步骤运行状态
+/// </summary>
 public enum RunnerState
 {
     Running,

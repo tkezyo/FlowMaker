@@ -7,14 +7,20 @@ namespace FlowMaker;
 
 public interface IStep
 {
+    /// <summary>
+    /// 类别
+    /// </summary>
     static abstract string Category { get; }
+    /// <summary>
+    /// 名称
+    /// </summary>
     static abstract string Name { get; }
     static abstract StepDefinition GetDefinition();
-    protected Task Run(FlowContext context, StepContext stepContext, FlowStep step,  CancellationToken cancellationToken);
+    Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken);
     Task WrapAsync(FlowContext context, StepContext stepContext, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
-public interface IFlowValueConverter
+public interface IDataConverter
 {
     static abstract string Category { get; }
     static abstract string Name { get; }
@@ -33,7 +39,7 @@ public interface IFlowValueConverter
                 throw new InvalidOperationException();
             }
             var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
-            if (converterObj is IFlowValueConverter converter)
+            if (converterObj is IDataConverter converter)
             {
                 output.Inputs.RemoveAll(x => x.Name == output.InputKey);
                 output.Inputs.Add(new FlowInput
@@ -41,7 +47,7 @@ public interface IFlowValueConverter
                     Id = Guid.NewGuid(),
                     Name = output.InputKey,
                     Value = valueStr,
-                    UseGlobeData = false,
+                    Mode = InputMode.Normal,
                     ConverterCategory = null,
                     ConverterName = null
                 });
@@ -61,9 +67,9 @@ public interface IFlowValueConverter
         }
     }
 }
-public interface IFlowValueConverter<T> : IFlowValueConverter
+public interface IDataConverter<T> : IDataConverter
 {
-    protected Task<T> Convert(FlowContext context, IReadOnlyList<FlowInput> inputs, CancellationToken cancellationToken);
+    Task<T> Convert(FlowContext context, CancellationToken cancellationToken);
     Task<T> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 
     public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
@@ -78,7 +84,7 @@ public interface IFlowValueConverter<T> : IFlowValueConverter
                 throw new InvalidOperationException();
             }
             var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
-            if (converterObj is IFlowValueConverter<T> converter)
+            if (converterObj is IDataConverter<T> converter)
             {
                 return await converter.WrapAsync(context, input.Inputs, serviceProvider, cancellationToken);
             }
@@ -89,7 +95,7 @@ public interface IFlowValueConverter<T> : IFlowValueConverter
         }
         else
         {
-            if (input.UseGlobeData && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
+            if (input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
             {
                 return convert.Invoke(data.Value ?? string.Empty);
             }

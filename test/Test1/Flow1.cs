@@ -1,23 +1,28 @@
 ﻿using FlowMaker;
 using FlowMaker.Models;
+using System.ComponentModel;
 
 namespace Test1;
 
-[FlowStep(nameof(Test1), "流程1")]
-public partial class Flow1
+public partial class Flow1 : IStep
 {
-    [Input("Prop1")]
+    public static string Category => "Test1";
+
+    public static string Name => "Flow1";
+
+    [Input]
     public int Prop1 { get; set; }
     [DefaultValue("1")]
-    [Input("Prop2")]
+    [Input]
+    [DisplayName("123sdfasef")]
     [Option("123", "3")]
     [Option("234", "34")]
     public int Prop2 { get; set; }
 
-    [Output("333")]
+    [Output]
     public int Prop3 { get; set; }
 
-    [Input("123")]
+    [Input]
     public Data1? Data { get; set; }
 
     /// <summary>
@@ -36,15 +41,18 @@ public class Data1
 
 }
 
-[FlowConverter<int>(nameof(Test1), "流程1")]
-public partial class ValueConverter
+public partial class ValueConverter : IDataConverter<int>
 {
-    [Input("双方1")]
+    public static string Category => "Test1";
+
+    public static string Name => "转换器1";
+
+    [Input]
     public int Prop1 { get; set; }
-    [Input("问1")]
+    [Input]
     public int Prop2 { get; set; }
 
-    public async Task<int> Convert(FlowContext context, IReadOnlyList<FlowInput> inputs, CancellationToken cancellationToken)
+    public async Task<int> Convert(FlowContext context, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
         return Prop1 + Prop2;

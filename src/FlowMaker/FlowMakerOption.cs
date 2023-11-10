@@ -54,7 +54,7 @@ public static class FlowMakerExtention
         });
     }
     public static void AddFlowConverter<T>(this IServiceCollection serviceDescriptors)
-        where T : class, IFlowValueConverter
+        where T : class, IDataConverter
     {
         serviceDescriptors.AddTransient<T>();
         serviceDescriptors.Configure<FlowMakerOption>(c =>
