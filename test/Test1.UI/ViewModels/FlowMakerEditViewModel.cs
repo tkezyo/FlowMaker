@@ -9,11 +9,14 @@ using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.DependencyInjection;
@@ -201,11 +204,21 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
             }
             flowDefinition.Datas.Add(data);
         }
-        await Task.CompletedTask;
+        if (!Directory.Exists(Path.Combine("Flows", Category)))
+        {
+            Directory.CreateDirectory(Path.Combine("Flows", Category));
+        }
+
+        await File.WriteAllTextAsync(Path.Combine("Flows", Category, Name + ".json"), JsonSerializer.Serialize(flowDefinition, options: new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
+            WriteIndented = true,
+        }));
+
     }
     public async Task Load(string category, string name)
     {
-        string json = "";
+        string json = await File.ReadAllTextAsync(Path.Combine("Flows", category, name + ".json"));
         var flowDefinition = JsonSerializer.Deserialize<FlowDefinition>(json);
         if (flowDefinition is null)
         {
@@ -295,9 +308,9 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
                         break;
                 }
             }
+            Steps.Add(flowStepViewModel);
         }
-
-        await Task.CompletedTask;
+        Render();
     }
 
     #region Steps

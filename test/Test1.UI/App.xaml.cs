@@ -30,7 +30,7 @@ public partial class App : Application
     protected override async void OnStartup(StartupEventArgs e)
     {
         MainWindow = new MainWindow();
-        MainWindow.DataContext = new MainWindowViewModel() { Title = "流程设计" };
+        MainWindow.DataContext = new MainWindowViewModel() { Title = "牛马指挥官" };
         MainWindow.Show();
 
         List<LogFilter> filters = new List<LogFilter>();

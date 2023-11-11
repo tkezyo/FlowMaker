@@ -65,13 +65,13 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <ToolBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
-            <Button Content="保存" Style="{StaticResource ButtonSuccess}"/>
+            <Button Content="保存" Style="{StaticResource ButtonSuccess}" Command="{Binding SaveCommand}"/>
             <Separator Margin="10,0"/>
             <TextBox Text="{Binding Category}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="类别:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <TextBox Text="{Binding Name}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="名称:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <Separator Margin="10,0"/>
-            <Button Margin="4,0" Command="{Binding CreateCommand}">创建步骤</Button>
-            <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除步骤" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
+            <Button Margin="4,0" Command="{Binding CreateCommand}">创建牛马</Button>
+            <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除牛马" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
             <Button  Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}"  ></Button>
             <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}"  ></Button>
             <Separator Margin="10,0"/>
@@ -82,7 +82,8 @@
             <Button Command="{Binding CreateGlobeDataCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showData}">创建变量</Button>
 
         </ToolBar>
-        <ScrollViewer x:Name="viewer" Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
+        <ScrollViewer x:Name="viewer"
+                      Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
             <Grid  Margin="2" >
                 <ItemsControl ItemsSource="{Binding Steps}" x:Name="gantee"  VerticalAlignment="Top" AlternationCount="{Binding Steps.Count}">
                     <ItemsControl.ItemsPanel>
@@ -98,7 +99,7 @@
                 RelativeSource={RelativeSource Mode=TemplatedParent}}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" Width="30">
                                 </TextBlock>
                                 <Button 
-                                    Width="20" Height="20" Margin="5" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}">
+                                    Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
                                             <Style.Triggers>
@@ -110,7 +111,7 @@
                                     </Button.Style>
                                 </Button>
                                 <Button 
-                                    Width="20" Height="20" Margin="5" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}">
+                                    Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
                                             <Style.Triggers>
@@ -141,7 +142,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <ItemsControl Margin="90,0,0,0"  VerticalAlignment="Stretch" ItemsSource="{Binding DateAxis}">
+                <ItemsControl Margin="72,0,0,0"  VerticalAlignment="Stretch" ItemsSource="{Binding DateAxis}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Grid></Grid>
@@ -228,8 +229,8 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                     <StackPanel>
                         <TextBox Text="{Binding FlowStep.DisplayName,UpdateSourceTrigger=PropertyChanged}" hc:InfoElement.Title="显示名称" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                            <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="步骤分组"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
-                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding StepDefinitions}" hc:InfoElement.Title="步骤" SelectedValue="{Binding FlowStep.Name}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                            <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="分组"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
+                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding StepDefinitions}" hc:InfoElement.Title="名称" SelectedValue="{Binding FlowStep.Name}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
                         </StackPanel>
                         <TextBox Text="{Binding FlowStep.TimeOut}" hc:InfoElement.Title="超时时间" />
                         <TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />

@@ -13,14 +13,15 @@ namespace Test1.ViewModels
     {
         public FlowMakerListViewModel()
         {
-            CreateCommand = ReactiveCommand.Create(Create);
+            CreateCommand = ReactiveCommand.CreateFromTask(Create);
         }
 
         public ReactiveCommand<Unit, Unit> CreateCommand { get; }
-        public void Create()
+        public async Task Create()
         {
             var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
-            MessageBox.Window.Handle(new FlowMaker.Services.ModalInfo("", vm) { OwnerTitle = null }).Subscribe();
+            await vm.Load("士大夫", "fwe");
+            MessageBox.Window.Handle(new FlowMaker.Services.ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).Subscribe();
             //HostScreen.Router.Navigate.Execute(Navigate<FlowMakerEditViewModel>(HostScreen));
         }
     }
