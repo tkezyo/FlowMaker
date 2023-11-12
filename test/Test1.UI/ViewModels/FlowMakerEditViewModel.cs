@@ -15,7 +15,6 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.Unicode;
 using System.Threading.Tasks;
 using Volo.Abp;
@@ -84,6 +83,7 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
     public string? Category { get; set; }
     [Reactive]
     public string? Name { get; set; }
+
 
     public ReactiveCommand<Unit, Unit> SaveCommand { get; }
     public async Task Save()
@@ -895,6 +895,13 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
 
 }
 
+
+public enum FlowEditMode
+{
+    Serial,
+    Tree,
+    Gantt,
+}
 public class StepDataDefinitionViewModel : ReactiveObject
 {
     public StepDataDefinitionViewModel()
