@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net7.0-windows10.0.17763</TargetFramework>
+		<TargetFramework>net8.0-windows10.0.17763</TargetFramework>
 		<Nullable>enable</Nullable>
 		<UseWPF>true</UseWPF>
 		<RootNamespace>Test1</RootNamespace>
@@ -10,9 +10,6 @@
 
 	<ItemGroup>
 		<PackageReference Include="Volo.Abp.Autofac" Version="7.4.0" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.0" />
 		<PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
 		<PackageReference Include="Serilog.Extensions.Logging" Version="3.1.0" />

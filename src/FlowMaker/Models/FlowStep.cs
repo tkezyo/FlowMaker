@@ -22,11 +22,11 @@ public class FlowStep
     /// <summary>
     /// 输入
     /// </summary>
-    public List<FlowInput> Inputs { get; set; } = new();
+    public List<FlowInput> Inputs { get; set; } = [];
     /// <summary>
     /// 输出
     /// </summary>
-    public List<FlowOutput> Outputs { get; set; } = new();
+    public List<FlowOutput> Outputs { get; set; } = [];
 
     /// <summary>
     /// 超时,秒
@@ -56,12 +56,12 @@ public class FlowStep
     /// <summary>
     /// 是否可执行，同时可作为Break的条件
     /// </summary>
-    public Dictionary<Guid, bool> Ifs { get; set; } = new();
-    public List<FlowInput> Checkers { get; set; } = new();
+    public Dictionary<Guid, bool> Ifs { get; set; } = [];
+    public List<FlowInput> Checkers { get; set; } = [];
     /// <summary>
     /// 等待事件
     /// </summary>
-    public List<FlowWait> WaitEvents { get; set; } = new();
+    public List<FlowWait> WaitEvents { get; set; } = [];
 }
 
 public class FlowWait
@@ -84,7 +84,7 @@ public class FlowInput
     /// Globe模式下为全局变量, 普通或选项为具体的值,Wait为事件名称
     /// </summary>
     public string? Value { get; set; }
-    public List<FlowInput> Inputs { get; protected set; } = new();
+    public List<FlowInput> Inputs { get;  set; } = [];
 }
 public enum InputMode
 {
@@ -108,7 +108,7 @@ public class FlowOutput
     public required string Type { get; set; }
 
     public string? GlobeDataName { get; set; }
-    public List<FlowInput> Inputs { get; protected set; } = new();
+    public List<FlowInput> Inputs { get;  set; } = [];
 }
 public enum OutputMode
 {

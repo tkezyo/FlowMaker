@@ -19,13 +19,23 @@ namespace FlowMaker.Services
     {
         public string? OwnerTitle { get; set; }
         public string? Title { get; set; }
-        public required string Message { get; set; }
+        public  string Message { get; set; }
+
+        public AlertInfo(string message)
+        {
+            Message = message;
+        }
     }
     public class ConformInfo
     {
         public string? OwnerTitle { get; set; }
         public string? Title { get; set; }
-        public required string Message { get; set; }
+        public  string Message { get; set; }
+
+        public ConformInfo(string message)
+        {
+            Message = message;
+        }
     }
     public class OpenFilesInfo
     {
@@ -45,8 +55,15 @@ namespace FlowMaker.Services
     }
     public class PromptInfo
     {
+        
         public string? OwnerTitle { get; set; }
-        public required string Title { get; set; }
+        public  string Title { get; set; }
+
+        public PromptInfo(string title)
+        {
+            Title = title;
+        }
+
         public string? DefautValue { get; set; }
     }
     public class PromptResult

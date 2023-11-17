@@ -1,6 +1,16 @@
 ﻿namespace FlowMaker.Models;
 
-public class FlowDefinition
+public interface IStepDefinition
+{
+    string Category { get; set; }
+    /// <summary>
+    /// 名称
+    /// </summary>
+    string DisplayName { get; }
+    string Name { get; set; }
+    List<StepDataDefinition> Datas { get; set; }
+}
+public class FlowDefinition : IStepDefinition
 {
     /// <summary>
     /// 同一个流程里可以保护多个子流程
@@ -10,13 +20,14 @@ public class FlowDefinition
     /// 子流程名称,如果为空代表是主流程
     /// </summary>
     public required string Name { get; set; }
+    public string DisplayName => Name;
 
-    public List<FlowStep> Steps { get; set; } = new();
-    public List<FlowInput> Checkers { get; set; } = new();
+    public List<FlowStep> Steps { get; set; } = [];
+    public List<FlowInput> Checkers { get; set; } = [];
 
-    public List<StepDataDefinition> Datas { get; set; } = new();
+    public List<StepDataDefinition> Datas { get; set; } = [];
 }
-public class StepDefinition
+public class StepDefinition : IStepDefinition
 {
     public required string Category { get; set; }
     /// <summary>
@@ -25,7 +36,7 @@ public class StepDefinition
     public required string DisplayName { get; set; }
     public required string Name { get; set; }
     public required Type Type { get; set; }
-    public List<StepDataDefinition> Datas { get; set; } = new();
+    public List<StepDataDefinition> Datas { get; set; } = [];
 }
 public class ConverterDefinition
 {
@@ -33,7 +44,7 @@ public class ConverterDefinition
     public required string DisplayName { get; set; }
     public required string Name { get; set; }
     public required Type Type { get; set; }
-    public List<StepDataDefinition> Inputs { get; set; } = new();
+    public List<StepDataDefinition> Inputs { get; set; } = [];
     public required string Output { get; set; }
 }
 public class StepDataDefinition

@@ -27,7 +27,7 @@ namespace FlowMaker.ViewModels
             UrlPathSegment = "Layout";
             foreach (var item in _kHToolOptions.Tools)
             {
-                var tool = new ToolViewModel { DisplayName = item.DisplayName, Name = item.Name, Show = true };
+                var tool = new ToolViewModel(item.DisplayName, item.Name) { Show = true };
                 if (item.Color.HasValue)
                 {
                     tool.Color = item.Color.Value;
@@ -161,12 +161,19 @@ namespace FlowMaker.ViewModels
         /// 显示名称
         /// </summary>
         [Reactive]
-        public required string DisplayName { get; set; }
+        public string DisplayName { get; set; }
+
+        public ToolViewModel(string displayName, string name)
+        {
+            DisplayName = displayName;
+            Name = name;
+        }
+
         /// <summary>
         /// 名称
         /// </summary>
         [Reactive]
-        public required string Name { get; set; }
+        public string Name { get; set; }
         /// <summary>
         /// 图标
         /// </summary>

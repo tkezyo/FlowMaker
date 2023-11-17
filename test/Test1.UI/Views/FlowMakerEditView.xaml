@@ -51,6 +51,7 @@
                     <Setter Property="Background" Value="SkyBlue"/>
                 </DataTrigger>
             </Style.Triggers>
+
         </Style>
     </UserControl.Resources>
     <Grid>
@@ -189,34 +190,34 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <GroupBox Header="{Binding DisplayName}">
-                            
-                        <StackPanel Margin="5">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBox Text="{Binding Type}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="类型" Style="{StaticResource TextBoxExtend.Small}"/>
-                                <TextBox Text="{Binding Name}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
 
-                                <Button VerticalAlignment="Bottom" Content="删除" Command="{Binding DataContext.RemoveGlobeDataCommand,RelativeSource={RelativeSource AncestorType=ItemsControl,Mode=FindAncestor}}" Visibility="{Binding IsStepOutput,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDanger.Small}"/>
+                            <StackPanel Margin="5">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Text="{Binding Type}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="类型" Style="{StaticResource TextBoxExtend.Small}"/>
+                                    <TextBox Text="{Binding Name}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
+
+                                    <Button VerticalAlignment="Bottom" Content="删除" Command="{Binding DataContext.RemoveGlobeDataCommand,RelativeSource={RelativeSource AncestorType=ItemsControl,Mode=FindAncestor}}" Visibility="{Binding IsStepOutput,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}"/>
+                                </StackPanel>
+                                <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Content="输入" IsChecked="{Binding IsInput}"/>
+                                    <CheckBox Content="输出" IsChecked="{Binding IsOutput}"/>
+                                </StackPanel>
+                                <TextBox Text="{Binding DefaultValue}" hc:TitleElement.Title="默认值" Style="{StaticResource TextBoxExtend.Small}" Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                <Button HorizontalAlignment="Left" Command="{Binding AddOptionCommand}" Content="添加选项" Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource ButtonPrimary.Small}"/>
+                                <ItemsControl ItemsSource="{Binding Options}"  Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                                <TextBox Text="{Binding Name}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                                <Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Separator  Margin="0,10"/>
                             </StackPanel>
-                            <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
-                            <StackPanel Orientation="Horizontal">
-                                <CheckBox Content="输入" IsChecked="{Binding IsInput}"/>
-                                <CheckBox Content="输出" IsChecked="{Binding IsOutput}"/>
-                            </StackPanel>
-                            <TextBox Text="{Binding DefaultValue}" hc:TitleElement.Title="默认值" Style="{StaticResource TextBoxExtend.Small}" Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                            <Button HorizontalAlignment="Left" Command="{Binding AddOptionCommand}" Content="添加选项" Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource ButtonPrimary.Small}"/>
-                            <ItemsControl ItemsSource="{Binding Options}"  Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
-                                            <TextBox Text="{Binding Name}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
-                                            <Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <Separator  Margin="0,10"/>
-                        </StackPanel>
                         </GroupBox>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -230,8 +231,10 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                         <TextBox Text="{Binding FlowStep.DisplayName,UpdateSourceTrigger=PropertyChanged}" hc:InfoElement.Title="显示名称" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                             <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="分组"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
-                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding StepDefinitions}" hc:InfoElement.Title="名称" SelectedValue="{Binding FlowStep.Name}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}" hc:InfoElement.Title="名称" SelectedValue="{Binding FlowStep.Name}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
+                            <Button Visibility="{Binding FlowStep.IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
                         </StackPanel>
+                      
                         <TextBox Text="{Binding FlowStep.TimeOut}" hc:InfoElement.Title="超时时间" />
                         <TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
                         <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />
@@ -272,7 +275,7 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                                         <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding InputKeys}" hc:InfoElement.Title="属性" SelectedValue="{Binding InputKey}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
 
                                     </StackPanel>
-                                    <ItemsControl ItemsSource="{Binding AllInputs}">
+                                    <ItemsControl ItemsSource="{Binding Inputs}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
                                                 <controls:FlowInputView FlowInput="{Binding .}" />
@@ -301,7 +304,7 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                 </GroupBox>
                 <GroupBox Header="执行条件">
                     <StackPanel>
-                        <Button Command="{Binding LoadIfCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left">载入</Button>
+                        <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left">载入</Button>
                         <ItemsControl ItemsSource="{Binding FlowStep.Ifs}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

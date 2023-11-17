@@ -1,6 +1,5 @@
 ﻿using FlowMaker.ViewModels;
 using Volo.Abp.Autofac;
-using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 using Volo.Abp.ObjectMapping;
 using Volo.Abp.UI.Navigation;
@@ -10,7 +9,6 @@ namespace FlowMaker
     [DependsOn(
         typeof(AbpObjectMappingModule),
         typeof(AbpAutofacModule),
-        typeof(AbpAutoMapperModule),
         typeof(AbpUiNavigationModule)
         )]
     public class FlowMakerUIBaseModule : AbpModule

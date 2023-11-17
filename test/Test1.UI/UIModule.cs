@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 
@@ -13,6 +14,7 @@ public class UIModule : AbpModule
         context.Services.AddFlowStep<Flow1>();
         context.Services.AddFlowStep<Flow2>();
         context.Services.AddFlowConverter<ValueConverter>();
+        context.Services.AddSingleton<FlowManager>();
         Configure<ViewForMatch>(options =>
         {
             options.Add(Test1UIViewLocatorMatcher.Match);

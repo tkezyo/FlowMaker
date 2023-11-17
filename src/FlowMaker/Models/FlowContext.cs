@@ -15,11 +15,11 @@ public class FlowContext
             {
                 continue;
             }
-            if (!item.WaitEvents.Any())
+            if (item.WaitEvents.Count == 0)
             {
                 if (!ExcuteStepIds.TryGetValue(EventType.StartFlow.ToString(), out var list))
                 {
-                    list = new List<Guid>();
+                    list = [];
                     ExcuteStepIds.Add(EventType.StartFlow.ToString(), list);
                 }
                 list.Add(item.Id);
@@ -34,7 +34,7 @@ public class FlowContext
                         var key = flowInput.Mode + flowInput.Value;
                         if (!ExcuteStepIds.TryGetValue(key, out var list))
                         {
-                            list = new List<Guid>();
+                            list = [];
                             ExcuteStepIds.Add(key, list);
                         }
                         list.Add(flowInput.Id);
@@ -59,7 +59,7 @@ public class FlowContext
 
                 if (!ExcuteStepIds.TryGetValue(key, out var list))
                 {
-                    list = new List<Guid>();
+                    list = [];
                     ExcuteStepIds.Add(key, list);
                 }
                 list.Add(item.Id);
@@ -100,8 +100,8 @@ public class FlowContext
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
-    public Dictionary<Guid, StepResult> StepState { get; protected set; } = new();
-    public Dictionary<string, List<Guid>> ExcuteStepIds { get; } = new();
+    public Dictionary<Guid, StepResult> StepState { get; protected set; } = [];
+    public Dictionary<string, List<Guid>> ExcuteStepIds { get; } = [];
 
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
 
@@ -114,19 +114,12 @@ public class StepContext
     public string? DisplayName { get; set; }
 }
 
-public class FlowGlobeData
+public class FlowGlobeData(string name, string type, string value)
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = name;
 
-    public FlowGlobeData(string name, string type, string value)
-    {
-        Name = name;
-        Type = type;
-        Value = value;
-    }
-
-    public string Type { get; set; }
-    public string Value { get; set; }
+    public string Type { get; set; } = type;
+    public string Value { get; set; } = value;
 }
 public class StepResult
 {
@@ -142,11 +135,11 @@ public class StepResult
     /// 暂停
     /// </summary>
     public bool Suspend { get; set; }
-    public List<bool> Results { get; set; } = new();
+    public List<bool> Results { get; set; } = [];
 
     /// <summary>
     /// 消耗的时间
     /// </summary>
     public TimeSpan? ConsumeTime { get; set; }
-    public List<string> Waits { get; set; } = new();
+    public List<string> Waits { get; set; } = [];
 }

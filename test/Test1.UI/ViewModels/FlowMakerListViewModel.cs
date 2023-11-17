@@ -20,7 +20,8 @@ namespace Test1.ViewModels
         public async Task Create()
         {
             var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
-            await vm.Load("士大夫", "fwe");
+            await vm.Load();
+            await Task.CompletedTask;
             MessageBox.Window.Handle(new FlowMaker.Services.ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).Subscribe();
             //HostScreen.Router.Navigate.Execute(Navigate<FlowMakerEditViewModel>(HostScreen));
         }

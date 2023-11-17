@@ -29,6 +29,7 @@
     <StackPanel Margin="0,0,10,0" IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
         <StackPanel Orientation="Horizontal">
             <TextBlock Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityReConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+            <TextBox Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称"></TextBox>
             <TextBlock VerticalAlignment="Bottom" Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" ></TextBlock>
             <RadioButton Content="普通" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
             <RadioButton Content="选项" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Option}}" GroupName="{Binding Id}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
@@ -41,7 +42,7 @@
 
         <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Option}}" ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
 
-        <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="Name" />
+        <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
 
         <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
 

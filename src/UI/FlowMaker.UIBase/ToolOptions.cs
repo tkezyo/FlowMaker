@@ -10,8 +10,6 @@ namespace FlowMaker
     }
     public class ToolInfo
     {
-        public required string DisplayName { get; set; }
-        [SetsRequiredMembers]
         public ToolInfo(string displayName, string name, string? icon = null)
         {
             DisplayName = displayName;
@@ -23,7 +21,9 @@ namespace FlowMaker
         public IObservable<Color?>? ChangeColor { get; set; }
         public IObservable<string>? ChangeIcon { get; set; }
         public IObservable<string>? ChangeDisplayName { get; set; }
-        public required string Name { get; set; }
+
+        public string Name { get; set; }
+        public string DisplayName { get; set; }
         public string? Icon { get; set; }
         public Color? Color { get; set; }
         public List<ToolInfo> Children { get; set; } = new List<ToolInfo>();
