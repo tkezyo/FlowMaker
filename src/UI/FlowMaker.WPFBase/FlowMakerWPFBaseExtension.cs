@@ -8,7 +8,7 @@ namespace FlowMaker
 {
     public static class FlowMakerWPFBaseExtension
     {
-        public static void AddViews(this IServiceCollection services)
+        public static void AddBaseViews(this IServiceCollection services)
         {
             services.AddSingleton<IMessageBoxManager, MessageBoxManager>();
 

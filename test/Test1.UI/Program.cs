@@ -1,17 +1,11 @@
 ﻿using FlowMaker;
-using FlowMaker.ViewModels;
 using FlowMaker.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ReactiveUI;
 using Serilog;
 using Serilog.Events;
 using System;
-using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
 using Test1.UI;
 using Test1.ViewModels;
 using Test1.Views;
@@ -46,7 +40,7 @@ namespace Test1
                 services.AddHostedService<WpfHostedService<App, MainWindow>>();
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
-                services.AddViews();
+                services.AddBaseViews();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
 
@@ -72,34 +66,6 @@ namespace Test1
                 host.Start();
                 host.WaitForShutdown();
             }
-        }
-    }
-
-    class WpfHostedService<TApplication, TMainWindow> : IHostedService
-        where TApplication : Application
-        where TMainWindow : Window
-    {
-        public WpfHostedService(TApplication application, TMainWindow mainWindow, IHostApplicationLifetime hostApplicationLifetime)
-        {
-            this.application = application;
-            this.mainWindow = mainWindow;
-            hostApplicationLifetime.ApplicationStopping.Register(application.Shutdown);
-        }
-
-        private readonly TApplication application;
-        private readonly TMainWindow mainWindow;
-
-        public Task StartAsync(CancellationToken cancellationToken)
-        {
-            application.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            application.Run(mainWindow);
-          
-            return Task.CompletedTask;
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken)
-        {
-            return Task.CompletedTask;
         }
     }
 }
