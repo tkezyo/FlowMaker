@@ -5,24 +5,19 @@ using System.Collections.ObjectModel;
 using System.Drawing;
 using System.Reactive;
 using System.Reactive.Linq;
-using Volo.Abp.DependencyInjection;
-using Volo.Abp.UI.Navigation;
 
 namespace FlowMaker.ViewModels
 {
-    public class LayoutViewModel : RoutableViewModelBase, IScreen, ISingletonDependency
+    public class LayoutViewModel : ViewModelBase, IScreen
     {
-        protected readonly IMenuManager _menuManager;
         protected readonly ToolOptions _kHToolOptions;
 
         public RoutingState Router { get; } = new RoutingState(RxApp.MainThreadScheduler);
 
-        public LayoutViewModel(IMenuManager menuManager, IOptions<ToolOptions> options)
+        public LayoutViewModel(IOptions<ToolOptions> options)
         {
-            _menuManager = menuManager;
             _kHToolOptions = options.Value;
             ShowThemeToggle = _kHToolOptions.ShowThemeToggle;
-            NaviCommand = ReactiveCommand.Create<ApplicationMenuItem>(Navi);
             ToolCommand = ReactiveCommand.CreateFromTask<string>(ToolExcute);
             UrlPathSegment = "Layout";
             foreach (var item in _kHToolOptions.Tools)
@@ -70,14 +65,10 @@ namespace FlowMaker.ViewModels
                 if (!string.IsNullOrWhiteSpace(c.UrlPathSegment))
                 {
                     CurrentPage = c.UrlPathSegment;
-                    LoadSubMenu(CurrentPage);
                 }
             });
         }
-        public override async Task Activate()
-        {
-            await LoadMenu();
-        }
+
         /// <summary>
         /// 显示切换主题按钮
         /// </summary>
@@ -95,64 +86,12 @@ namespace FlowMaker.ViewModels
             MessageBus.Current.SendMessage(nameValue, "Tool");
         }
 
-        [Reactive]
-        public ObservableCollection<ApplicationMenuItem> Menus { get; set; } = new ObservableCollection<ApplicationMenuItem>();
-        [Reactive]
-        public ObservableCollection<ApplicationMenuItem> SubMenus { get; set; } = new ObservableCollection<ApplicationMenuItem>();
-        protected ApplicationMenu? _applicationMenu;
-        public virtual async Task LoadMenu()
-        {
-            _applicationMenu = await _menuManager.GetMainMenuAsync();
-            Menus.Clear();
-            foreach (var item in _applicationMenu.Items.OrderBy(c => c.Order))
-            {
-                Menus.Add(item);
-            }
-            if (string.IsNullOrEmpty(CurrentPage) && Menus.Any())
-            {
-                Navi(Menus.First());
-            }
-        }
-        public ReactiveCommand<ApplicationMenuItem, Unit> NaviCommand { get; }
-
         /// <summary>
         /// 当前页面名称
         /// </summary>
         [Reactive]
         public string? CurrentPage { get; set; }
-        public virtual void Navi(ApplicationMenuItem menu)
-        {
-            if (menu.CustomData.TryGetValue("type", out var type))
-            {
-                Router.NavigateAndReset.Execute(Navigate((Type)type, this, menu.Name));
-            }
-            else
-            {
-                if (menu.Items.Any())
-                {
-                    Router.NavigateAndReset.Execute(Navigate((Type)menu.Items[0].CustomData["type"], this, menu.Items[0].Name));
-                }
-                else
-                {
-                    Router.NavigationStack.Clear();
-                }
-            }
-        }
 
-
-        public void LoadSubMenu(string menu)
-        {
-            //如果是主菜单,则加载子菜单
-            var m = _applicationMenu?.Items.FirstOrDefault(v => v.Name == menu || v.FindMenuItem(menu) is not null);
-            if (m is not null)
-            {
-                SubMenus.Clear();
-                foreach (var item in m.Items.OrderBy(c => c.Order))
-                {
-                    SubMenus.Add(item);
-                }
-            }
-        }
     }
 
     public class ToolViewModel : ReactiveObject

@@ -4,7 +4,7 @@ using System.Reactive;
 
 namespace FlowMaker.ViewModels
 {
-    public class PromptDialogViewModel : RoutableViewModelBase
+    public class PromptDialogViewModel : ViewModelBase
     {
         public PromptDialogViewModel()
         {

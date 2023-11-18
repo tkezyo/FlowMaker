@@ -22,9 +22,9 @@ public sealed class OptionAttribute : Attribute
     readonly string value;
 
     // This is a positional argument
-    public OptionAttribute(string displayname, string value)
+    public OptionAttribute(string displayName, string value)
     {
-        this.displayName = displayname;
+        this.displayName = displayName;
         this.value = value;
     }
 

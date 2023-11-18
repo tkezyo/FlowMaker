@@ -5,7 +5,7 @@ namespace FlowMaker;
 
 public class ViewForMatch
 {
-    private List<Func<object, IViewFor?>> match = new List<Func<object, IViewFor?>>();
+    private readonly List<Func<object, IViewFor?>> match = [];
     public IReadOnlyList<Func<object, IViewFor?>> Match => match;
 
     public void Add(Func<object, IViewFor?> func)

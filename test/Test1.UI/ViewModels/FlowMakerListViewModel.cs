@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using FlowMaker.Services;
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
@@ -9,11 +10,14 @@ using Windows.Media.Devices;
 
 namespace Test1.ViewModels
 {
-    public class FlowMakerListViewModel : RoutableViewModelBase
+    public class FlowMakerListViewModel : ViewModelBase
     {
-        public FlowMakerListViewModel()
+        private readonly IMessageBoxManager _messageBoxManager;
+
+        public FlowMakerListViewModel( IMessageBoxManager messageBoxManager)
         {
             CreateCommand = ReactiveCommand.CreateFromTask(Create);
+            this._messageBoxManager = messageBoxManager;
         }
 
         public ReactiveCommand<Unit, Unit> CreateCommand { get; }
@@ -22,7 +26,7 @@ namespace Test1.ViewModels
             var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
             await vm.Load();
             await Task.CompletedTask;
-            MessageBox.Window.Handle(new FlowMaker.Services.ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).Subscribe();
+            _messageBoxManager.Window.Handle(new FlowMaker.Services.ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).Subscribe();
             //HostScreen.Router.Navigate.Execute(Navigate<FlowMakerEditViewModel>(HostScreen));
         }
     }

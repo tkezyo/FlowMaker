@@ -5,29 +5,42 @@ using System.Text.Json;
 
 namespace FlowMaker;
 
-public interface IStep
+public interface IStep : IStepInject
 {
     /// <summary>
     /// 类别
     /// </summary>
-    static abstract string Category { get; }
+    static abstract string Category { get; } 
     /// <summary>
     /// 名称
     /// </summary>
     static abstract string Name { get; }
     static abstract StepDefinition GetDefinition();
+}
+
+public interface IStepInject
+{
     Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken);
     Task WrapAsync(FlowContext context, StepContext stepContext, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
-public interface IDataConverter
+
+public interface IDataConverter : IDataConverterInject
 {
     static abstract string Category { get; }
     static abstract string Name { get; }
     static abstract ConverterDefinition GetDefinition();
+}
+public interface IDataConverterInject
+{
     Task<string> GetStringResultAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+
     public static async Task SetValue<TValue>(FlowOutput output, TValue value, IServiceProvider serviceProvider, FlowContext context, CancellationToken cancellationToken)
     {
+        if (output.Mode == OutputMode.Drop)
+        {
+            return;
+        }
         var valueStr = JsonSerializer.Serialize(value);
         if (!string.IsNullOrEmpty(output.ConverterCategory) && !string.IsNullOrEmpty(output.ConverterName) && !string.IsNullOrEmpty(output.InputKey))
         {
@@ -38,7 +51,7 @@ public interface IDataConverter
             {
                 throw new InvalidOperationException();
             }
-            var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
+            var converterObj = serviceProvider.GetRequiredKeyedService<IDataConverterInject>(converterDefinition.Category + ":" + converterDefinition.Name);
             if (converterObj is IDataConverter converter)
             {
                 output.Inputs.RemoveAll(x => x.Name == output.InputKey);
@@ -83,7 +96,7 @@ public interface IDataConverter<T> : IDataConverter
             {
                 throw new InvalidOperationException();
             }
-            var converterObj = serviceProvider.GetRequiredService(converterDefinition.Type);
+            var converterObj = serviceProvider.GetKeyedService<IDataConverterInject>(converterDefinition.Category + ":" + converterDefinition.Name);
             if (converterObj is IDataConverter<T> converter)
             {
                 return await converter.WrapAsync(context, input.Inputs, serviceProvider, cancellationToken);

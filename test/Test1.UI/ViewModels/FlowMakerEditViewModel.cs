@@ -1,6 +1,7 @@
 ﻿using DynamicData;
 using FlowMaker;
 using FlowMaker.Models;
+using FlowMaker.Services;
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -17,18 +18,16 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
 using System.Threading.Tasks;
-using Volo.Abp;
-using Volo.Abp.DependencyInjection;
 
 namespace Test1.ViewModels;
 
-[Dependency(ServiceLifetime.Transient)]
-public class FlowMakerEditViewModel : RoutableViewModelBase
+public class FlowMakerEditViewModel : ViewModelBase
 {
     private readonly FlowMakerOption _flowMakerOption;
     private readonly FlowManager _flowManager;
+    private readonly IMessageBoxManager _messageBoxManager;
 
-    public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager)
+    public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager)
     {
         _flowMakerOption = options.Value;
         CreateCommand = ReactiveCommand.CreateFromTask(Create);
@@ -61,6 +60,7 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
         }
 
         this._flowManager = flowManager;
+        this._messageBoxManager = messageBoxManager;
     }
     [Reactive]
     public string? Category { get; set; }
@@ -192,7 +192,7 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
             {
                 data.Options.Add(new OptionDefinition(option.DisplayName, option.Name));
             }
-            flowDefinition.Datas.Add(data);
+            flowDefinition.Data.Add(data);
         }
         if (!Directory.Exists(Path.Combine("Flows", Category)))
         {
@@ -225,7 +225,7 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
         Checkers.Clear();
         GlobeDatas.Clear();
 
-        foreach (var item in flowDefinition.Datas)
+        foreach (var item in flowDefinition.Data)
         {
             var data = new StepDataDefinitionViewModel
             {
@@ -428,7 +428,8 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
             var model = new FlowStepViewModel(this);
             model.Init();
             model.PreSteps.Add(FlowStep.Id);
-            Steps.InsertAfter(FlowStep, model);
+
+            Steps.Insert(Steps.IndexOf(FlowStep) + 1, model);
             ChangePre(FlowStep);
             ChangePre(model);
         }
@@ -453,7 +454,9 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
 
         var temp = FlowStep;
         ChangePre(FlowStep);
-        GlobeDatas.RemoveAll(c => c.FromStepId == temp.Id);
+        var deletes = GlobeDatas.Where(c => c.FromStepId == temp.Id);
+
+        GlobeDatas.RemoveMany(deletes);
 
         Steps.Remove(temp);
         Render();
@@ -583,7 +586,7 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
     }
     public void MoveAction(FlowStepViewModel action, bool up)
     {
-        var oldIndex = Steps.FindIndex(c => c.Id == action.Id);
+        var oldIndex = Steps.IndexOf(action);
         if (oldIndex >= 0)
         {
             if (up && oldIndex != 0 || !up && oldIndex != Steps.Count - 1)
@@ -780,7 +783,7 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
     {
         var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
         await vm.Load(flowStepViewModel.Category, flowStepViewModel.Name);
-        MessageBox.Modals.Handle(new FlowMaker.Services.ModalInfo("牛马编辑器:" + flowStepViewModel.Name, vm) { OwnerTitle = WindowTitle }).Subscribe();
+        _messageBoxManager.Modals.Handle(new FlowMaker.Services.ModalInfo("牛马编辑器:" + flowStepViewModel.Name, vm) { OwnerTitle = WindowTitle }).Subscribe();
     }
     public void SetStepDefinitions(FlowStepViewModel flowStepViewModel)
     {
@@ -794,14 +797,14 @@ public class FlowMakerEditViewModel : RoutableViewModelBase
         {
             foreach (var item in group.StepDefinitions)
             {
-                flowStepViewModel.StepDefinitions.Add(new NameValue(item.DisplayName, item.Name));
+                flowStepViewModel.StepDefinitions.Add(item.Name);
             }
         }
         else
         {
             foreach (var item in _flowManager.LoadFlows(flowStepViewModel.Category))
             {
-                flowStepViewModel.StepDefinitions.Add(new NameValue(item, item));
+                flowStepViewModel.StepDefinitions.Add(item);
             }
         }
     }
@@ -1304,7 +1307,7 @@ public class FlowStepViewModel : ReactiveObject
         Outputs.Clear();
         Inputs.Clear();
 
-        foreach (var item in stepDef.Datas)
+        foreach (var item in stepDef.Data)
         {
             if (item.IsInput)
             {
@@ -1352,7 +1355,7 @@ public class FlowStepViewModel : ReactiveObject
         }
     }
     [Reactive]
-    public ObservableCollection<NameValue> StepDefinitions { get; set; } = [];
+    public ObservableCollection<string> StepDefinitions { get; set; } = [];
     [Reactive]
     public ObservableCollection<FlowStepOutputViewModel> Outputs { get; set; } = [];
     [Reactive]

@@ -181,10 +181,8 @@ public partial class {item.Option.MetadataName}
         return new StepDefinition
         {{
             Category = {item.Option.MetadataName}.Category,
-            DisplayName = {item.Option.MetadataName}.Name,
-            Name = ""{item.Option.ContainingNamespace}.{item.Option.Name}"",
-            Type = typeof({item.Option.Name}),
-            Datas = new List<StepDataDefinition>
+            Name = {item.Option.MetadataName}.Name,
+            Data = new List<StepDataDefinition>
             {{
                 {string.Join(", ", props)}
             }}
@@ -311,9 +309,7 @@ partial class {item.Option.MetadataName}
         return new ConverterDefinition
         {{
             Category = {item.Option.MetadataName}.Category,
-            DisplayName = {item.Option.MetadataName}.Name,
-            Name = ""{item.Option.ContainingNamespace}.{item.Option.Name}"",
-            Type = typeof({item.Option.Name}),
+            Name = {item.Option.MetadataName}.Name,
             Output = ""{type.ToDisplayString()}"",
             Inputs = new List<StepDataDefinition>
             {{

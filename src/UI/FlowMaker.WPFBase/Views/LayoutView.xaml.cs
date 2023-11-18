@@ -1,22 +1,17 @@
 ﻿using FlowMaker.ViewModels;
 using ReactiveUI;
-using System.Reactive.Disposables;
-using System.Windows;
-using Volo.Abp.DependencyInjection;
 
-namespace FlowMaker.Views
+namespace FlowMaker.Views;
+
+/// <summary>
+/// LayoutView.xaml 的交互逻辑
+/// </summary>
+public partial class LayoutView : ReactiveUserControl<LayoutViewModel>
 {
-    /// <summary>
-    /// LayoutView.xaml 的交互逻辑
-    /// </summary>
-    [ExposeServices(typeof(IViewFor<LayoutViewModel>))]
-    public partial class LayoutView : ReactiveUserControl<LayoutViewModel>, ITransientDependency
+    public LayoutView()
     {
-        public LayoutView()
-        {
-            InitializeComponent();
-            this.WhenActivated(d => { });
-        }
-       
+        InitializeComponent();
+        this.WhenActivated(d => { });
     }
+   
 }

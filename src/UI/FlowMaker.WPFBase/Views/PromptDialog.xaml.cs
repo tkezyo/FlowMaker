@@ -2,15 +2,13 @@
 using ReactiveUI;
 using System;
 using System.Reactive.Disposables;
-using Volo.Abp.DependencyInjection;
 
 namespace FlowMaker.Views
 {
     /// <summary>
     /// PromptDialog.xaml 的交互逻辑
     /// </summary>
-    [ExposeServices(typeof(IViewFor<PromptDialogViewModel>))]
-    public partial class PromptDialog : ReactiveWindow<PromptDialogViewModel>, ITransientDependency
+    public partial class PromptDialog : ReactiveWindow<PromptDialogViewModel>
     {
         public PromptDialog()
         {

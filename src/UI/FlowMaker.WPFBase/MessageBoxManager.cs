@@ -10,11 +10,10 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using Volo.Abp.DependencyInjection;
 
 namespace FlowMaker
 {
-    public class MessageBoxManager : ISingletonDependency, IMessageBoxManager
+    public class MessageBoxManager :  IMessageBoxManager
     {
         /// <summary>
         /// 确认

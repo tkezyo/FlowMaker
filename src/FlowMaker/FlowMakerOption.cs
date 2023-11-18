@@ -1,5 +1,6 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.DependencyInjection;
+using System.Numerics;
 
 namespace FlowMaker;
 
@@ -36,16 +37,16 @@ public class FlowMakerOption
 
 public class FlowMakerOptionGroup
 {
-    public List<StepDefinition> StepDefinitions { get; set; } = new();
-    public List<ConverterDefinition> ConverterDefinitions { get; set; } = new();
+    public List<StepDefinition> StepDefinitions { get; set; } = [];
+    public List<ConverterDefinition> ConverterDefinitions { get; set; } = [];
 }
 
-public static class FlowMakerExtention
+public static class FlowMakerExtension
 {
     public static void AddFlowStep<T>(this IServiceCollection serviceDescriptors)
         where T : class, IStep
     {
-        serviceDescriptors.AddTransient<T>();
+        serviceDescriptors.AddKeyedTransient<IStepInject, T>(T.Category + ":" + T.Name);
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
             var group = c.GetOrAddGroup(T.Category);
@@ -56,7 +57,7 @@ public static class FlowMakerExtention
     public static void AddFlowConverter<T>(this IServiceCollection serviceDescriptors)
         where T : class, IDataConverter
     {
-        serviceDescriptors.AddTransient<T>();
+        serviceDescriptors.AddKeyedTransient<IDataConverterInject,T>(T.Category + ":" + T.Name);
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
             var group = c.GetOrAddGroup(T.Category);

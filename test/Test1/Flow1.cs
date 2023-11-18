@@ -3,6 +3,17 @@ using FlowMaker.Models;
 using System.ComponentModel;
 
 namespace Test1;
+public partial class MyClass : IStep
+{
+    public static string Category => "123";
+
+    public static string Name => "123";
+
+    public Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+}
 
 public partial class Flow1 : IStep
 {

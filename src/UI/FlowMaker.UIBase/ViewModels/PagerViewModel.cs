@@ -27,7 +27,7 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public int PageSize { get; set; } = 10;
         [Reactive]
-        public ObservableCollection<PageInfo> PageInfos { get; set; } = new ObservableCollection<PageInfo>();
+        public ObservableCollection<PageInfo> PageInfos { get; set; } = [];
         /// <summary>
         /// 重置分页信息
         /// </summary>
@@ -70,7 +70,7 @@ namespace FlowMaker.ViewModels
         }
         protected virtual List<PageInfo> GetPage(int skipCount, long totalCount, int pageSize)
         {
-            List<PageInfo> pageInfos = new();
+            List<PageInfo> pageInfos = [];
             int skipCountTemp = 0;
             int totalPage = (int)(totalCount / pageSize + (totalCount % pageSize == 0 ? 0 : 1));
 

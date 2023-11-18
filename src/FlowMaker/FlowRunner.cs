@@ -1,4 +1,6 @@
 ﻿using FlowMaker.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -65,16 +67,16 @@ public class FlowRunner
         {
             throw new Exception();
         }
-        var stepObj = _serviceProvider.GetService(stepDefinition.Type);
+        var stepObj = _serviceProvider.GetKeyedService<IStepInject>(stepDefinition.Category + ":" + stepDefinition.Name);
 
         //TODO 这里如果找不到步骤就获取所以流程,再执行流程
 
-        if (stepObj is not IStep stepService || CancellationTokenSource is null)
+        if (stepObj is null || CancellationTokenSource is null)
         {
             throw new Exception();
         }
 
-        await stepService.WrapAsync(Context, stepContext, step, _serviceProvider, CancellationTokenSource.Token);
+        await stepObj.WrapAsync(Context, stepContext, step, _serviceProvider, CancellationTokenSource.Token);
     }
     protected async Task RunCompensateStep(Guid stepId, StepContext stepContext)
     {

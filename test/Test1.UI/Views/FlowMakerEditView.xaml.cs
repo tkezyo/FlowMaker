@@ -14,15 +14,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Test1.ViewModels;
-using Volo.Abp.DependencyInjection;
 
 namespace Test1.Views
 {
     /// <summary>
     /// FlowMakerEditView.xaml 的交互逻辑
     /// </summary>
-    [ExposeServices(typeof(IViewFor<FlowMakerEditViewModel>))]
-    public partial class FlowMakerEditView : ReactiveUserControl<FlowMakerEditViewModel>, ITransientDependency
+    public partial class FlowMakerEditView : ReactiveUserControl<FlowMakerEditViewModel>
     {
         public FlowMakerEditView()
         {

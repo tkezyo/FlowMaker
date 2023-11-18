@@ -14,15 +14,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Test1.ViewModels;
-using Volo.Abp.DependencyInjection;
 
 namespace Test1.Views
 {
     /// <summary>
     /// FlowMakerListView.xaml 的交互逻辑
     /// </summary>
-    [ExposeServices(typeof(IViewFor<FlowMakerListViewModel>))]
-    public partial class FlowMakerListView : ReactiveUserControl<FlowMakerListViewModel>, ITransientDependency
+    public partial class FlowMakerListView : ReactiveUserControl<FlowMakerListViewModel>
     {
         public FlowMakerListView()
         {

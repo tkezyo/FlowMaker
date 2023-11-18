@@ -1,11 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using Volo.Abp.DependencyInjection;
 
 namespace FlowMaker.ViewModels
 {
-    [Dependency(ServiceLifetime.Transient)]
     public class ModalDialogViewModel : ViewModelBase, IScreen
     {
         public RoutingState Router { get; } = new RoutingState();

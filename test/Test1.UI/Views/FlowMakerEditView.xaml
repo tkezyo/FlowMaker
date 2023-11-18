@@ -231,7 +231,7 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                         <TextBox Text="{Binding FlowStep.DisplayName,UpdateSourceTrigger=PropertyChanged}" hc:InfoElement.Title="显示名称" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
                             <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="分组"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
-                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}" hc:InfoElement.Title="名称" SelectedValue="{Binding FlowStep.Name}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
+                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}" hc:InfoElement.Title="名称" SelectedItem="{Binding FlowStep.Name}"></ComboBox>
                             <Button Visibility="{Binding FlowStep.IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
                         </StackPanel>
                       
