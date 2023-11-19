@@ -182,10 +182,7 @@ public partial class {item.Option.MetadataName}
         {{
             Category = {item.Option.MetadataName}.Category,
             Name = {item.Option.MetadataName}.Name,
-            Data = new List<StepDataDefinition>
-            {{
-                {string.Join(", ", props)}
-            }}
+            Data = [ {string.Join(", ", props)} ]
         }};
     }}
 }}
@@ -311,10 +308,7 @@ partial class {item.Option.MetadataName}
             Category = {item.Option.MetadataName}.Category,
             Name = {item.Option.MetadataName}.Name,
             Output = ""{type.ToDisplayString()}"",
-            Inputs = new List<StepDataDefinition>
-            {{
-                {string.Join(", ", inputs)}
-            }}
+            Inputs = [ {string.Join(", ", inputs)} ]
         }};
     }}
 }}
