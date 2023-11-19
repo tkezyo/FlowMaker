@@ -12,7 +12,7 @@ public class FlowManager
         return Task.CompletedTask;
     }
 
-    public string[] LoadFlowCategorys()
+    public string[] LoadFlowCategories()
     {
         var dir = Path.Combine("Flows");
         if (!Directory.Exists(dir))
@@ -33,6 +33,7 @@ public class FlowManager
         var files = Directory.GetFiles(dir, "*.json").Select(c => c.Replace(dir + "\\", "").Replace(".json", "")).ToArray();
         return files;
     }
+
 
     public async Task<FlowDefinition?> LoadFlowDefinitionAsync(string? category, string? name)
     {

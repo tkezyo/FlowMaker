@@ -6,7 +6,7 @@ namespace FlowMaker;
 
 public class FlowMakerOption
 {
-    public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = new();
+    public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = [];
     public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
         if (!Group.TryGetValue(category, out var group))

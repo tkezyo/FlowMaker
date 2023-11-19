@@ -38,7 +38,7 @@ public class FlowRunner
                 foreach (var item in steps)
                 {
                     Context.StepState[item].Waits.Remove(key);
-                    if (!Context.StepState[item].Waits.Any())
+                    if (Context.StepState[item].Waits.Count == 0)
                     {
                         var step = Context.FlowDefinition.Steps.First(c => c.Id == item);
 
@@ -102,7 +102,6 @@ public class FlowRunner
     public RunnerState State { get; set; }
     public void Run(FlowDefinition flowInfo)
     {
-
         if (State != RunnerState.Stop)
         {
             throw new Exception("正在运行中");

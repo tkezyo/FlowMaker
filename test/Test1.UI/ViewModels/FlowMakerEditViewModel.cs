@@ -209,7 +209,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     public async Task Load(string? category = null, string? name = null)
     {
-        foreach (var item in _flowManager.LoadFlowCategorys())
+        foreach (var item in _flowManager.LoadFlowCategories())
         {
             StepGroups.Add(item);
         }

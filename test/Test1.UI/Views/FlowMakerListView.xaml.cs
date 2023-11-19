@@ -25,6 +25,7 @@ namespace Test1.Views
         public FlowMakerListView()
         {
             InitializeComponent();
+            this.WhenActivated(d => { });
         }
     }
 }
