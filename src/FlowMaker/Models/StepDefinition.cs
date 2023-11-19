@@ -11,6 +11,16 @@ public class FlowDefinition : StepDefinition, IStepDefinition
     public List<FlowStep> Steps { get; set; } = [];
     public List<FlowInput> Checkers { get; set; } = [];
 }
+/// <summary>
+/// 流程文件信息
+/// </summary>
+public class FlowDefinitionInfo
+{
+    public required string Category { get; set; }
+    public required string Name { get; set; }
+    public required DateTime CreationTime { get; set; }
+    public required DateTime ModifyTime { get; set; }
+}
 public class StepDefinition : IStepDefinition
 {
     public required string Category { get; set; }
@@ -51,6 +61,32 @@ public class OptionDefinition(string displayName, string name)
 {
     public string Name { get; set; } = displayName;
     public string DisplayName { get; set; } = name;
+}
+
+public class ConfigDefinition
+{
+    public required string Name { get; set; }
+    /// <summary>
+    /// 流程的类别
+    /// </summary>
+    public required string FlowCategory { get; set; }
+    /// <summary>
+    /// 流程的名称
+    /// </summary>
+    public required string FlowName { get; set; }
+    /// <summary>
+    /// 重试
+    /// </summary>
+    public int Retry { get; set; }
+    /// <summary>
+    /// 重复,如果是负数，则一直重复
+    /// </summary>
+    public int Repeat { get; set; }
+    /// <summary>
+    /// 出现错误时处理方式
+    /// </summary>
+    public ErrorHandling ErrorHandling { get; set; }
+    public List<NameValue> Data { get; set; } = [];
 }
 
 public enum InputDisplayType

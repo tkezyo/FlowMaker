@@ -804,7 +804,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             foreach (var item in _flowManager.LoadFlows(flowStepViewModel.Category))
             {
-                flowStepViewModel.StepDefinitions.Add(item);
+                flowStepViewModel.StepDefinitions.Add(item.Name);
             }
         }
     }
