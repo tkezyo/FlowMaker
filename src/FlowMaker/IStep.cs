@@ -10,7 +10,7 @@ public interface IStep : IStepInject
     /// <summary>
     /// 类别
     /// </summary>
-    static abstract string Category { get; } 
+    static abstract string Category { get; }
     /// <summary>
     /// 名称
     /// </summary>
@@ -34,10 +34,9 @@ public interface IDataConverter : IDataConverterInject
 public interface IDataConverterInject
 {
     Task<string> GetStringResultAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
-
     public static async Task SetValue<TValue>(FlowOutput output, TValue value, IServiceProvider serviceProvider, FlowContext context, CancellationToken cancellationToken)
     {
-        if (output.Mode == OutputMode.Drop)
+        if (output.Mode == OutputMode.Drop || string.IsNullOrEmpty(output.GlobeDataName))
         {
             return;
         }
@@ -66,8 +65,14 @@ public interface IDataConverterInject
                 });
 
                 var result = await converter.GetStringResultAsync(context, output.Inputs, serviceProvider, cancellationToken);
-                context.Data[output.GlobeDataName].Value = result;
-
+                if (!context.Data.TryGetValue(output.GlobeDataName, out var data))
+                {
+                    context.Data.TryAdd(output.GlobeDataName, new FlowGlobeData(output.Name, output.Type, result));
+                }
+                else
+                {
+                    data.Value = result;
+                }
             }
             else
             {
@@ -76,7 +81,40 @@ public interface IDataConverterInject
         }
         else
         {
-            context.Data[output.GlobeDataName].Value = valueStr;
+            if (!context.Data.TryGetValue(output.GlobeDataName, out var data))
+            {
+                context.Data.TryAdd(output.GlobeDataName, new FlowGlobeData(output.Name, output.Type, valueStr));
+            }
+            else
+            {
+                data.Value = valueStr;
+            }
+        }
+    }
+    public static async Task<string> GetValue(FlowInput input, IServiceProvider serviceProvider, FlowContext context, string? defaultValue, CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
+        {
+            var option = serviceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
+            var converterDefinition = option.Value.GetConverter(input.ConverterCategory, input.ConverterName);
+
+            if (converterDefinition == null)
+            {
+                throw new InvalidOperationException();
+            }
+            var converterObj = serviceProvider.GetRequiredKeyedService<IDataConverterInject>(converterDefinition.Category + ":" + converterDefinition.Name);
+            return await converterObj.GetStringResultAsync(context, input.Inputs, serviceProvider, cancellationToken);
+        }
+        else
+        {
+            if (input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
+            {
+                return data.Value ?? defaultValue ?? string.Empty;
+            }
+            else
+            {
+                return input.Value ?? defaultValue ?? string.Empty;
+            }
         }
     }
 }
@@ -84,6 +122,7 @@ public interface IDataConverter<T> : IDataConverter
 {
     Task<T> Convert(FlowContext context, CancellationToken cancellationToken);
     Task<T> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+
 
     public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
     {

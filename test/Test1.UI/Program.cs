@@ -43,11 +43,13 @@ namespace Test1
                 services.AddBaseViews();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
+                services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
+                services.AddTransient<FlowRunner>();
+                services.AddSingleton<FlowManager>();
 
                 services.AddFlowStep<Flow1>();
                 services.AddFlowStep<Flow2>();
                 services.AddFlowConverter<ValueConverter>();
-                services.AddSingleton<FlowManager>();
 
                 services.Configure<ViewForMatch>(options =>
                 {

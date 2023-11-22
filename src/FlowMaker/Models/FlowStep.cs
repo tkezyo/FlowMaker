@@ -1,4 +1,6 @@
-﻿namespace FlowMaker.Models;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace FlowMaker.Models;
 
 public class FlowStep
 {
@@ -84,7 +86,7 @@ public class FlowInput
     /// Globe模式下为全局变量, 普通或选项为具体的值,Wait为事件名称
     /// </summary>
     public string? Value { get; set; }
-    public List<FlowInput> Inputs { get;  set; } = [];
+    public List<FlowInput> Inputs { get; set; } = [];
 }
 public enum InputMode
 {
@@ -108,7 +110,7 @@ public class FlowOutput
     public required string Type { get; set; }
 
     public string? GlobeDataName { get; set; }
-    public List<FlowInput> Inputs { get;  set; } = [];
+    public List<FlowInput> Inputs { get; set; } = [];
 }
 public enum OutputMode
 {
@@ -117,6 +119,13 @@ public enum OutputMode
     GlobeWithConverter,
 }
 
+public class FlowResult
+{
+    public required string Name { get; set; }
+    public required string DisplayName { get; set; }
+    public required string Value { get; set; }
+    public required string Type { get; set; }
+}
 public enum ErrorHandling
 {
     /// <summary>

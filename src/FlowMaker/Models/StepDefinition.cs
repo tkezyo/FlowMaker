@@ -14,10 +14,22 @@ public class FlowDefinition : StepDefinition, IStepDefinition
 /// <summary>
 /// 流程文件信息
 /// </summary>
-public class FlowDefinitionInfo
+public class FlowDefinitionFileInfo
 {
     public required string Category { get; set; }
     public required string Name { get; set; }
+    public required DateTime CreationTime { get; set; }
+    public required DateTime ModifyTime { get; set; }
+}
+/// <summary>
+/// 流程文件信息
+/// </summary>
+public class ConfigDefinitionFileInfo
+{
+    public required string Category { get; set; }
+    public required string Name { get; set; }
+    public required string FlowCategory { get; set; }
+    public required string FlowName { get; set; }
     public required DateTime CreationTime { get; set; }
     public required DateTime ModifyTime { get; set; }
 }
@@ -65,6 +77,7 @@ public class OptionDefinition(string displayName, string name)
 
 public class ConfigDefinition
 {
+    public required string Category { get; set; }
     public required string Name { get; set; }
     /// <summary>
     /// 流程的类别
@@ -82,6 +95,7 @@ public class ConfigDefinition
     /// 重复,如果是负数，则一直重复
     /// </summary>
     public int Repeat { get; set; }
+    public int Timeout { get; set; }
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>

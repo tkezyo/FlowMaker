@@ -23,11 +23,12 @@ public partial class Flow1 : IStep
 
     [Input]
     public int Prop1 { get; set; }
-    [DefaultValue("1")]
+
     [Input]
+    [DefaultValue("3")]
     [DisplayName("123sdfasef")]
-    [Option("123", "3")]
-    [Option("234", "34")]
+    [Option("3", "3")]
+    [Option("34", "34")]
     public int Prop2 { get; set; }
 
     [Output]
@@ -42,6 +43,7 @@ public partial class Flow1 : IStep
     /// <returns></returns>
     public Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
     {
+        Prop3 = 100;
         return Task.CompletedTask;
     }
 }

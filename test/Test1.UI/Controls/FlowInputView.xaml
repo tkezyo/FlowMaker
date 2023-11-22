@@ -47,7 +47,7 @@
         <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
 
             <ComboBox Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
-            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="Name"></ComboBox>
         </StackPanel>
 
         <ItemsControl ItemsSource="{Binding SubInputs}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">

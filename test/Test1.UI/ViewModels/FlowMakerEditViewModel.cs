@@ -194,18 +194,8 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
             flowDefinition.Data.Add(data);
         }
-        if (!Directory.Exists(Path.Combine("Flows", Category)))
-        {
-            Directory.CreateDirectory(Path.Combine("Flows", Category));
-        }
-
-        JsonSerializerOptions options = new()
-        {
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
-            WriteIndented = true,
-        };
-        await File.WriteAllTextAsync(Path.Combine("Flows", Category, Name + ".json"), JsonSerializer.Serialize(flowDefinition, options: options));
-
+        await _flowManager.SaveFlow(flowDefinition);
+        CloseModal(true);
     }
     public async Task Load(string? category = null, string? name = null)
     {
@@ -1333,7 +1323,10 @@ public class FlowStepViewModel : ReactiveObject
                 }
                 else
                 {
-                    input.Mode = InputMode.Option;
+                    if (input.HasOption)
+                    {
+                        input.Mode = InputMode.Option;
+                    }
                 }
                 Inputs.Add(input);
             }

@@ -83,7 +83,8 @@ public class FlowContext
                 {
                     EventType.Step => wait.StepId?.ToString(),
                     EventType.Event => wait.EventName,
-                    EventType.Debug => item.Id.ToString(),
+                    EventType.EventData => wait.EventName,
+                    EventType.Debug => item.Id.ToString() + "Debug",
                     EventType.StartFlow => "",
                     _ => ""
                 };
@@ -110,6 +111,7 @@ public class FlowContext
 public class StepContext
 {
     public int CurrentIndex { get; set; }
+    public int ErrorIndex { get; set; }
     public Guid Id { get; set; }
     public string? DisplayName { get; set; }
 }
