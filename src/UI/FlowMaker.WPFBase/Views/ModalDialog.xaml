@@ -9,7 +9,7 @@
         xmlns:local="clr-namespace:FlowMaker.Views"
          xmlns:app="clr-namespace:FlowMaker" d:DataContext="{d:DesignInstance Type=vms:ModalDialogViewModel}"
                      mc:Ignorable="d"
-        Title="{Binding Title}" Height="{Binding Height}" Width="{Binding Width}" WindowStartupLocation="CenterScreen">
+        Title="{Binding Title}" Height="{Binding Height}" Width="{Binding Width}" WindowStartupLocation="CenterOwner">
     <rxui:RoutedViewHost Grid.Row="0" Router="{Binding Router}">
         <rxui:RoutedViewHost.DefaultContent>
             <TextBlock Text="载入中。。"

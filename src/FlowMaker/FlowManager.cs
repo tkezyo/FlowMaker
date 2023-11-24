@@ -1,5 +1,6 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Text;
@@ -16,14 +17,16 @@ public class FlowManager
     private const string ConfigDir = "Configs";
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly IServiceProvider _serviceProvider;
+    private readonly FlowMakerOption _flowMakerOption;
 
-    public FlowManager(IServiceProvider serviceProvider)
+    public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options)
     {
         _jsonSerializerOptions = new()
         {
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
             WriteIndented = true,
         };
+        _flowMakerOption = options.Value;
         this._serviceProvider = serviceProvider;
     }
 
@@ -53,7 +56,11 @@ public class FlowManager
         {
             return;
         }
-        var flow = await LoadFlowDefinitionAsync(flowCategory, flowName);
+        await Run(config);
+    }
+    public async Task Run(ConfigDefinition configDefinition)
+    {
+        var flow = await LoadFlowDefinitionAsync(configDefinition.FlowCategory, configDefinition.FlowName);
         if (flow is null)
         {
             return;
@@ -63,12 +70,12 @@ public class FlowManager
         CancellationTokenSource cancellationTokenSource = new();
         Status[runner.Id] = new RunnerStatus(runner, scope, cancellationTokenSource)
         {
-            ConfigCategory = configCategory,
-            ConfigName = configName,
-            FlowCategory = flowCategory,
-            FlowName = flowName
+            ConfigCategory = configDefinition.Category,
+            ConfigName = configDefinition.Name,
+            FlowCategory = configDefinition.FlowCategory,
+            FlowName = configDefinition.FlowName
         };
-        _ = runner.Start(flow, config, cancellationTokenSource.Token);
+        _ = runner.Start(flow, configDefinition, cancellationTokenSource.Token);
     }
 
     public void Dispose(Guid id)
@@ -80,8 +87,25 @@ public class FlowManager
     }
     #endregion
 
-
     #region Flow
+    public async Task<IStepDefinition?> GetStepDefinitionAsync(string category, string name)
+    {
+        if (_flowMakerOption.Group.TryGetValue(category, out var group))
+        {
+            return group.StepDefinitions.FirstOrDefault(c => c.Name == name);
+        }
+        else
+        {
+            var file = Path.Combine("Flows", category, name + ".json");
+            if (!File.Exists(file))
+            {
+                return null;
+            }
+
+            string json = await File.ReadAllTextAsync(file);
+            return JsonSerializer.Deserialize<FlowDefinition>(json);
+        }
+    }
     public async Task SaveFlow(FlowDefinition flowDefinition)
     {
         if (!Directory.Exists(Path.Combine(FlowDir, flowDefinition.Category)))

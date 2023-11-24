@@ -41,16 +41,18 @@ namespace Test1
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
                 services.AddBaseViews();
+                services.AddTransientFlowView<ChatViewModel, ChatView>();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
                 services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
+                services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
                 services.AddTransient<FlowRunner>();
                 services.AddSingleton<FlowManager>();
 
                 services.AddFlowStep<Flow1>();
                 services.AddFlowStep<Flow2>();
                 services.AddFlowConverter<ValueConverter>();
-
+                services.AddAutoMapper(typeof(ConfigProfile).Assembly);
                 services.Configure<ViewForMatch>(options =>
                 {
                     options.Add(Test1UIViewLocatorMatcher.Match);
@@ -58,6 +60,11 @@ namespace Test1
                 services.Configure<PageOptions>(options =>
                 {
                     options.FirstLoadPage = typeof(FlowMakerListViewModel);
+                });
+                services.Configure<FlowMakerOption>(options =>
+                {
+                    options.Sections.Add("设备1");
+                    options.Sections.Add("设备2");
                 });
             });
 

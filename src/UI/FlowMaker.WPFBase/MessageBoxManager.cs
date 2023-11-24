@@ -13,7 +13,7 @@ using System.Windows;
 
 namespace FlowMaker
 {
-    public class MessageBoxManager :  IMessageBoxManager
+    public class MessageBoxManager : IMessageBoxManager
     {
         /// <summary>
         /// 确认
@@ -174,7 +174,7 @@ namespace FlowMaker
                 });
                 var ownerWindow = GetCurrentWindow(interaction.Input.OwnerTitle);
                 window.Owner = ownerWindow;
-
+              
                 RxApp.MainThreadScheduler.Schedule(X =>
                 {
                     window.ShowDialog();

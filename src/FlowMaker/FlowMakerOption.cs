@@ -6,6 +6,8 @@ namespace FlowMaker;
 
 public class FlowMakerOption
 {
+    public List<string> Sections { get; set; } = [];
+    public List<string> CustomViews { get; set; } = [];
     public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = [];
     public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
@@ -43,6 +45,7 @@ public class FlowMakerOptionGroup
 
 public static class FlowMakerExtension
 {
+
     public static void AddFlowStep<T>(this IServiceCollection serviceDescriptors)
         where T : class, IStep
     {
@@ -57,7 +60,7 @@ public static class FlowMakerExtension
     public static void AddFlowConverter<T>(this IServiceCollection serviceDescriptors)
         where T : class, IDataConverter
     {
-        serviceDescriptors.AddKeyedTransient<IDataConverterInject,T>(T.Category + ":" + T.Name);
+        serviceDescriptors.AddKeyedTransient<IDataConverterInject, T>(T.Category + ":" + T.Name);
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
             var group = c.GetOrAddGroup(T.Category);

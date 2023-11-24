@@ -67,22 +67,14 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
     }
     public async Task Load(string category, string name)
     {
-        var step = _flowMakerOption.GetStep(category, name);
-        if (step is not null)
+        var flow = await _flowManager.GetStepDefinitionAsync(category, name);
+        if (flow is not null)
         {
-            SetStepDefinition(step);
+            SetStepDefinition(flow);
         }
         else
         {
-            var flow = await _flowManager.LoadFlowDefinitionAsync(category, name);
-            if (flow is not null)
-            {
-                SetStepDefinition(flow);
-            }
-            else
-            {
-                throw new System.Exception("未找到步骤");
-            }
+            throw new System.Exception("未找到步骤");
         }
     }
 

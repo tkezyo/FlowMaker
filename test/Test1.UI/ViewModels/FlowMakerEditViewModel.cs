@@ -3,7 +3,6 @@ using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.Services;
 using FlowMaker.ViewModels;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -14,9 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Unicode;
 using System.Threading.Tasks;
 
 namespace Test1.ViewModels;
@@ -800,21 +797,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     public async Task<IStepDefinition?> GetStepDefinitionAsync(string category, string name)
     {
-        if (_flowMakerOption.Group.TryGetValue(category, out var group))
-        {
-            return group.StepDefinitions.FirstOrDefault(c => c.Name == name);
-        }
-        else
-        {
-            var file = Path.Combine("Flows", category, name + ".json");
-            if (!File.Exists(file))
-            {
-                return null;
-            }
-
-            string json = await File.ReadAllTextAsync(file);
-            return JsonSerializer.Deserialize<FlowDefinition>(json);
-        }
+        return await _flowManager.GetStepDefinitionAsync(category, name);
     }
 
 

@@ -10,6 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 		<PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
 		<PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
@@ -20,7 +21,9 @@
 
 	<ItemGroup>
 		<None Remove="appsettings.json" />
+		<None Remove="Views\ChatView.xaml" />
 		<None Remove="Views\FlowMakerConfigEditView.xaml" />
+		<None Remove="Views\FlowMakerSelectView.xaml" />
 		<Content Include="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
