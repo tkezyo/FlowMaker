@@ -9,8 +9,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using Windows.UI.Notifications;
+using Windows.ApplicationModel.VoiceCommands;
+using Windows.Services.Maps;
 
 namespace Test1.ViewModels;
 
@@ -48,6 +48,7 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
     public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = [];
     public async Task LoadConfig(string category, string name, string flowCategory, string flowName)
     {
+        Type = DefinitionType.Config;
         var cd = await _flowManager.LoadConfigDefinitionAsync(category, name, flowCategory, flowName);
         if (cd is null)
         {
@@ -70,6 +71,14 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
         var flow = await _flowManager.GetStepDefinitionAsync(category, name);
         if (flow is not null)
         {
+            if (flow is FlowDefinition)
+            {
+                Type = DefinitionType.Flow;
+            }
+            else
+            {
+                Type = DefinitionType.Step;
+            }
             SetStepDefinition(flow);
         }
         else
@@ -108,7 +117,48 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
         CloseModal(true);
     }
     [Reactive]
+    public DefinitionType Type { get; set; }
+    [Reactive]
     public ConfigDefinitionViewModel Model { get; set; } = new();
+
+    public async Task Run()
+    {
+        switch (Type)
+        {
+            case DefinitionType.Step:
+                Model.Category = "Step";
+                Model.Name = "Step";
+                break;
+            case DefinitionType.Flow:
+                break;
+            case DefinitionType.Config:
+                break;
+            default:
+                break;
+        }
+        ConfigDefinition configDefinition = new()
+        {
+            Category = Model.Category,
+            Name = Model.Name,
+            FlowCategory = Model.FlowCategory,
+            FlowName = Model.FlowName,
+            ErrorHandling = Model.ErrorHandling,
+            Repeat = Model.Repeat,
+            Retry = Model.Retry,
+            Timeout = Model.Timeout,
+        };
+
+        foreach (var item in Model.Data)
+        {
+            if (string.IsNullOrEmpty(item.Value))
+            {
+                return;
+            }
+            configDefinition.Data.Add(new NameValue(item.Name, item.Value));
+        }
+
+        await _flowManager.Run(configDefinition);
+    }
 }
 
 
@@ -138,6 +188,9 @@ public class ConfigDefinitionViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public int Repeat { get; set; }
+
+    [Reactive]
+    public int Timeout { get; set; }
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>

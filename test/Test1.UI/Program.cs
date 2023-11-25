@@ -53,10 +53,10 @@ namespace Test1
                 services.AddFlowStep<Flow2>();
                 services.AddFlowConverter<ValueConverter>();
                 services.AddAutoMapper(typeof(ConfigProfile).Assembly);
-                services.Configure<ViewForMatch>(options =>
-                {
-                    options.Add(Test1UIViewLocatorMatcher.Match);
-                });
+                //services.Configure<ViewForMatch>(options =>
+                //{
+                //    options.Add(Test1UIViewLocatorMatcher.Match);
+                //});
                 services.Configure<PageOptions>(options =>
                 {
                     options.FirstLoadPage = typeof(FlowMakerListViewModel);

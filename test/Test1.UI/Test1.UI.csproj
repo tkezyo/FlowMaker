@@ -31,7 +31,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\src\UI\FlowMaker.WPFBase\FlowMaker.WPFBase.csproj" />
-	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj" />
 	  <ProjectReference Include="..\Test1\Test1.csproj" />
 	</ItemGroup>
 

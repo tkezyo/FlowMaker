@@ -13,14 +13,14 @@ namespace FlowMaker.ViewModels
         public IFlowMakerRoutableViewModel ShowModal<T>(Action<T>? setValue = null)
           where T : IFlowMakerRoutableViewModel
         {
-            var viewModel = FlowMakerApp.ServiceProvider.GetService<T>();
+            var viewModel = FlowMakerApp.ServiceProvider.GetRequiredService<T>();
             setValue?.Invoke(viewModel);
             return viewModel;
         }
         public T Navigate<T>(IScreen screen, Action<T>? setValue = null, string? pageName = null)
           where T : IFlowMakerRoutableViewModel
         {
-            var viewModel = FlowMakerApp.ServiceProvider.GetService<T>();
+            var viewModel = FlowMakerApp.ServiceProvider.GetRequiredService<T>();
             viewModel.SetScreen(screen);
             viewModel.UrlPathSegment = pageName;
             setValue?.Invoke(viewModel);

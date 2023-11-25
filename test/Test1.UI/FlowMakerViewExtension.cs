@@ -17,7 +17,7 @@ namespace System
             where TViewModel : class, ISpikeViewModel
         {
             serviceDescriptors.AddKeyedSingleton<ISpikeInjectViewModel, TViewModel>(TViewModel.ViewName);
-            serviceDescriptors.AddTransient<IViewFor<TViewModel>, TView>();
+            serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {
                 c.CustomViews.Add(TViewModel.ViewName);
@@ -28,7 +28,7 @@ namespace System
             where TViewModel : class, ISpikeViewModel
         {
             serviceDescriptors.AddKeyedTransient<ISpikeInjectViewModel, TViewModel>(TViewModel.ViewName);
-            serviceDescriptors.AddTransient<IViewFor<TViewModel>, TView>();
+            serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {
                 c.CustomViews.Add(TViewModel.ViewName);

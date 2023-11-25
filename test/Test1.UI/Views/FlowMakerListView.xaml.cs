@@ -37,16 +37,16 @@ namespace Test1.Views
                         switch (c.EventArgs.Key)
                         {
                             case Key.W:
-                                ViewModel.AddHeightCommnd.Execute(false);
+                                ViewModel.AddHeightCommand.Execute(false);
                                 break;
                             case Key.S:
-                                ViewModel.AddHeightCommnd.Execute(true);
+                                ViewModel.AddHeightCommand.Execute(true);
                                 break;
                             case Key.A:
-                                ViewModel.AddWidthCommnd.Execute(false);
+                                ViewModel.AddWidthCommand.Execute(false);
                                 break;
                             case Key.D:
-                                ViewModel.AddWidthCommnd.Execute(true);
+                                ViewModel.AddWidthCommand.Execute(true);
                                 break;
                             default:
                                 break;
@@ -57,16 +57,16 @@ namespace Test1.Views
                         switch (c.EventArgs.Key)
                         {
                             case Key.W:
-                                ViewModel.TopCommnd.Execute(false);
+                                ViewModel.TopCommand.Execute(false);
                                 break;
                             case Key.S:
-                                ViewModel.TopCommnd.Execute(true);
+                                ViewModel.TopCommand.Execute(true);
                                 break;
                             case Key.A:
-                                ViewModel.LeftCommnd.Execute(false);
+                                ViewModel.LeftCommand.Execute(false);
                                 break;
                             case Key.D:
-                                ViewModel.LeftCommnd.Execute(true);
+                                ViewModel.LeftCommand.Execute(true);
                                 break;
                             default:
                                 break;

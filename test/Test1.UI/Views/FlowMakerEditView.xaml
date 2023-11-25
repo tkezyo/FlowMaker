@@ -112,7 +112,7 @@
                                     </Button.Style>
                                 </Button>
                                 <Button 
-                                    Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}">
+                                    Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding DataContext.RunCommand,ElementName=page}" CommandParameter="{Binding .}">
                                     <Button.Style>
                                         <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
                                             <Style.Triggers>

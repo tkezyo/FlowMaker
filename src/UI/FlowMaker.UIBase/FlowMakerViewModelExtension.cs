@@ -11,13 +11,13 @@ public static class FlowMakerViewModelExtension
         where TViewModel : class, IFlowMakerRoutableViewModel
     {
         services.AddSingleton<TViewModel>();
-        services.AddTransient<IViewFor<TViewModel>, TView>();
+        services.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
     }
     public static void AddTransientView<TViewModel, TView>(this IServiceCollection services)
         where TView : class, IViewFor<TViewModel>
         where TViewModel : class, IFlowMakerRoutableViewModel
     {
         services.AddTransient<TViewModel>();
-        services.AddTransient<IViewFor<TViewModel>, TView>();
+        services.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
     }
 }

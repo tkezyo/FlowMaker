@@ -83,7 +83,6 @@
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
                                 <Button Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">运行</Button>
-                                <Button Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">运行</Button>
                                 <Button Command="{Binding DataContext.EditConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">复制</Button>
                                 <Button Command="{Binding DataContext.RemoveConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">删除</Button>
                             </StackPanel>
@@ -119,7 +118,7 @@
             </TabControl.ItemTemplate>
             <TabControl.ContentTemplate>
                 <DataTemplate>
-                    <ItemsControl ItemsSource="{Binding Boxs}">
+                    <ItemsControl ItemsSource="{Binding Boxes}">
                         <ItemsControl.ItemContainerStyle>
                             <Style>
                                 <Setter Property="Grid.Row" Value="{Binding Size.Top}" />
@@ -171,110 +170,95 @@
                                     <Grid>
                                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                       Visibility="{Binding ShowView,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                                                <ItemsControl ItemsSource="{Binding Actions}">
-                                                    <ItemsControl.ItemsPanel>
-                                                        <ItemsPanelTemplate>
-                                                            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" ></WrapPanel>
-                                                        </ItemsPanelTemplate>
-                                                    </ItemsControl.ItemsPanel>
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Border HorizontalAlignment="Center" VerticalAlignment="Center" Name="BoxBorder" BorderThickness="1" CornerRadius="5" Background="Transparent">
-                                                                <Border.Style>
-                                                                    <Style TargetType="Border">
-                                                                        <Style.Triggers>
-                                                                            <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}">
-                                                                                <DataTrigger.Value>
-                                                                                    <s:Boolean>True</s:Boolean>
-                                                                                </DataTrigger.Value>
-                                                                                <Setter Property="BorderBrush" Value="Black"/>
-                                                                            </DataTrigger>
-                                                                        </Style.Triggers>
-                                                                    </Style>
-                                                                </Border.Style>
-                                                                <Canvas Width="{Binding AcitonSize.Width}" Height="{Binding AcitonSize.Height}">
-                                                                    <Canvas.ContextMenu>
-                                                                        <ContextMenu Visibility="{Binding DataContext.Edit,Converter={StaticResource Boolean2VisibilityConverter},Source={x:Reference Name=page}}">
-                                                                            <MenuItem Header="按钮变换"
- Command="{Binding DataContext.SelectResizeableCommand,Source={x:Reference Name=page}}"
-CommandParameter="{Binding ButtonSize}"/>
-                                                                            <MenuItem Header="输入变换"
- Command="{Binding DataContext.SelectResizeableCommand,Source={x:Reference Name=page}}"
-						CommandParameter="{Binding InputSize}"/>
-                                                                            <MenuItem Header="输出变换"
- Command="{Binding DataContext.SelectResizeableCommand,Source={x:Reference Name=page}}"
-						CommandParameter="{Binding OutputSize}"/>
-                                                                            <MenuItem Header="边框变换"
- Command="{Binding DataContext.SelectResizeableCommand,Source={x:Reference Name=page}}"
-						CommandParameter="{Binding AcitonSize}"/>
-                                                                        </ContextMenu>
-                                                                    </Canvas.ContextMenu>
-                                                                    <Button Content="{Binding Name}" Command="{Binding DataContext.RunCommand,ElementName=page}" CommandParameter="{Binding .}"  Canvas.Left="{Binding ButtonSize.Left}" Canvas.Top="{Binding ButtonSize.Top}" Height="{Binding ButtonSize.Height}" Width="{Binding ButtonSize.Width}"></Button>
+                                            <ItemsControl ItemsSource="{Binding Actions}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" ></WrapPanel>
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" Name="BoxBorder" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                                                            <Border.Style>
+                                                                <Style TargetType="Border">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}">
+                                                                            <DataTrigger.Value>
+                                                                                <s:Boolean>True</s:Boolean>
+                                                                            </DataTrigger.Value>
+                                                                            <Setter Property="BorderBrush" Value="Black"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Border.Style>
+                                                            <Canvas Width="{Binding ActionSize.Width}" Height="{Binding ActionSize.Height}">
+                                                                <Button Content="{Binding DisplayName}"  Canvas.Left="{Binding ButtonSize.Left}" Canvas.Top="{Binding ButtonSize.Top}" Height="{Binding ButtonSize.Height}" Width="{Binding ButtonSize.Width}">
+                                                                    <Button.Style>
+                                                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}" Value="False">
+                                                                                    <Setter  Property="Command" Value="{Binding DataContext.RunCommand,ElementName=page}" />
+                                                                                    <Setter  Property="CommandParameter" Value="." />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}" Value="True">
+                                                                                    <Setter  Property="Command" Value="{Binding DataContext.SelectActionCommand,ElementName=page}" />
+                                                                                    <Setter  Property="CommandParameter" >
+                                                                                        <Setter.Value>
+                                                                                            <MultiBinding Converter="{StaticResource spikeDeleteActionConverter}">
+                                                                                                <Binding RelativeSource="{RelativeSource FindAncestor,AncestorType={x:Type ItemsControl}}" Path="DataContext"></Binding>
+                                                                                                <Binding  Path="."></Binding>
+                                                                                            </MultiBinding>
+                                                                                        </Setter.Value>
+                                                                                    </Setter>
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding Editing}" Value="True">
+                                                                                    <Setter  Property="BorderBrush" Value="Blue" />
+                                                                                    <Setter  Property="BorderThickness" Value="1" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Button.Style>
+                                                                </Button>
 
-                                                                    <StackPanel Canvas.Right="0" Canvas.Bottom="0" Visibility="{Binding IsMouseOver,Converter={StaticResource Boolean2VisibilityConverter},ElementName=BoxBorder}">
-                                                                        <Button Content="前移" Height="20" Padding="0" Foreground="#673ab7" Visibility="{Binding DataContext.Edit,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.MoveForwardActionCommand,ElementName=page}"  >
-                                                                            <Button.CommandParameter>
-                                                                                <MultiBinding Converter="{StaticResource spikeDeleteActionConverter}">
-                                                                                    <Binding RelativeSource="{RelativeSource FindAncestor,AncestorType={x:Type ItemsControl}}" 			Path="DataContext"></Binding>
-                                                                                    <Binding  Path="."></Binding>
-                                                                                </MultiBinding>
-                                                                            </Button.CommandParameter>
-                                                                        </Button>
-                                                                        <Button Content="后移" Height="20" Padding="0" Foreground="#673ab7" Visibility="{Binding DataContext.Edit,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.MoveBackActionCommand,ElementName=page}"  >
-                                                                            <Button.CommandParameter>
-                                                                                <MultiBinding Converter="{StaticResource spikeDeleteActionConverter}">
-                                                                                    <Binding RelativeSource="{RelativeSource FindAncestor,AncestorType={x:Type ItemsControl}}" 			Path="DataContext"></Binding>
-                                                                                    <Binding  Path="."></Binding>
-                                                                                </MultiBinding>
-                                                                            </Button.CommandParameter>
-                                                                        </Button>
-                                                                        <Button Content="删除" Height="20" Padding="0" Foreground="#ff6e6e" Visibility="{Binding DataContext.Edit,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.DeleteActionCommand,ElementName=page}" >
-                                                                            <Button.CommandParameter>
-                                                                                <MultiBinding Converter="{StaticResource spikeDeleteActionConverter}">
-                                                                                    <Binding RelativeSource="{RelativeSource FindAncestor,AncestorType={x:Type ItemsControl}}" Path="DataContext"></Binding>
-                                                                                    <Binding  Path="."></Binding>
-                                                                                </MultiBinding>
-                                                                            </Button.CommandParameter>
-                                                                        </Button>
-                                                                    </StackPanel>
+                                                                <ItemsControl
+                                                                        ItemsSource="{Binding Inputs}" Canvas.Left="{Binding InputSize.Left}" Canvas.Top="{Binding InputSize.Top}" Width="{Binding InputSize.Width}" Height="{Binding InputSize.Height}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <WrapPanel Orientation="Horizontal"></WrapPanel>
+                                                                        </ItemsPanelTemplate>
+                                                                    </ItemsControl.ItemsPanel>
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <StackPanel>
+                                                                                <TextBox  hc:TitleElement.Title="{Binding Description}"  Text="{Binding Value}"></TextBox>
+                                                                            </StackPanel>
 
-                                                                    <ItemsControl ItemsSource="{Binding Inputs}" Canvas.Left="{Binding InputSize.Left}" Canvas.Top="{Binding InputSize.Top}" Width="{Binding InputSize.Width}" Height="{Binding InputSize.Height}">
-                                                                        <ItemsControl.ItemsPanel>
-                                                                            <ItemsPanelTemplate>
-                                                                                <WrapPanel Orientation="Horizontal"></WrapPanel>
-                                                                            </ItemsPanelTemplate>
-                                                                        </ItemsControl.ItemsPanel>
-                                                                        <ItemsControl.ItemTemplate>
-                                                                            <DataTemplate>
-                                                                                <StackPanel>
-                                                                                    <TextBox  hc:TitleElement.Title="{Binding Description}"  Text="{Binding Value}"></TextBox>
-                                                                                </StackPanel>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
+                                                                <ItemsControl 
+                                                                        ItemsSource="{Binding Outputs}" Canvas.Left="{Binding OutputSize.Left}" Canvas.Top="{Binding OutputSize.Top}"  Width="{Binding OutputSize.Width}" Height="{Binding OutputSize.Height}">
+                                                                    <ItemsControl.ItemsPanel>
+                                                                        <ItemsPanelTemplate>
+                                                                            <WrapPanel Orientation="Horizontal"></WrapPanel>
+                                                                        </ItemsPanelTemplate>
+                                                                    </ItemsControl.ItemsPanel>
+                                                                    <ItemsControl.ItemTemplate>
+                                                                        <DataTemplate>
+                                                                            <StackPanel HorizontalAlignment="Left" >
+                                                                                <TextBlock Text="{Binding Description}"></TextBlock>
+                                                                                <TextBlock Text="{Binding Value}"></TextBlock>
+                                                                            </StackPanel>
+                                                                        </DataTemplate>
+                                                                    </ItemsControl.ItemTemplate>
+                                                                </ItemsControl>
 
-                                                                            </DataTemplate>
-                                                                        </ItemsControl.ItemTemplate>
-                                                                    </ItemsControl>
-                                                                    <ItemsControl ItemsSource="{Binding Outputs}" Canvas.Left="{Binding OutputSize.Left}" Canvas.Top="{Binding OutputSize.Top}"  Width="{Binding OutputSize.Width}" Height="{Binding OutputSize.Height}">
-                                                                        <ItemsControl.ItemsPanel>
-                                                                            <ItemsPanelTemplate>
-                                                                                <WrapPanel Orientation="Horizontal"></WrapPanel>
-                                                                            </ItemsPanelTemplate>
-                                                                        </ItemsControl.ItemsPanel>
-                                                                        <ItemsControl.ItemTemplate>
-                                                                            <DataTemplate>
-                                                                                <StackPanel HorizontalAlignment="Left" >
-                                                                                    <TextBlock Text="{Binding Description}"></TextBlock>
-                                                                                    <TextBlock Text="{Binding Value}"></TextBlock>
-                                                                                </StackPanel>
-                                                                            </DataTemplate>
-                                                                        </ItemsControl.ItemTemplate>
-                                                                    </ItemsControl>
+                                                            </Canvas>
 
-                                                                </Canvas>
-
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </ScrollViewer>
 
                                         <rxui:RoutedViewHost 

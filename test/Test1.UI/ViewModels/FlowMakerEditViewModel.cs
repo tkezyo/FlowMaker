@@ -38,6 +38,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         RemoveFlowCheckerCommand = ReactiveCommand.Create<FlowStepInputViewModel>(RemoveFlowChecker);
         RemoveGlobeDataCommand = ReactiveCommand.Create<StepDataDefinitionViewModel>(RemoveGlobeData);
         SaveCommand = ReactiveCommand.CreateFromTask(Save);
+        RunCommand = ReactiveCommand.CreateFromTask<FlowStepViewModel>(Run);
 
         AddCheckerCommand = ReactiveCommand.Create(AddChecker);
         RemoveCheckerCommand = ReactiveCommand.Create<FlowStepInputViewModel>(RemoveChecker);
@@ -318,6 +319,18 @@ public class FlowMakerEditViewModel : ViewModelBase
         Render();
     }
 
+    public ReactiveCommand<FlowStepViewModel, Unit> RunCommand { get; }
+    public async Task Run(FlowStepViewModel flowStepViewModel)
+    {
+        if (string.IsNullOrEmpty(flowStepViewModel.Category) || string.IsNullOrEmpty(flowStepViewModel.Name))
+        {
+            return;
+        }
+        var vm = Navigate<FlowMakerConfigEditViewModel>(HostScreen);
+        await vm.Load(flowStepViewModel.Category, flowStepViewModel.Name);
+
+        await _messageBoxManager.Modals.Handle(new ModalInfo("配置", vm));
+    }
     #region Steps
 
     #region Edit

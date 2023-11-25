@@ -13,7 +13,7 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public string? Title { get; set; }
         [Reactive]
-        public string? DefautValue { get; set; }
+        public string? DefaultValue { get; set; }
         [Reactive]
         public bool OK { get; set; }
         public ReactiveCommand<bool, Unit> OKCommand { get; }

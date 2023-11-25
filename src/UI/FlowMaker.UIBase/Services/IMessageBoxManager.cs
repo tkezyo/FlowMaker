@@ -15,27 +15,17 @@ namespace FlowMaker.Services
         Interaction<ModalInfo, bool> Window { get; }
         Interaction<PromptInfo, PromptResult> Prompt { get; }
     }
-    public class AlertInfo
+    public class AlertInfo(string message)
     {
         public string? OwnerTitle { get; set; }
         public string? Title { get; set; }
-        public  string Message { get; set; }
-
-        public AlertInfo(string message)
-        {
-            Message = message;
-        }
+        public string Message { get; set; } = message;
     }
-    public class ConformInfo
+    public class ConformInfo(string message)
     {
         public string? OwnerTitle { get; set; }
         public string? Title { get; set; }
-        public  string Message { get; set; }
-
-        public ConformInfo(string message)
-        {
-            Message = message;
-        }
+        public string Message { get; set; } = message;
     }
     public class OpenFilesInfo
     {
@@ -53,37 +43,25 @@ namespace FlowMaker.Services
         public string? DefaultExtension { get; set; }
         public string? Title { get; set; }
     }
-    public class PromptInfo
+    public class PromptInfo(string title)
     {
         
         public string? OwnerTitle { get; set; }
-        public  string Title { get; set; }
+        public string Title { get; set; } = title;
 
-        public PromptInfo(string title)
-        {
-            Title = title;
-        }
-
-        public string? DefautValue { get; set; }
+        public string? DefaultValue { get; set; }
     }
     public class PromptResult
     {
         public bool Ok { get; set; }
         public string? Value { get; set; }
     }
-    public class ModalInfo
+    public class ModalInfo(string title, IFlowMakerRoutableViewModel viewModel, int width = 800, int height = 600)
     {
-        public ModalInfo(string title, IFlowMakerRoutableViewModel viewModel, int width = 800, int height = 600)
-        {
-            Title = title;
-            Width = width;
-            Height = height;
-            ViewModel = viewModel;
-        }
         public string? OwnerTitle { get; set; }
-        public string? Title { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public IFlowMakerRoutableViewModel ViewModel { get; set; }
+        public string? Title { get; set; } = title;
+        public int Width { get; set; } = width;
+        public int Height { get; set; } = height;
+        public IFlowMakerRoutableViewModel ViewModel { get; set; } = viewModel;
     }
 }

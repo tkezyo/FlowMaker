@@ -47,83 +47,68 @@ namespace Test1.ViewModels
             DeleteBoxCommand = ReactiveCommand.Create(DeleteBox);
 
             AddActionCommand = ReactiveCommand.CreateFromTask(AddAction);
-            DeleteActionCommand = ReactiveCommand.Create<(SpikeBoxViewModel, SpikeActionViewModel)?>(DeleteAction);
-            //AddActionCommand = ReactiveCommand.CreateFromTask<(SpikeTabViewModel, SpikeBoxViewModel)?>(AddAction);
-            //EditActionCommand = ReactiveCommand.CreateFromTask<SpikeActionViewModel>(EditAction);
-            MoveForwardActionCommand = ReactiveCommand.Create<(SpikeBoxViewModel, SpikeActionViewModel)?>(c =>
-            {
-                if (c is null)
-                {
-                    return;
-                }
-                MoveAction((c.Value.Item1, c.Value.Item2, true));
-            });
-            MoveBackActionCommand = ReactiveCommand.Create<(SpikeBoxViewModel, SpikeActionViewModel)?>(c =>
-            {
-                if (c is null)
-                {
-                    return;
-                }
-                MoveAction((c.Value.Item1, c.Value.Item2, false));
-            });
+            DeleteActionCommand = ReactiveCommand.Create(DeleteAction);
+            SelectActionCommand = ReactiveCommand.Create<(SpikeBoxViewModel, SpikeActionViewModel)?>(SelectAction);
 
-            AddHeightCommnd = ReactiveCommand.Create<bool>(c =>
+            MoveActionCommand = ReactiveCommand.Create<bool>(MoveAction);
+
+            AddHeightCommand = ReactiveCommand.Create<bool>(c =>
             {
                 int span = 5;
-                if (Changeable is null || Changeable is not IResizeable resizeable)
+                if (Changeable is null || Changeable is not IResizable resizable)
                 {
                     return;
                 }
-                if (resizeable is SpikeBoxResizeableViewModel)
+                if (resizable is SpikeBoxResizableViewModel)
                 {
                     span = 1;
                 }
 
                 if (c)
                 {
-                    resizeable.Height += span;
+                    resizable.Height += span;
                 }
                 else
                 {
-                    if (resizeable.Height <= 1)
+                    if (resizable.Height <= 1)
                     {
                         return;
                     }
-                    resizeable.Height -= span;
+                    resizable.Height -= span;
                 }
             });
-            AddWidthCommnd = ReactiveCommand.Create<bool>(c =>
+            AddWidthCommand = ReactiveCommand.Create<bool>(c =>
             {
                 int span = 5;
-                if (Changeable is null || Changeable is not IResizeable resizeable)
+                if (Changeable is null || Changeable is not IResizable resizable)
                 {
                     return;
                 }
-                if (Changeable is SpikeBoxResizeableViewModel)
+                if (Changeable is SpikeBoxResizableViewModel)
                 {
                     span = 1;
                 }
                 if (c)
                 {
-                    resizeable.Width += span;
+                    resizable.Width += span;
                 }
                 else
                 {
-                    if (resizeable.Width <= 1)
+                    if (resizable.Width <= 1)
                     {
                         return;
                     }
-                    resizeable.Width -= span;
+                    resizable.Width -= span;
                 }
             });
-            LeftCommnd = ReactiveCommand.Create<bool>(c =>
+            LeftCommand = ReactiveCommand.Create<bool>(c =>
             {
                 int span = 5;
                 if (Changeable is null || Changeable is not IMoveable moveable)
                 {
                     return;
                 }
-                if (Changeable is SpikeBoxResizeableViewModel)
+                if (Changeable is SpikeBoxResizableViewModel)
                 {
                     span = 1;
                 }
@@ -140,14 +125,14 @@ namespace Test1.ViewModels
                     moveable.Left -= span;
                 }
             });
-            TopCommnd = ReactiveCommand.Create<bool>(c =>
+            TopCommand = ReactiveCommand.Create<bool>(c =>
             {
                 int span = 5;
                 if (Changeable is null || Changeable is not IMoveable moveable)
                 {
                     return;
                 }
-                if (Changeable is SpikeBoxResizeableViewModel)
+                if (Changeable is SpikeBoxResizableViewModel)
                 {
                     span = 1;
                 }
@@ -164,7 +149,7 @@ namespace Test1.ViewModels
                     moveable.Top -= span;
                 }
             });
-            SelectResizeableCommand = ReactiveCommand.Create<IChangeable?>(SelectResizeable);
+            SelectResizableCommand = ReactiveCommand.Create<IChangeable?>(SelectResizable);
             SelectBoxCommand = ReactiveCommand.Create<SpikeBoxViewModel>(SelectBox);
             ChangeCustomViewCommand = ReactiveCommand.Create<string?>(ChangeCustomView);
 
@@ -173,6 +158,7 @@ namespace Test1.ViewModels
             this._flowManager = flowManager;
             _mapper = mapper;
             this._serviceProvider = serviceProvider;
+            Edit = _flowMakerOption.Edit;
             InitMenu();
         }
 
@@ -205,25 +191,51 @@ namespace Test1.ViewModels
                 {
                     sections.Children.Add(new MenuItemViewModel(item));
                 }
-                var editview = new MenuItemViewModel("编辑");
-                editview.Children.Add(new MenuItemViewModel("添加标签") { Command = AddTabCommand });
-                editview.Children.Add(new MenuItemViewModel("添加盒子") { Command = AddBoxCommand });
-                editview.Children.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
+                var editView = new MenuItemViewModel("编辑");
+                var tabView = new MenuItemViewModel("标签");
+                var bixView = new MenuItemViewModel("盒子");
+                var actionView = new MenuItemViewModel("按钮");
+                editView.Children.Add(tabView);
+                editView.Children.Add(bixView);
+                editView.Children.Add(actionView);
+
+                tabView.Children.Add(new MenuItemViewModel("添加标签") { Command = AddTabCommand });
+                tabView.Children.Add(new MenuItemViewModel("前移标签") { Command = MoveTabCommand, CommandParameter = false });
+                tabView.Children.Add(new MenuItemViewModel("后移标签") { Command = MoveTabCommand, CommandParameter = true });
+                tabView.Children.Add(new MenuItemViewModel("删除标签") { Command = DeleteTabCommand });
+
+
+                bixView.Children.Add(new MenuItemViewModel("添加盒子") { Command = AddBoxCommand });
+                if (CurrentBox is not null)
+                {
+                    bixView.Children.Add(new MenuItemViewModel("删除盒子") { Command = DeleteBoxCommand });
+                }
+
+                actionView.Children.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
+
+                if (CurrentAction is not null)
+                {
+                    actionView.Children.Add(new MenuItemViewModel("删除按钮") { Command = DeleteActionCommand });
+                    actionView.Children.Add(new MenuItemViewModel("前移按钮") { Command = MoveActionCommand, CommandParameter = true });
+                    actionView.Children.Add(new MenuItemViewModel("后移按钮") { Command = MoveActionCommand, CommandParameter = false });
+                    actionView.Children.Add(new MenuItemViewModel("按钮变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ButtonSize });
+                    actionView.Children.Add(new MenuItemViewModel("输入变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.InputSize });
+                    actionView.Children.Add(new MenuItemViewModel("输出变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.OutputSize });
+                    actionView.Children.Add(new MenuItemViewModel("边框变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ActionSize });
+                }
+
+
                 var customViews = new MenuItemViewModel("自定义视图");
                 foreach (var item in _flowMakerOption.CustomViews)
                 {
                     customViews.Children.Add(new MenuItemViewModel("指令") { Command = ChangeCustomViewCommand });
                     customViews.Children.Add(new MenuItemViewModel(item) { Command = ChangeCustomViewCommand, CommandParameter = item });
                 }
-                editview.Children.Add(customViews);
+                editView.Children.Add(customViews);
 
-                editview.Children.Add(new MenuItemViewModel("前移标签") { Command = MoveTabCommand, CommandParameter = false });
-                editview.Children.Add(new MenuItemViewModel("后移标签") { Command = MoveTabCommand, CommandParameter = true });
-                editview.Children.Add(new MenuItemViewModel("删除标签") { Command = DeleteTabCommand });
-                editview.Children.Add(new MenuItemViewModel("删除盒子") { Command = DeleteBoxCommand });
-                Menus.Add(editview);
+
+                Menus.Add(editView);
             }
-            Edit = true;
             foreach (var item in ConfigMenus)
             {
                 if (!item.ShowInMenu)
@@ -388,15 +400,13 @@ namespace Test1.ViewModels
         #endregion
 
         #region 主页
-        public ICommand EditCommand { get; }
-        public ICommand AddHeightCommnd { get; }
-        public ICommand AddWidthCommnd { get; }
-        public ICommand LeftCommnd { get; }
-        public ICommand TopCommnd { get; }
-        public ReactiveCommand<IChangeable?, Unit> SelectResizeableCommand { get; }
-        public ICommand TerminateCommand { get; }
+        public ICommand AddHeightCommand { get; }
+        public ICommand AddWidthCommand { get; }
+        public ICommand LeftCommand { get; }
+        public ICommand TopCommand { get; }
+        public ReactiveCommand<IChangeable?, Unit> SelectResizableCommand { get; }
         public IChangeable? Changeable { get; set; }
-        public void SelectResizeable(IChangeable? changeableViewModel)
+        public void SelectResizable(IChangeable? changeableViewModel)
         {
             Changeable = changeableViewModel;
         }
@@ -440,7 +450,7 @@ namespace Test1.ViewModels
             }
             foreach (var tab in Tabs)
             {
-                foreach (var box in tab.Boxs)
+                foreach (var box in tab.Boxes)
                 {
                     if (!string.IsNullOrEmpty(box.ViewName))
                     {
@@ -494,29 +504,29 @@ namespace Test1.ViewModels
                 return;
             }
             var old = Tabs.IndexOf(CurrentTab);
-            int newindex;
+            int newIndex;
             if (back)
             {
-                newindex = old + 1;
-                if (newindex >= Tabs.Count)
+                newIndex = old + 1;
+                if (newIndex >= Tabs.Count)
                 {
                     return;
                 }
             }
             else
             {
-                newindex = old - 1;
-                if (newindex < 0)
+                newIndex = old - 1;
+                if (newIndex < 0)
                 {
                     return;
                 }
             }
-            Tabs.Move(old, newindex);
+            Tabs.Move(old, newIndex);
         }
         public ReactiveCommand<Unit, Unit> AddTabCommand { get; }
         public async Task AddTab()
         {
-            var r = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入标签名称") { DefautValue = "New Tab" + (Tabs.Count + 1) });
+            var r = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入标签名称") { DefaultValue = "New Tab" + (Tabs.Count + 1) });
             if (r.Ok && !string.IsNullOrEmpty(r.Value))
             {
                 Tabs.Add(new SpikeTabViewModel() { Name = r.Value });
@@ -535,30 +545,34 @@ namespace Test1.ViewModels
             {
                 return;
             }
-            var r = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入分组名称") { DefautValue = "New Box" + (CurrentTab.Boxs.Count + 1) });
+            var r = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入分组名称") { DefaultValue = "New Box" + (CurrentTab.Boxes.Count + 1) });
             if (r.Ok && !string.IsNullOrEmpty(r.Value))
             {
-                var left = 1;
-                var top = 1;
-                if (CurrentTab.Boxs.Any())
+                var left = 0;
+                var top = 0;
+                if (CurrentTab.Boxes.Any())
                 {
-                    left = CurrentTab.Boxs.Max(c => c.Size.Left + c.Size.Width);
-                    top = CurrentTab.Boxs.Max(c => c.Size.Top + c.Size.Height);
+                    left = CurrentTab.Boxes.Max(c => c.Size.Left + c.Size.Width);
+                    if (left >= 6)
+                    {
+                        top = CurrentTab.Boxes.Max(c => c.Size.Top + c.Size.Height);
+                        left = 0;
+                    }
                 }
 
-                if (left > 8)
+                if (left > 6)
                 {
-                    left = 8;
+                    left = 6;
                 }
-                if (top > 8)
+                if (top > 6)
                 {
-                    top = 8;
+                    top = 6;
                 }
                 var box = new SpikeBoxViewModel() { Name = r.Value };
                 box.Size.Left = left;
                 box.Size.Top = top;
 
-                CurrentTab.Boxs.Add(box);
+                CurrentTab.Boxes.Add(box);
             }
         }
         public ReactiveCommand<Unit, Unit> DeleteTabCommand { get; }
@@ -574,11 +588,16 @@ namespace Test1.ViewModels
         public ReactiveCommand<SpikeBoxViewModel, Unit> SelectBoxCommand { get; }
         public void SelectBox(SpikeBoxViewModel spikeBoxViewModel)
         {
+            if (CurrentAction is not null)
+            {
+                CurrentAction.Editing = false;
+                CurrentAction = null;
+            }
             if (CurrentBox is null)
             {
                 CurrentBox = spikeBoxViewModel;
                 CurrentBox.Editing = true;
-                SelectResizeable(CurrentBox.Size);
+                SelectResizable(CurrentBox.Size);
             }
             else
             {
@@ -586,7 +605,7 @@ namespace Test1.ViewModels
                 if (CurrentBox == spikeBoxViewModel)
                 {
                     CurrentBox = null;
-                    SelectResizeable(null);
+                    SelectResizable(null);
                     return;
                 }
                 else
@@ -594,7 +613,7 @@ namespace Test1.ViewModels
                     CurrentBox = spikeBoxViewModel;
                     CurrentBox.Editing = true;
                 }
-                SelectResizeable(CurrentBox.Size);
+                SelectResizable(CurrentBox.Size);
             }
 
         }
@@ -606,7 +625,7 @@ namespace Test1.ViewModels
                 return;
             }
 
-            CurrentTab.Boxs.Remove(CurrentBox);
+            CurrentTab.Boxes.Remove(CurrentBox);
         }
         [Reactive]
         public ObservableCollection<string> CustomViews { get; set; } = [];
@@ -634,29 +653,37 @@ namespace Test1.ViewModels
 
         #region 流程编辑
 
-        public ReactiveCommand<(SpikeBoxViewModel, SpikeActionViewModel)?, Unit> MoveForwardActionCommand { get; }
-        public ReactiveCommand<(SpikeBoxViewModel, SpikeActionViewModel)?, Unit> MoveBackActionCommand { get; }
-        public void MoveAction((SpikeBoxViewModel, SpikeActionViewModel, bool) input)
+        public ReactiveCommand<bool, Unit> MoveActionCommand { get; }
+        public void MoveAction(bool input)
         {
-            var old = input.Item1.Actions.IndexOf(input.Item2);
-            int newindex;
-            if (!input.Item3)
+
+            if (CurrentAction is null)
             {
-                newindex = old + 1;
-                if (newindex >= input.Item1.Actions.Count)
+                return;
+            }
+            if (CurrentBox is null)
+            {
+                return;
+            }
+            var old = CurrentBox.Actions.IndexOf(CurrentAction);
+            int newIndex;
+            if (!input)
+            {
+                newIndex = old + 1;
+                if (newIndex >= CurrentBox.Actions.Count)
                 {
                     return;
                 }
             }
             else
             {
-                newindex = old - 1;
-                if (newindex < 0)
+                newIndex = old - 1;
+                if (newIndex < 0)
                 {
                     return;
                 }
             }
-            input.Item1.Actions.Move(old, newindex);
+            CurrentBox.Actions.Move(old, newIndex);
         }
 
         public ReactiveCommand<Unit, Unit> AddActionCommand { get; }
@@ -687,14 +714,53 @@ namespace Test1.ViewModels
             }
 
         }
-        public ReactiveCommand<(SpikeBoxViewModel, SpikeActionViewModel)?, Unit> DeleteActionCommand { get; }
-        public void DeleteAction((SpikeBoxViewModel, SpikeActionViewModel)? input)
+        [Reactive]
+        public SpikeActionViewModel? CurrentAction { get; set; }
+        public ReactiveCommand<(SpikeBoxViewModel, SpikeActionViewModel)?, Unit> SelectActionCommand { get; }
+        public void SelectAction((SpikeBoxViewModel, SpikeActionViewModel)? input)
         {
             if (input is null)
             {
                 return;
             }
-            input.Value.Item1.Actions.Remove(input.Value.Item2);
+            if (CurrentAction == input.Value.Item2)
+            {
+                if (CurrentBox is not null)
+                {
+                    CurrentBox.Editing = false;
+                    CurrentBox = null;
+                }
+                if (CurrentAction is not null)
+                {
+                    CurrentAction.Editing = false;
+                    CurrentAction = null;
+                }
+            }
+            else
+            {
+                CurrentBox = input.Value.Item1;
+                CurrentBox.Editing = false;
+                if (CurrentAction is not null)
+                {
+                    CurrentAction.Editing = false;
+                }
+                CurrentAction = input.Value.Item2;
+                CurrentAction.Editing = true;
+            }
+            InitMenu();
+        }
+        public ReactiveCommand<Unit, Unit> DeleteActionCommand { get; }
+        public void DeleteAction()
+        {
+            if (CurrentAction is null)
+            {
+                return;
+            }
+            if (CurrentBox is null)
+            {
+                return;
+            }
+            CurrentBox.Actions.Remove(CurrentAction);
         }
         #endregion
         #endregion
@@ -705,7 +771,7 @@ namespace Test1.ViewModels
     {
         public required string Name { get; set; }
 
-        public List<SpikeBox> Boxs { get; set; } = new List<SpikeBox>();
+        public List<SpikeBox> Boxes { get; set; } = [];
 
     }
     public class SpikeBox
@@ -714,7 +780,7 @@ namespace Test1.ViewModels
 
         public string? ViewName { get; set; }
 
-        public SpikeMoveAndResizeable Size { get; set; } = new SpikeMoveAndResizeable();
+        public SpikeMoveAndResizable Size { get; set; } = new SpikeMoveAndResizable();
 
 
         public List<SpikeAction> Actions { get; set; } = [];
@@ -724,16 +790,16 @@ namespace Test1.ViewModels
     {
         public required string Name { get; set; }
 
-        public SpikeResizeable AcitonSize { get; set; } = new SpikeResizeable();
+        public SpikeResizable ActionSize { get; set; } = new SpikeResizable();
 
 
-        public SpikeMoveAndResizeable ButtonSize { get; set; } = new SpikeMoveAndResizeable();
+        public SpikeMoveAndResizable ButtonSize { get; set; } = new SpikeMoveAndResizable();
 
 
-        public SpikeMoveAndResizeable InputSize { get; set; } = new SpikeMoveAndResizeable();
+        public SpikeMoveAndResizable InputSize { get; set; } = new SpikeMoveAndResizable();
 
 
-        public SpikeMoveAndResizeable OutputSize { get; set; } = new SpikeMoveAndResizeable();
+        public SpikeMoveAndResizable OutputSize { get; set; } = new SpikeMoveAndResizable();
 
 
         public required string DeviceType { get; set; }
@@ -754,13 +820,13 @@ namespace Test1.ViewModels
 
         public int Top { get; set; }
     }
-    public class SpikeResizeable : IResizeable, IChangeable
+    public class SpikeResizable : IResizable, IChangeable
     {
         public int Width { get; set; }
 
         public int Height { get; set; }
     }
-    public class SpikeMoveAndResizeable : IResizeable, IChangeable, IMoveable
+    public class SpikeMoveAndResizable : IResizable, IChangeable, IMoveable
     {
         public int Width { get; set; }
 
@@ -775,7 +841,7 @@ namespace Test1.ViewModels
         [Reactive]
         public required string Name { get; set; }
         [Reactive]
-        public ObservableCollection<SpikeBoxViewModel> Boxs { get; set; } = [];
+        public ObservableCollection<SpikeBoxViewModel> Boxes { get; set; } = [];
     }
     public class SpikeBoxViewModel : ReactiveObject, IScreen
     {
@@ -802,7 +868,7 @@ namespace Test1.ViewModels
         }
 
         [Reactive]
-        public SpikeBoxResizeableViewModel Size { get; set; } = new();
+        public SpikeBoxResizableViewModel Size { get; set; } = new();
 
         [Reactive]
         public ObservableCollection<SpikeActionViewModel> Actions { get; set; } = [];
@@ -837,9 +903,11 @@ namespace Test1.ViewModels
         [Reactive]
         public DefinitionType Type { get; set; }
         [Reactive]
-        public SpikeResizeableViewModel AcitonSize { get; set; } = new();
+        public bool Editing { get; set; }
         [Reactive]
-        public SpikeMoveAndResizeableViewModel ButtonSize { get; set; } = new()
+        public SpikeResizableViewModel ActionSize { get; set; } = new();
+        [Reactive]
+        public SpikeMoveAndResizableViewModel ButtonSize { get; set; } = new()
         {
             Top = 30,
             Left = 60,
@@ -847,7 +915,7 @@ namespace Test1.ViewModels
             Height = 30,
         };
         [Reactive]
-        public SpikeMoveAndResizeableViewModel InputSize { get; set; } = new()
+        public SpikeMoveAndResizableViewModel InputSize { get; set; } = new()
         {
             Top = 30,
             Left = 0,
@@ -855,7 +923,7 @@ namespace Test1.ViewModels
             Height = 60,
         };
         [Reactive]
-        public SpikeMoveAndResizeableViewModel OutputSize { get; set; } = new()
+        public SpikeMoveAndResizableViewModel OutputSize { get; set; } = new()
         {
             Top = 30,
             Left = 150,
@@ -867,8 +935,8 @@ namespace Test1.ViewModels
 
         public SpikeActionViewModel()
         {
-            AcitonSize.Width = 200;
-            AcitonSize.Height = 100;
+            ActionSize.Width = 200;
+            ActionSize.Height = 100;
         }
 
         [Reactive]
@@ -896,7 +964,7 @@ namespace Test1.ViewModels
     }
 
 
-    public class SpikeResizeableViewModel : ReactiveObject, IResizeable
+    public class SpikeResizableViewModel : ReactiveObject, IResizable
     {
         [Reactive]
         public int Height { get; set; } = 100;
@@ -912,7 +980,7 @@ namespace Test1.ViewModels
         public int Top { get; set; } = 50;
 
     }
-    public class SpikeMoveAndResizeableViewModel : ReactiveObject, IResizeable, IMoveable
+    public class SpikeMoveAndResizableViewModel : ReactiveObject, IResizable, IMoveable
     {
         [Reactive]
         public int Left { get; set; }
@@ -924,7 +992,7 @@ namespace Test1.ViewModels
         public int Width { get; set; } = 2;
 
     }
-    public class SpikeBoxResizeableViewModel : ReactiveObject, IResizeable, IMoveable
+    public class SpikeBoxResizableViewModel : ReactiveObject, IResizable, IMoveable
     {
         [Reactive]
         public int Left { get; set; }
@@ -946,7 +1014,7 @@ namespace Test1.ViewModels
         [Reactive]
         public required string Status { get; set; }
     }
-    public interface IResizeable : IChangeable
+    public interface IResizable : IChangeable
     {
         int Width { get; set; }
 

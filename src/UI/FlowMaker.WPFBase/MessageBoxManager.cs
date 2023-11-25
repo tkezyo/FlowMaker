@@ -57,7 +57,7 @@ namespace FlowMaker
             Window.RegisterHandler(DoShowWindowAsync);
             SaveFile.RegisterHandler(SaveFileAsync);
             OpenFiles.RegisterHandler(FileDialogAsync);
-            Conform.RegisterHandler(ComformDialogAsync);
+            Conform.RegisterHandler(ConformDialogAsync);
             Prompt.RegisterHandler(PromptDialogAsync);
             SelectFolder.RegisterHandler(FileFolderAsync);
         }
@@ -76,7 +76,7 @@ namespace FlowMaker
             interaction.SetOutput(null);
             await Task.CompletedTask;
         }
-        protected virtual void ComformDialogAsync(IInteractionContext<ConformInfo,
+        protected virtual void ConformDialogAsync(IInteractionContext<ConformInfo,
                                     bool> interaction)
         {
 
@@ -90,11 +90,11 @@ namespace FlowMaker
         protected virtual async Task PromptDialogAsync(IInteractionContext<PromptInfo,
                                     PromptResult> interaction)
         {
-            var dialog = FlowMakerApp.ServiceProvider.GetRequiredService<IViewFor<PromptDialogViewModel>>();
+            var dialog = FlowMakerApp.ServiceProvider.GetRequiredKeyedService<IViewFor>(typeof(PromptDialogViewModel).FullName);
             var viewModel = FlowMakerApp.ServiceProvider.GetRequiredService<PromptDialogViewModel>();
 
             viewModel.Title = interaction.Input.Title;
-            viewModel.DefautValue = interaction.Input.DefautValue;
+            viewModel.DefaultValue = interaction.Input.DefaultValue;
             dialog.ViewModel = viewModel;
             IDisposable? disposable = null;
             TaskCompletionSource<PromptResult> tcs = new();
@@ -109,7 +109,7 @@ namespace FlowMaker
                         tcs.SetResult(new PromptResult
                         {
                             Ok = c,
-                            Value = viewModel.DefautValue
+                            Value = viewModel.DefaultValue
                         });
                         disposable?.Dispose();
                     });
@@ -149,7 +149,7 @@ namespace FlowMaker
         protected virtual async Task DoShowDialogAsync(IInteractionContext<ModalInfo,
                                             bool> interaction)
         {
-            var dialog = FlowMakerApp.ServiceProvider.GetRequiredService<IViewFor<ModalDialogViewModel>>();
+            var dialog = FlowMakerApp.ServiceProvider.GetRequiredKeyedService<IViewFor>(typeof(ModalDialogViewModel).FullName);
             var viewModel = FlowMakerApp.ServiceProvider.GetRequiredService<ModalDialogViewModel>();
 
             viewModel.Title = interaction.Input.Title;
@@ -174,7 +174,7 @@ namespace FlowMaker
                 });
                 var ownerWindow = GetCurrentWindow(interaction.Input.OwnerTitle);
                 window.Owner = ownerWindow;
-              
+
                 RxApp.MainThreadScheduler.Schedule(X =>
                 {
                     window.ShowDialog();
@@ -187,7 +187,7 @@ namespace FlowMaker
                                           bool> interaction)
         {
             IDisposable? disposable = null;
-            var dialog = FlowMakerApp.ServiceProvider.GetRequiredService<IViewFor<ModalDialogViewModel>>();
+            var dialog = FlowMakerApp.ServiceProvider.GetKeyedService<IViewFor>(typeof(ModalDialogViewModel).FullName);
             var viewModel = FlowMakerApp.ServiceProvider.GetRequiredService<ModalDialogViewModel>();
 
             viewModel.Title = interaction.Input.Title;

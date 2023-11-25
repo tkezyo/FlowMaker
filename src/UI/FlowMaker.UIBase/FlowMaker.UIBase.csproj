@@ -21,8 +21,4 @@
 		<PackageReference Include="ReactiveUI.Validation" Version="3.1.7" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\..\tools\FlowMaker.ViewLocator.SourceGenerator\FlowMaker.ViewLocator.SourceGenerator.csproj" />
-	</ItemGroup>
-
 </Project>

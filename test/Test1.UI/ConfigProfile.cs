@@ -26,17 +26,17 @@ namespace Test1
             //CreateMap<WorkflowInput, SpikeActionInputViewModel>();
 
 
-            CreateMap<SpikeResizeable, SpikeResizeableViewModel>();
-            CreateMap<SpikeResizeableViewModel, SpikeResizeable>();
+            CreateMap<SpikeResizable, SpikeResizableViewModel>();
+            CreateMap<SpikeResizableViewModel, SpikeResizable>();
 
             CreateMap<SpikeMoveable, SpikeMoveableViewModel>();
             CreateMap<SpikeMoveableViewModel, SpikeMoveable>();
 
-            CreateMap<SpikeMoveAndResizeable, SpikeBoxResizeableViewModel>();
-            CreateMap<SpikeBoxResizeableViewModel, SpikeMoveAndResizeable>();
+            CreateMap<SpikeMoveAndResizable, SpikeBoxResizableViewModel>();
+            CreateMap<SpikeBoxResizableViewModel, SpikeMoveAndResizable>();
 
-            CreateMap<SpikeMoveAndResizeableViewModel, SpikeMoveAndResizeable>();
-            CreateMap<SpikeMoveAndResizeable, SpikeMoveAndResizeableViewModel>();
+            CreateMap<SpikeMoveAndResizableViewModel, SpikeMoveAndResizable>();
+            CreateMap<SpikeMoveAndResizable, SpikeMoveAndResizableViewModel>();
 
             // Use CreateMap... Etc.. here (Profile methods are the same as configuration methods)
         }
