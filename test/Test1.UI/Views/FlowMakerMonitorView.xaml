@@ -16,7 +16,6 @@
         <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}"></Style>
         <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
         <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
-
     </UserControl.Resources>
     <DockPanel>
         <ItemsControl ItemsSource="{Binding Flows}">
@@ -32,14 +31,13 @@
                             <ToolBar>
                                 <Button Content="运行"/>
                                 <Button Content="删除"/>
-                                <ComboBox Text="{Binding Category,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend}" hc:TitleElement.Title="类别:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding DataContext.Categories,ElementName=page}"/>
-                                <ComboBox SelectedItem="{Binding Definition,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend}" hc:TitleElement.Title="名称:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Definitions}" DisplayMemberPath="DisplayName"/>
-                                
+
+                                <TextBox Text="{Binding DisplayName}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" IsReadOnly="True"/>
                                 <TextBox Text="{Binding Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                                 <TextBox Text="{Binding Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
-                                <ComboBox ItemsSource="{Binding ErrorHandlings}" Style="{StaticResource ComboBoxExtend}" SelectedItem="{Binding ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理方式:" hc:TitleElement.TitlePlacement="Left"/>
+                                <ComboBox ItemsSource="{Binding DataContext.ErrorHandlings,ElementName=page}" Style="{StaticResource ComboBoxExtend}" SelectedItem="{Binding ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理方式:" hc:TitleElement.TitlePlacement="Left"/>
                             </ToolBar>
-                            <ToolBar ItemsSource="{Binding Data}" Visibility="{Binding Data.Count,Converter={StaticResource CountToVisibilityReConverter},ConverterParameter=0}">
+                            <ToolBar  Band="2" ItemsSource="{Binding Data}" Visibility="{Binding Data.Count,Converter={StaticResource CountToVisibilityReConverter},ConverterParameter=0}">
                             
                                 <ToolBar.ItemTemplate>
                                     <DataTemplate>

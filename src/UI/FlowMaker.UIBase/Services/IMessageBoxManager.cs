@@ -45,7 +45,7 @@ namespace FlowMaker.Services
     }
     public class PromptInfo(string title)
     {
-        
+
         public string? OwnerTitle { get; set; }
         public string Title { get; set; } = title;
 
@@ -58,6 +58,7 @@ namespace FlowMaker.Services
     }
     public class ModalInfo(string title, IFlowMakerRoutableViewModel viewModel, int width = 800, int height = 600)
     {
+        public bool OnlyOne { get; set; }
         public string? OwnerTitle { get; set; }
         public string? Title { get; set; } = title;
         public int Width { get; set; } = width;

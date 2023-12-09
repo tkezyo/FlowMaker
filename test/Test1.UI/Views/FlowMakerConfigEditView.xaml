@@ -15,31 +15,44 @@
         <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}"></Style>
         <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
     </UserControl.Resources>
-    <StackPanel Margin="10">
-        <TextBox Text="{Binding Model.Category,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置类别:" MinWidth="90" hc:TitleElement.TitlePlacement="Top"/>
-        <TextBox Text="{Binding Model.Name,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置名称:" MinWidth="90"  hc:TitleElement.TitlePlacement="Top"/>
-        <TextBox Text="{Binding Model.FlowCategory,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="类别:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Top"/>
-        <TextBox Text="{Binding Model.FlowName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="名称:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Top"/>
-        <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Top"/>
-        <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Top"/>
-        <ComboBox ItemsSource="{Binding ErrorHandlings}" Style="{StaticResource ComboBoxExtend}" SelectedItem="{Binding Model.ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理方式:" hc:TitleElement.TitlePlacement="Top"/>
-        <ItemsControl ItemsSource="{Binding Model.Data}">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding Model.Category,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置类别:" MinWidth="90" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Model.Name,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置名称:" MinWidth="90"  hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding Model.FlowCategory,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="类别:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Model.FlowName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="名称:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Grid.Row="2" Grid.Column="0" Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Top"/>
+        <ComboBox Grid.Row="3" Grid.Column="0" ItemsSource="{Binding ErrorHandlings}" Style="{StaticResource ComboBoxExtend}" SelectedItem="{Binding Model.ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理方式:" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="超时（秒）:"  hc:TitleElement.TitlePlacement="Top"/>
+        <ItemsControl ItemsSource="{Binding Model.Data}"  Grid.Row="4" Grid.ColumnSpan="2">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <StackPanel>
-                        <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedItem="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                        <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Top" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Top" ItemsSource="{Binding Options}" SelectedItem="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
                     </StackPanel>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <Button Content="保存" Command="{Binding SaveCommand}"/>
-        <!--<Button Content="保存并运行" Command="{Binding SaveCommand}" >
+        <Button Margin="10" Grid.Row="5" Grid.Column="0" Content="保存" Style="{StaticResource ButtonSuccess}" Command="{Binding SaveOrRunCommand}"/>
+        <Button Margin="10" Grid.Row="5" Grid.Column="1" Content="保存并执行" Style="{StaticResource ButtonPrimary}" Command="{Binding SaveOrRunCommand}" >
             <Button.CommandParameter>
                 <s:Boolean>True</s:Boolean>
             </Button.CommandParameter>
-        </Button>-->
-    </StackPanel>
+        </Button>
+    </Grid>
 
 </rxui:ReactiveUserControl>

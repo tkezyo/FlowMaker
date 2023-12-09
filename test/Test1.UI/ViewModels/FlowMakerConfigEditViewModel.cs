@@ -20,7 +20,7 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
 
     public FlowMakerConfigEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager)
     {
-        SaveCommand = ReactiveCommand.CreateFromTask<bool?>(Save);
+        SaveOrRunCommand = ReactiveCommand.CreateFromTask<bool?>(SaveOrRun);
         _flowMakerOption = options.Value;
         this._flowManager = flowManager;
         foreach (var item in Enum.GetValues<ErrorHandling>())
@@ -37,35 +37,7 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
             await SetStepInputAsync();
         });
     }
-    public CompositeDisposable? Disposables { get; set; }
 
-    public override Task Activate()
-    {
-        Disposables = [];
-        var f = _flowManager.OnFlowChange.Subscribe(c =>
-          {
-
-          });
-        Disposables.Add(f);
-
-        var d = _flowManager.OnStepChange.Subscribe(c =>
-          {
-
-          });
-        Disposables.Add(d);
-
-        return Task.CompletedTask;
-    }
-
-    public override Task Deactivate()
-    {
-        if (Disposables is not null)
-        {
-            Disposables.Dispose();
-            Disposables = null;
-        }
-        return base.Deactivate();
-    }
 
     private IStepDefinition? _stepDefinition;
 
@@ -213,8 +185,8 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
     public ObservableCollection<string> StepGroups { get; set; } = [];
     [Reactive]
     public ObservableCollection<string> StepDefinitions { get; set; } = [];
-    public ReactiveCommand<bool?, Unit> SaveCommand { get; set; }
-    public async Task Save(bool? run)
+    public ReactiveCommand<bool?, Unit> SaveOrRunCommand { get; set; }
+    public async Task SaveOrRun(bool? run)
     {
         if (string.IsNullOrEmpty(Model.Category) || string.IsNullOrEmpty(Model.Name) || string.IsNullOrEmpty(Model.FlowCategory) || string.IsNullOrEmpty(Model.FlowName))
         {

@@ -141,7 +141,7 @@ namespace FlowMaker
             dlg.Title = interaction.Input.Title;
             dlg.Filter = interaction.Input.Filter;
             dlg.FileName = interaction.Input.FileName;
-            
+
 
             var files = dlg.ShowDialog();
             interaction.SetOutput(dlg.FileName);
@@ -187,8 +187,22 @@ namespace FlowMaker
         protected virtual async Task DoShowWindowAsync(IInteractionContext<ModalInfo,
                                           bool> interaction)
         {
+            if (interaction.Input.OnlyOne)
+            {
+                var old = FindWindow(interaction.Input.Title);
+                if (old is not null)
+                {
+                    if (old.WindowState == WindowState.Minimized)
+                    {
+                        old.WindowState = WindowState.Normal;
+                    }
+                    old.Focus();
+                    interaction.SetOutput(true);
+                    return;
+                }
+            }
             IDisposable? disposable = null;
-            var dialog = FlowMakerApp.ServiceProvider.GetKeyedService<IViewFor>(typeof(ModalDialogViewModel).FullName);
+            var dialog = FlowMakerApp.ServiceProvider.GetRequiredKeyedService<IViewFor>(typeof(ModalDialogViewModel).FullName);
             var viewModel = FlowMakerApp.ServiceProvider.GetRequiredService<ModalDialogViewModel>();
 
             viewModel.Title = interaction.Input.Title;
@@ -221,8 +235,15 @@ namespace FlowMaker
 
                 window.Show();
             }
-            var r = await tcs.Task;
-            interaction.SetOutput(r);
+            if (!interaction.Input.OnlyOne)
+            {
+                var r = await tcs.Task;
+                interaction.SetOutput(r);
+            }
+            else
+            {
+                interaction.SetOutput(true);
+            }
         }
         protected virtual async Task DoAlertAsync(IInteractionContext<AlertInfo,
                                           Unit> interaction)
@@ -239,6 +260,18 @@ namespace FlowMaker
             MessageBox.Show(interaction.Input.Message, interaction.Input.Title);
             interaction.SetOutput(Unit.Default);
             await Task.CompletedTask;
+        }
+
+        private Window? FindWindow(string? title)
+        {
+            foreach (Window item in Application.Current.Windows)
+            {
+                if (item.Title == title)
+                {
+                    return item;
+                }
+            }
+            return null;
         }
 
         private Window GetCurrentWindow(string? ownerTitle)

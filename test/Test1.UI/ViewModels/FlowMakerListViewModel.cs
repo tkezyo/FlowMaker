@@ -14,7 +14,6 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -34,6 +33,7 @@ namespace Test1.ViewModels
             CreateCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel?>(Create);
             RemoveCommand = ReactiveCommand.Create<FlowDefinitionInfoViewModel>(Remove);
             ConfigCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(Config);
+            DebugFlowCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(DebugFlow);
             EditConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(EditConfig);
             RemoveConfigCommand = ReactiveCommand.Create<ConfigDefinitionInfoViewModel>(RemoveConfig);
             RunCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(Run);
@@ -297,9 +297,18 @@ namespace Test1.ViewModels
             var vm = Navigate<FlowMakerConfigEditViewModel>(HostScreen);
             await vm.Load(flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
 
-            await _messageBoxManager.Modals.Handle(new ModalInfo("配置", vm));
+            await _messageBoxManager.Modals.Handle(new ModalInfo("配置", vm, 400));
             LoadFlowMenus();
             LoadConfigMenus();
+        }
+
+        public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> DebugFlowCommand { get; }
+        public async Task DebugFlow(FlowDefinitionInfoViewModel flowDefinitionInfoViewModel)
+        {
+            var vm = Navigate<FlowMakerMonitorViewModel>(HostScreen);
+            await vm.Load(flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
+
+            await _messageBoxManager.Window.Handle(new ModalInfo("监控", vm) { OnlyOne = true });
         }
 
         public override async Task Activate()
@@ -343,7 +352,7 @@ namespace Test1.ViewModels
             var vm = Navigate<FlowMakerConfigEditViewModel>(HostScreen);
             await vm.LoadConfig(configDefinitionInfoViewModel.Category, configDefinitionInfoViewModel.Name, configDefinitionInfoViewModel.FlowCategory, configDefinitionInfoViewModel.FlowName);
             await Task.CompletedTask;
-            _messageBoxManager.Window.Handle(new ModalInfo("牛马配置器", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
+            _messageBoxManager.Window.Handle(new ModalInfo("牛马配置器", vm, 400) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
             {
                 LoadConfigMenus();
             });

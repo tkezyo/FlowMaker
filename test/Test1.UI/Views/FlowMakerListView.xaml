@@ -48,12 +48,12 @@
 
         <Grid Grid.Row="1"  Grid.ColumnSpan="2" Margin="4"
               Visibility="{Binding ShowFlowList,Converter={StaticResource Boolean2VisibilityConverter}}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="8" />
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
-            <DataGrid Grid.Column="0" 
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="8" />
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <DataGrid Grid.Row="0" 
                       ItemsSource="{Binding FlowMenus}" AutoGenerateColumns="False" IsReadOnly="True">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="类别" Binding="{Binding Category}"></DataGridTextColumn>
@@ -64,6 +64,7 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
+                                    <Button Command="{Binding DataContext.DebugFlowCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">调试</Button>
                                     <Button Command="{Binding DataContext.ConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">配置</Button>
                                     <Button Command="{Binding DataContext.CreateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">编辑</Button>
                                     <Button Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">删除</Button>
@@ -73,8 +74,8 @@
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
-            <DataGrid  Grid.Column="2"
+            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"/>
+            <DataGrid  Grid.Row="2"
                        ItemsSource="{Binding ConfigMenus}" AutoGenerateColumns="False" IsReadOnly="False">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="配置类别" Binding="{Binding Category}" IsReadOnly="True"></DataGridTextColumn>
