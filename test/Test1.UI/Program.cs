@@ -2,6 +2,7 @@
 using FlowMaker.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ReactiveUI;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -29,7 +30,7 @@ namespace Test1
 
             Log.Logger = configuration.CreateLogger();
 
-
+            RxApp.DefaultExceptionHandler = new MyCoolObservableExceptionHandler();
             var hostBuilder = Host.CreateDefaultBuilder(args);
 
             hostBuilder.ConfigureServices(services =>
@@ -44,6 +45,7 @@ namespace Test1
                 services.AddTransientFlowView<ChatViewModel, ChatView>();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
+                services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
                 services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
                 services.AddTransient<FlowRunner>();
@@ -63,6 +65,7 @@ namespace Test1
                 });
                 services.Configure<FlowMakerOption>(options =>
                 {
+                    options.RootDir = "D:\\FlowMaker";
                     options.Sections.Add("设备1");
                     options.Sections.Add("设备2");
                 });

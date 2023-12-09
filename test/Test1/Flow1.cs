@@ -26,7 +26,7 @@ public partial class Flow1 : IStep
 
     [Input]
     [DefaultValue("3")]
-    [DisplayName("123sdfasef")]
+    [Description("123sdfasef")]
     [Option("3", "3")]
     [Option("34", "34")]
     public int Prop2 { get; set; }

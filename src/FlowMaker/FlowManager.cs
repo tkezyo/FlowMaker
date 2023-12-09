@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 using System.Data;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -13,11 +14,17 @@ namespace FlowMaker;
 
 public class FlowManager
 {
-    private const string FlowDir = "Flows";
-    private const string ConfigDir = "Configs";
+    private const string flowDir = "Flows";
+    private const string configDir = "Configs";
+    private string FlowDir { get; set; }
+    private string ConfigDir { get; set; }
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly IServiceProvider _serviceProvider;
     private readonly FlowMakerOption _flowMakerOption;
+
+
+    public Subject<FlowStatusArgs> OnFlowChange { get; set; } = new();
+    public Subject<StepStatusArgs> OnStepChange { get; set; } = new();
 
     public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options)
     {
@@ -27,6 +34,8 @@ public class FlowManager
             WriteIndented = true,
         };
         _flowMakerOption = options.Value;
+        FlowDir = Path.Combine(_flowMakerOption.RootDir, flowDir);
+        ConfigDir = Path.Combine(_flowMakerOption.RootDir, configDir);
         this._serviceProvider = serviceProvider;
     }
 
@@ -49,22 +58,19 @@ public class FlowManager
     }
     private readonly ConcurrentDictionary<Guid, RunnerStatus> Status = [];
 
-    public async Task Run(string configCategory, string configName, string flowCategory, string flowName)
+    public async Task<Guid> Run(string configCategory, string configName, string flowCategory, string flowName)
     {
         var config = await LoadConfigDefinitionAsync(configCategory, configName, flowCategory, flowName);
         if (config is null)
         {
-            return;
+            throw new InvalidOperationException("未找到配置");
         }
-        await Run(config);
+        return await Run(config);
     }
-    public async Task Run(ConfigDefinition configDefinition)
+    public async Task<Guid> Run(ConfigDefinition configDefinition)
     {
         var flow = await LoadFlowDefinitionAsync(configDefinition.FlowCategory, configDefinition.FlowName);
-        if (flow is null)
-        {
-            return;
-        }
+
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
         CancellationTokenSource cancellationTokenSource = new();
@@ -75,7 +81,8 @@ public class FlowManager
             FlowCategory = configDefinition.FlowCategory,
             FlowName = configDefinition.FlowName
         };
-        _ = runner.Start(flow, configDefinition, cancellationTokenSource.Token);
+        _ = runner.Start(flow, configDefinition, [], cancellationTokenSource.Token);
+        return runner.Id;
     }
 
     public void Dispose(Guid id)
@@ -96,7 +103,7 @@ public class FlowManager
         }
         else
         {
-            var file = Path.Combine("Flows", category, name + ".json");
+            var file = Path.Combine(FlowDir, category, name + ".json");
             if (!File.Exists(file))
             {
                 return null;
@@ -174,20 +181,25 @@ public class FlowManager
     /// <param name="category"></param>
     /// <param name="name"></param>
     /// <returns></returns>
-    public async Task<FlowDefinition?> LoadFlowDefinitionAsync(string? category, string? name)
+    public async Task<FlowDefinition> LoadFlowDefinitionAsync(string? category, string? name)
     {
         if (string.IsNullOrEmpty(category) || string.IsNullOrEmpty(name))
         {
-            return null;
+            throw new Exception($"步骤信息错误:{category},{name}");
         }
         var file = Path.Combine(FlowDir, category, name + ".json");
         if (!File.Exists(file))
         {
-            return null;
+            throw new Exception($"未找到步骤:{category},{name}");
         }
 
         string json = await File.ReadAllTextAsync(file);
-        return JsonSerializer.Deserialize<FlowDefinition>(json);
+        var df = JsonSerializer.Deserialize<FlowDefinition>(json);
+        if (df is null)
+        {
+            throw new Exception($"步骤文件错误:{category},{name}");
+        }
+        return df;
     }
     #endregion
 

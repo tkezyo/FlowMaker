@@ -133,7 +133,7 @@ public enum ErrorHandling
     /// </summary>
     Skip,
     /// <summary>
-    /// 暂停
+    /// 暂停,需要添加恢复事件
     /// </summary>
     Suspend,
     /// <summary>

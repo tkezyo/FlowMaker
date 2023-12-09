@@ -24,11 +24,28 @@ namespace Test1.Converters
             return parameter;
         }
     }
+
     public class EqualToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             return value.Equals(parameter) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return parameter;
+        }
+    }
+    public class CountToVisibilityReConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (int.TryParse(parameter?.ToString(), out var count) && value is int vv)
+            {
+                return !vv.Equals(count) ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

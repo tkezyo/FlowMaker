@@ -23,6 +23,7 @@
 		<None Remove="appsettings.json" />
 		<None Remove="Views\ChatView.xaml" />
 		<None Remove="Views\FlowMakerConfigEditView.xaml" />
+		<None Remove="Views\FlowMakerMonitorView.xaml" />
 		<None Remove="Views\FlowMakerSelectView.xaml" />
 		<Content Include="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>

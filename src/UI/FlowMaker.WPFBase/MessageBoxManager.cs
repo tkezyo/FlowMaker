@@ -141,6 +141,7 @@ namespace FlowMaker
             dlg.Title = interaction.Input.Title;
             dlg.Filter = interaction.Input.Filter;
             dlg.FileName = interaction.Input.FileName;
+            
 
             var files = dlg.ShowDialog();
             interaction.SetOutput(dlg.FileName);
@@ -210,7 +211,12 @@ namespace FlowMaker
                 if (interaction.Input.OwnerTitle is not null)
                 {
                     var ownerWindow = GetCurrentWindow(interaction.Input.OwnerTitle);
+                    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
                     window.Owner = ownerWindow;
+                }
+                else
+                {
+                    window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 }
 
                 window.Show();

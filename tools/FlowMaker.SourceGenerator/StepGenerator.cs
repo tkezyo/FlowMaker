@@ -90,7 +90,7 @@ namespace FlowMaker.SourceGenerator
                             }
                             var memberName = member.Name;
                             var propAttrs = property.GetAttributes();
-                            var displayNameAttr = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DisplayNameAttribute");
+                            var displayNameAttr = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
                             var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
 
                             var output = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
@@ -218,7 +218,7 @@ public partial class {item.Option.MetadataName}
                             }
                             var memberName = member.Name;
                             var propAttrs = property.GetAttributes();
-                            var displayNameAttr = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DisplayNameAttribute");
+                            var displayNameAttr = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
                             var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
 
                             var output = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");

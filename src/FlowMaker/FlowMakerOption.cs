@@ -6,6 +6,7 @@ namespace FlowMaker;
 
 public class FlowMakerOption
 {
+    public string RootDir { get; set; } = string.Empty;
     public bool Edit { get; set; } = true;
     public List<string> Sections { get; set; } = [];
     public List<string> CustomViews { get; set; } = [];

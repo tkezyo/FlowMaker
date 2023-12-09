@@ -8,33 +8,38 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Test1.Views" d:DataContext="{d:DesignInstance Type=vms:FlowMakerConfigEditViewModel}"
+                          xmlns:s="clr-namespace:System;assembly=mscorlib"
                           mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}"></Style>
         <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
     </UserControl.Resources>
-    <ScrollViewer>
+    <StackPanel Margin="10">
+        <TextBox Text="{Binding Model.Category,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置类别:" MinWidth="90" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Text="{Binding Model.Name,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置名称:" MinWidth="90"  hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Text="{Binding Model.FlowCategory,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="类别:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Text="{Binding Model.FlowName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="名称:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Top"/>
+        <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Top"/>
+        <ComboBox ItemsSource="{Binding ErrorHandlings}" Style="{StaticResource ComboBoxExtend}" SelectedItem="{Binding Model.ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理方式:" hc:TitleElement.TitlePlacement="Top"/>
+        <ItemsControl ItemsSource="{Binding Model.Data}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedItem="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
-        <StackPanel Margin="10">
-            <TextBox Text="{Binding Model.Category}" hc:TitleElement.Title="配置类别"/>
-            <TextBox Text="{Binding Model.Name}" hc:TitleElement.Title="配置名称"/>
-            <TextBox Text="{Binding Model.FlowCategory}" hc:TitleElement.Title="类别" IsReadOnly="True"/>
-            <TextBox Text="{Binding Model.FlowName}" hc:TitleElement.Title="名称" IsReadOnly="True"/>
-            <TextBox Text="{Binding Model.Retry}" hc:TitleElement.Title="重试" />
-            <TextBox Text="{Binding Model.Repeat}" hc:TitleElement.Title="重复" />
-            <ComboBox ItemsSource="{Binding ErrorHandlings}" SelectedItem="{Binding Model.ErrorHandling}" hc:TitleElement.Title="错误处理方式"/>
-            <ItemsControl ItemsSource="{Binding Model.Data}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <TextBox hc:TitleElement.Title="{Binding DisplayName}" Text="{Binding Value}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                            <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" ItemsSource="{Binding Options}" SelectedItem="{Binding Value}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-            <Button Content="保存" Command="{Binding SaveCommand}"/>
-        </StackPanel>
-    </ScrollViewer>
+        <Button Content="保存" Command="{Binding SaveCommand}"/>
+        <!--<Button Content="保存并运行" Command="{Binding SaveCommand}" >
+            <Button.CommandParameter>
+                <s:Boolean>True</s:Boolean>
+            </Button.CommandParameter>
+        </Button>-->
+    </StackPanel>
+
 </rxui:ReactiveUserControl>

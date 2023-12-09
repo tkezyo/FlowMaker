@@ -23,7 +23,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Menu ItemsSource="{Binding Menus}">
+        <Menu ItemsSource="{Binding Menus}" Grid.Row="0">
             <Menu.ItemContainerStyle>
                 <Style TargetType="MenuItem" BasedOn="{StaticResource  MenuItemBaseStyle}">
                     <Setter Property="Command"  Value="{Binding Command}"/>
@@ -46,66 +46,61 @@
             </Menu.ItemTemplate>
         </Menu>
 
-        <DataGrid 
-              Visibility="{Binding ShowFlowList,Converter={StaticResource Boolean2VisibilityConverter}}"
-  Grid.Row="1"  ItemsSource="{Binding FlowMenus}" AutoGenerateColumns="False" IsReadOnly="True">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="类别" Binding="{Binding Category}"></DataGridTextColumn>
-                <DataGridTextColumn Header="名称" Binding="{Binding Name}"></DataGridTextColumn>
-                <DataGridTextColumn Header="创建时间" Binding="{Binding CreationTime,StringFormat={}{0:yyyy-MM-dd}}"></DataGridTextColumn>
-                <DataGridTextColumn Header="修改时间" Binding="{Binding ModifyTime,StringFormat={}{0:yyyy-MM-dd HH:mm}}"></DataGridTextColumn>
-                <DataGridTemplateColumn Header="操作">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Command="{Binding DataContext.ConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">配置</Button>
-                                <Button Command="{Binding DataContext.CreateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">编辑</Button>
-                                <Button Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">删除</Button>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Grid Grid.Row="1"  Grid.ColumnSpan="2" Margin="4"
+              Visibility="{Binding ShowFlowList,Converter={StaticResource Boolean2VisibilityConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <DataGrid Grid.Column="0" 
+                      ItemsSource="{Binding FlowMenus}" AutoGenerateColumns="False" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="类别" Binding="{Binding Category}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="名称" Binding="{Binding Name}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="创建时间" Binding="{Binding CreationTime,StringFormat={}{0:yyyy-MM-dd}}"></DataGridTextColumn>
+                    <DataGridTextColumn Header="修改时间" Binding="{Binding ModifyTime,StringFormat={}{0:yyyy-MM-dd HH:mm}}"></DataGridTextColumn>
+                    <DataGridTemplateColumn Header="操作">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Command="{Binding DataContext.ConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">配置</Button>
+                                    <Button Command="{Binding DataContext.CreateCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">编辑</Button>
+                                    <Button Command="{Binding DataContext.RemoveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">删除</Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
+            <DataGrid  Grid.Column="2"
+                       ItemsSource="{Binding ConfigMenus}" AutoGenerateColumns="False" IsReadOnly="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="配置类别" Binding="{Binding Category}" IsReadOnly="True"></DataGridTextColumn>
+                    <DataGridTextColumn Header="配置名称" Binding="{Binding Name}" IsReadOnly="True"></DataGridTextColumn>
+                    <DataGridTextColumn Header="类别" Binding="{Binding FlowCategory}" IsReadOnly="True"></DataGridTextColumn>
+                    <DataGridTextColumn Header="名称" Binding="{Binding FlowName}" IsReadOnly="True"></DataGridTextColumn>
+                    <DataGridTextColumn Header="创建时间" Binding="{Binding CreationTime,StringFormat={}{0:yyyy-MM-dd}}" IsReadOnly="True"></DataGridTextColumn>
+                    <DataGridTextColumn Header="修改时间" Binding="{Binding ModifyTime,StringFormat={}{0:yyyy-MM-dd HH:mm}}" IsReadOnly="True"></DataGridTextColumn>
+                    <DataGridTemplateColumn Header="操作">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">运行</Button>
+                                    <Button Command="{Binding DataContext.EditConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">复制</Button>
+                                    <Button Command="{Binding DataContext.RemoveConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">删除</Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
 
-        <DataGrid Grid.Row="1" 
-                      Visibility="{Binding ShowConfigList,Converter={StaticResource Boolean2VisibilityConverter}}" ItemsSource="{Binding ConfigMenus}" AutoGenerateColumns="False" IsReadOnly="False">
-            <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="菜单栏" Binding="{Binding ShowInMenu,UpdateSourceTrigger=PropertyChanged}" />
-                <DataGridTextColumn Header="配置类别" Binding="{Binding Category}" IsReadOnly="True"></DataGridTextColumn>
-                <DataGridTextColumn Header="配置名称" Binding="{Binding Name}" IsReadOnly="True"></DataGridTextColumn>
-                <DataGridTextColumn Header="类别" Binding="{Binding FlowCategory}" IsReadOnly="True"></DataGridTextColumn>
-                <DataGridTextColumn Header="名称" Binding="{Binding FlowName}" IsReadOnly="True"></DataGridTextColumn>
-                <DataGridTextColumn Header="创建时间" Binding="{Binding CreationTime,StringFormat={}{0:yyyy-MM-dd}}" IsReadOnly="True"></DataGridTextColumn>
-                <DataGridTextColumn Header="修改时间" Binding="{Binding ModifyTime,StringFormat={}{0:yyyy-MM-dd HH:mm}}" IsReadOnly="True"></DataGridTextColumn>
-                <DataGridTemplateColumn Header="操作">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Command="{Binding DataContext.RunCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">运行</Button>
-                                <Button Command="{Binding DataContext.EditConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">复制</Button>
-                                <Button Command="{Binding DataContext.RemoveConfigCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}">删除</Button>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
 
-
-        <ItemsControl ItemsSource="{Binding ConfigMenus}"  Grid.Row="1" Visibility="{Binding ShowMonitor,Converter={StaticResource Boolean2VisibilityConverter}}">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <UniformGrid Columns="9" Rows="1"/>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock>123</TextBlock>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-
+        </Grid>
+     
+      
 
         <TabControl Grid.Row="1"  ItemsSource="{Binding Tabs}" x:Name="tab"
                Visibility="{Binding ShowHome,Converter={StaticResource Boolean2VisibilityConverter}}"

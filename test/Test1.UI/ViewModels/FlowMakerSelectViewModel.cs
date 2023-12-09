@@ -1,14 +1,12 @@
-﻿using System;
-using FlowMaker;
+﻿using FlowMaker;
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using System;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using System.Reactive;
-using FlowMaker.Models;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace Test1.ViewModels
 {
@@ -17,6 +15,9 @@ namespace Test1.ViewModels
         private readonly FlowManager _flowManager;
         private readonly FlowMakerOption _flowMakerOption;
 
+        /// <summary>
+        /// Represents a view model for selecting flow makers.
+        /// </summary>
         public FlowMakerSelectViewModel(FlowManager flowManager, IOptions<FlowMakerOption> options)
         {
             this._flowManager = flowManager;
@@ -85,7 +86,7 @@ namespace Test1.ViewModels
         }
 
         public ReactiveCommand<Unit, Unit> SaveCommand { get; }
-        public  void Save()
+        public void Save()
         {
             if (string.IsNullOrEmpty(Category) || Definition is null)
             {
@@ -93,8 +94,7 @@ namespace Test1.ViewModels
             }
             else
             {
-               
-                    CloseModal(true);
+                CloseModal(true);
             }
 
         }
@@ -102,8 +102,6 @@ namespace Test1.ViewModels
 
     public class DefinitionInfoViewModel(string category, string name, DefinitionType type) : ReactiveObject
     {
-
-
         [Reactive]
         public string DisplayName { get; set; } = $"{name} ({type})";
         [Reactive]

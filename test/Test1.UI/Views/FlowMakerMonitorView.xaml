@@ -1,0 +1,66 @@
+﻿<rxui:ReactiveUserControl x:Class="Test1.Views.FlowMakerMonitorView"
+              xmlns:rxui="http://reactiveui.net"
+                xmlns:vms="clr-namespace:Test1.ViewModels"
+            x:TypeArguments="vms:FlowMakerMonitorViewModel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+            xmlns:hc="https://handyorg.github.io/handycontrol"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Test1.Views"
+                          xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:converters="clr-namespace:Test1.Converters" d:DataContext="{d:DesignInstance Type=vms:FlowMakerMonitorViewModel}"
+                          mc:Ignorable="d" 
+                          x:Name="page"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}"></Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
+        <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
+
+    </UserControl.Resources>
+    <DockPanel>
+        <ItemsControl ItemsSource="{Binding Flows}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid Columns="{Binding DataContext.ColCount, ElementName=page}" Rows="{Binding DataContext.RowCount, ElementName=page}"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <DockPanel>
+                        <ToolBarTray DockPanel.Dock="Top" Orientation="Horizontal">
+                            <ToolBar>
+                                <Button Content="运行"/>
+                                <Button Content="删除"/>
+                                <ComboBox Text="{Binding Category,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend}" hc:TitleElement.Title="类别:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding DataContext.Categories,ElementName=page}"/>
+                                <ComboBox SelectedItem="{Binding Definition,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend}" hc:TitleElement.Title="名称:"  MinWidth="90"  IsReadOnly="True" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Definitions}" DisplayMemberPath="DisplayName"/>
+                                
+                                <TextBox Text="{Binding Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
+                                <TextBox Text="{Binding Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
+                                <ComboBox ItemsSource="{Binding ErrorHandlings}" Style="{StaticResource ComboBoxExtend}" SelectedItem="{Binding ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理方式:" hc:TitleElement.TitlePlacement="Left"/>
+                            </ToolBar>
+                            <ToolBar ItemsSource="{Binding Data}" Visibility="{Binding Data.Count,Converter={StaticResource CountToVisibilityReConverter},ConverterParameter=0}">
+                            
+                                <ToolBar.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel>
+                                            <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                                            <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedItem="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ToolBar.ItemTemplate>
+                            </ToolBar>
+                        </ToolBarTray>
+                    
+                        <ScrollViewer>
+                            <StackPanel>
+
+
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </DockPanel>
+</rxui:ReactiveUserControl>

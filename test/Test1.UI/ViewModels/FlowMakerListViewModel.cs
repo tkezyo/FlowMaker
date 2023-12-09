@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -37,7 +38,6 @@ namespace Test1.ViewModels
             RemoveConfigCommand = ReactiveCommand.Create<ConfigDefinitionInfoViewModel>(RemoveConfig);
             RunCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(Run);
             ChangeViewCommand = ReactiveCommand.Create<string>(ChangeView);
-            SaveConfigsCommand = ReactiveCommand.Create(SaveConfigs);
 
             AddTabCommand = ReactiveCommand.CreateFromTask(AddTab);
             DeleteTabCommand = ReactiveCommand.Create(DeleteTab);
@@ -168,17 +168,9 @@ namespace Test1.ViewModels
         {
             Menus.Clear();
             Menus.Add(new MenuItemViewModel("主页") { Command = ChangeViewCommand, CommandParameter = "主页" });
-            Menus.Add(new MenuItemViewModel("监控") { Command = ChangeViewCommand, CommandParameter = "监控" });
             Menus.Add(new MenuItemViewModel("流程") { Command = ChangeViewCommand, CommandParameter = "流程编辑" });
-            Menus.Add(new MenuItemViewModel("配置") { Command = ChangeViewCommand, CommandParameter = "配置编辑" });
-            if (ShowMonitor)
-            {
-                Menus.Add(new MenuItemViewModel("显示全部") { Command = SaveConfigsCommand });
-            }
-            if (ShowConfigList)
-            {
-                Menus.Add(new MenuItemViewModel("保存配置") { Command = SaveConfigsCommand });
-            }
+            Menus.Add(new MenuItemViewModel("监控") { Command = ChangeViewCommand, CommandParameter = "监控" });
+
             if (ShowFlowList)
             {
                 Menus.Add(new MenuItemViewModel("创建流程") { Command = CreateCommand });
@@ -236,29 +228,23 @@ namespace Test1.ViewModels
 
                 Menus.Add(editView);
             }
-            foreach (var item in ConfigMenus)
-            {
-                if (!item.ShowInMenu)
-                {
-                    continue;
-                }
-                var menu = Menus.FirstOrDefault(c => c.Name == item.Category);
-                if (menu is null)
-                {
-                    menu = new MenuItemViewModel(item.Category);
-                    Menus.Add(menu);
-                }
-                menu.Children.Add(new MenuItemViewModel(item.Name) { Command = RunCommand, CommandParameter = item });
-            }
+            //foreach (var item in ConfigMenus)
+            //{
+            //    var menu = Menus.FirstOrDefault(c => c.Name == item.Category);
+            //    if (menu is null)
+            //    {
+            //        menu = new MenuItemViewModel(item.Category);
+            //        Menus.Add(menu);
+            //    }
+            //    menu.Children.Add(new MenuItemViewModel(item.Name) { Command = RunCommand, CommandParameter = item });
+            //}
         }
         [Reactive]
         public bool ShowHome { get; set; } = true;
         [Reactive]
         public bool ShowFlowList { get; set; }
-        [Reactive]
-        public bool ShowConfigList { get; set; }
-        [Reactive]
-        public bool ShowMonitor { get; set; }
+
+
         public ReactiveCommand<string, Unit> ChangeViewCommand { get; set; }
         public void ChangeView(string viewName)
         {
@@ -266,27 +252,19 @@ namespace Test1.ViewModels
             {
                 case "流程编辑":
                     ShowFlowList = true;
-                    ShowConfigList = false;
-                    ShowMonitor = false;
                     ShowHome = false;
                     break;
                 case "配置编辑":
                     ShowFlowList = false;
-                    ShowConfigList = true;
-                    ShowMonitor = false;
-                    ShowHome = false;
-                    break;
-                case "监控":
-                    ShowFlowList = false;
-                    ShowConfigList = false;
-                    ShowMonitor = true;
                     ShowHome = false;
                     break;
                 case "主页":
                     ShowFlowList = false;
-                    ShowConfigList = false;
-                    ShowMonitor = false;
                     ShowHome = true;
+                    break;
+                case "监控":
+                    var vm = Navigate<FlowMakerMonitorViewModel>(HostScreen);
+                    _messageBoxManager.Window.Handle(new ModalInfo("监控", vm) { OwnerTitle = null }).Subscribe();
                     break;
                 default:
                     break;
@@ -306,7 +284,6 @@ namespace Test1.ViewModels
             {
                 LoadFlowMenus();
             });
-            //HostScreen.Router.Navigate.Execute(Navigate<FlowMakerEditViewModel>(HostScreen));
         }
         public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> RemoveCommand { get; }
         public void Remove(FlowDefinitionInfoViewModel flowDefinitionInfoViewModel)
@@ -371,6 +348,7 @@ namespace Test1.ViewModels
                 LoadConfigMenus();
             });
         }
+
         public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RemoveConfigCommand { get; }
         public void RemoveConfig(ConfigDefinitionInfoViewModel flowDefinitionInfoViewModel)
         {
@@ -383,16 +361,7 @@ namespace Test1.ViewModels
             await _flowManager.Run(flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name, flowDefinitionInfoViewModel.FlowCategory, flowDefinitionInfoViewModel.FlowName);
         }
 
-        public ReactiveCommand<Unit, Unit> SaveConfigsCommand { get; }
-        public void SaveConfigs()
-        {
-            foreach (var item in ConfigMenus)
-            {
 
-            }
-
-            InitMenu();
-        }
         #endregion
 
         #region 监控
@@ -1079,8 +1048,5 @@ namespace Test1.ViewModels
 
         [Reactive]
         public string FlowName { get; set; } = flowName;
-
-        [Reactive]
-        public bool ShowInMenu { get; set; }
     }
 }

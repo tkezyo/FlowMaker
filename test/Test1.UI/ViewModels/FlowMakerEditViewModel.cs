@@ -201,12 +201,16 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             StepGroups.Add(item);
         }
-
-        var flowDefinition = await _flowManager.LoadFlowDefinitionAsync(category, name);
-        if (flowDefinition is null)
+        FlowDefinition flowDefinition;
+        try
+        {
+            flowDefinition = await _flowManager.LoadFlowDefinitionAsync(category, name);
+        }
+        catch
         {
             return;
         }
+
         Category = flowDefinition.Category;
         Name = flowDefinition.Name;
         Steps.Clear();
