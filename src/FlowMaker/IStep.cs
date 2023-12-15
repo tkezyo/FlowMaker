@@ -54,10 +54,8 @@ public interface IDataConverterInject
             if (converterObj is IDataConverter converter)
             {
                 output.Inputs.RemoveAll(x => x.Name == output.InputKey);
-                output.Inputs.Add(new FlowInput
+                output.Inputs.Add(new FlowInput(output.InputKey)
                 {
-                    Id = Guid.NewGuid(),
-                    Name = output.InputKey,
                     Value = valueStr,
                     Mode = InputMode.Normal,
                     ConverterCategory = null,

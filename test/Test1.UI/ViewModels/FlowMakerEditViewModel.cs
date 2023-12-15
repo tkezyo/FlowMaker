@@ -9,11 +9,9 @@ using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Test1.ViewModels;
@@ -75,10 +73,8 @@ public class FlowMakerEditViewModel : ViewModelBase
         }
         static FlowInput CreateInput(FlowStepInputViewModel flowStepInputViewModel)
         {
-            FlowInput flowInput = new()
+            FlowInput flowInput = new(!string.IsNullOrEmpty(flowStepInputViewModel.Name) ? flowStepInputViewModel.Name : flowStepInputViewModel.DisplayName, flowStepInputViewModel.Id)
             {
-                Id = flowStepInputViewModel.Id,
-                Name = !string.IsNullOrEmpty(flowStepInputViewModel.Name) ? flowStepInputViewModel.Name : flowStepInputViewModel.DisplayName,
                 ConverterCategory = flowStepInputViewModel.ConverterCategory,
                 ConverterName = flowStepInputViewModel.ConverterName,
                 Mode = flowStepInputViewModel.Mode,
@@ -100,11 +96,12 @@ public class FlowMakerEditViewModel : ViewModelBase
                 DisplayName = item.DisplayName,
                 Name = item.Name,
                 Compensate = item.Compensate,
-                ErrorHandling = item.ErrorHandling,
+                ErrorHandling = CreateInput(item.ErrorHandling),
                 Id = item.Id,
-                Repeat = item.Repeat,
-                Retry = item.Retry,
-                TimeOut = item.TimeOut,
+                Repeat = CreateInput(item.Repeat),
+                Retry = CreateInput(item.Retry),
+                TimeOut = CreateInput(item.TimeOut),
+                IsSubFlow = item.IsSubFlow,
             };
             foreach (var ifItem in item.Ifs)
             {
@@ -119,13 +116,6 @@ public class FlowMakerEditViewModel : ViewModelBase
                 {
                     Type = EventType.Event,
                     EventName = wait
-                });
-            }
-            if (item.IsDebug)
-            {
-                f.WaitEvents.Add(new FlowWait
-                {
-                    Type = EventType.Debug
                 });
             }
             foreach (var preStep in item.PreSteps)
@@ -256,18 +246,47 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 DisplayName = item.DisplayName,
                 Compensate = item.Compensate,
-                ErrorHandling = item.ErrorHandling,
                 Id = item.Id,
-                Repeat = item.Repeat,
-                Retry = item.Retry,
                 Status = StepStatus.Normal,
-                TimeOut = item.TimeOut,
                 Time = TimeSpan.FromSeconds(1),
             };
             flowStepViewModel.Category = item.Category;
             flowStepViewModel.Name = item.Name;
             await flowStepViewModel.SetInputOutputs(item);
             flowStepViewModel.Init();
+
+            flowStepViewModel.ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "ErrorHandling", "ErrorHandling", this)
+            {
+                Value = item.ErrorHandling.Value,
+                Mode = item.ErrorHandling.Mode,
+                Id = item.ErrorHandling.Id,
+                ConverterCategory = item.ErrorHandling.ConverterCategory,
+                ConverterName = item.ErrorHandling.ConverterName,
+            };
+            flowStepViewModel.Repeat = new FlowStepInputViewModel("Repeat", "Repeat", "int", this)
+            {
+                Value = item.Repeat.Value,
+                Mode = item.Repeat.Mode,
+                Id = item.Repeat.Id,
+                ConverterCategory = item.Repeat.ConverterCategory,
+                ConverterName = item.Repeat.ConverterName,
+            };
+            flowStepViewModel.Retry = new FlowStepInputViewModel("Retry", "Retry", "int", this)
+            {
+                Value = item.Retry.Value,
+                Mode = item.Retry.Mode,
+                Id = item.Retry.Id,
+                ConverterCategory = item.Retry.ConverterCategory,
+                ConverterName = item.Retry.ConverterName,
+            };
+            flowStepViewModel.TimeOut = new FlowStepInputViewModel("TimeOut", "TimeOut", "double", this)
+            {
+                Value = item.TimeOut.Value,
+                Mode = item.TimeOut.Mode,
+                Id = item.TimeOut.Id,
+                ConverterCategory = item.TimeOut.ConverterCategory,
+                ConverterName = item.TimeOut.ConverterName,
+            };
             foreach (var wait in item.WaitEvents)
             {
                 switch (wait.Type)
@@ -279,9 +298,6 @@ public class FlowMakerEditViewModel : ViewModelBase
                         flowStepViewModel.WaitEvents.Add(wait.EventName);
                         break;
                     case EventType.EventData:
-                        break;
-                    case EventType.Debug:
-                        flowStepViewModel.IsDebug = true;
                         break;
                     case EventType.StartFlow:
                         break;
@@ -427,20 +443,17 @@ public class FlowMakerEditViewModel : ViewModelBase
     public ObservableCollection<FlowStepViewModel> Steps { get; set; } = [];
     public async Task Create()
     {
+        var model = new FlowStepViewModel(this);
+        model.Init();
         if (FlowStep is not null)
         {
-            var model = new FlowStepViewModel(this);
-            model.Init();
             model.PreSteps.Add(FlowStep.Id);
-
             Steps.Insert(Steps.IndexOf(FlowStep) + 1, model);
             ChangePre(FlowStep);
             ChangePre(model);
         }
         else
         {
-            var model = new FlowStepViewModel(this);
-            model.Init();
             Steps.Add(model);
             ChangePre(model);
         }
@@ -1260,11 +1273,35 @@ public class FlowStepViewModel : ReactiveObject
     {
         Id = Guid.NewGuid();
         this._flowMakerEditViewModel = flowMakerEditViewModel;
-        ToggleDebugCommand = ReactiveCommand.Create(ToggleDebug);
+        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "ErrorHandling", "ErrorHandling", _flowMakerEditViewModel)
+        {
+            Value = "",
+            Mode = InputMode.Normal,
+            Id = Guid.NewGuid(),
+        };
+        Repeat = new FlowStepInputViewModel("Repeat", "Repeat", "int", _flowMakerEditViewModel)
+        {
+            Value = "",
+            Mode = InputMode.Normal,
+            Id = Guid.NewGuid(),
+        };
+        Retry = new FlowStepInputViewModel("Retry", "Retry", "int", _flowMakerEditViewModel)
+        {
+            Value = "",
+            Mode = InputMode.Normal,
+            Id = Guid.NewGuid(),
+        };
+        TimeOut = new FlowStepInputViewModel("TimeOut", "TimeOut", "double", _flowMakerEditViewModel)
+        {
+            Value = "",
+            Mode = InputMode.Normal,
+            Id = Guid.NewGuid(),
+        };
     }
 
     public void Init()
     {
+      
         this.WhenAnyValue(c => c.Category).WhereNotNull().DistinctUntilChanged().Subscribe(c =>
         {
             _flowMakerEditViewModel.SetStepDefinitions(this);
@@ -1373,25 +1410,24 @@ public class FlowStepViewModel : ReactiveObject
     /// 超时,秒
     /// </summary>
     [Reactive]
-    public double TimeOut { get; set; }
+    public FlowStepInputViewModel? TimeOut { get; set; }
 
     /// <summary>
     /// 重试
     /// </summary>
     [Reactive]
-    public int Retry { get; set; } = 0;
+    public FlowStepInputViewModel? Retry { get; set; }
     /// <summary>
     /// 重复
     /// </summary>
     [Reactive]
-    public int Repeat { get; set; } = 1;
-    [Reactive]
-    public bool IsDebug { get; set; }
+    public FlowStepInputViewModel? Repeat { get; set; }
+
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>
     [Reactive]
-    public ErrorHandling ErrorHandling { get; set; }
+    public FlowStepInputViewModel? ErrorHandling { get; set; }
     /// <summary>
     /// 前置任务
     /// </summary>
@@ -1401,11 +1437,6 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     public Guid? Compensate { get; set; }
 
-    public ReactiveCommand<Unit, Unit> ToggleDebugCommand { get; }
-    public void ToggleDebug()
-    {
-        IsDebug = !IsDebug;
-    }
 
     [Reactive]
     public ObservableCollection<FlowIfViewModel> Ifs { get; set; } = [];

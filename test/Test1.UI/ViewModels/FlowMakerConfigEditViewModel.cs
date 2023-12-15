@@ -1,5 +1,6 @@
 ﻿using FlowMaker;
 using FlowMaker.Models;
+using FlowMaker.Services;
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
@@ -9,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Threading.Tasks;
 
 namespace Test1.ViewModels;
@@ -17,12 +19,14 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
 {
     private readonly FlowMakerOption _flowMakerOption;
     private readonly FlowManager _flowManager;
+    private readonly IMessageBoxManager _messageBoxManager;
 
-    public FlowMakerConfigEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager)
+    public FlowMakerConfigEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager,IMessageBoxManager messageBoxManager)
     {
         SaveOrRunCommand = ReactiveCommand.CreateFromTask<bool?>(SaveOrRun);
         _flowMakerOption = options.Value;
         this._flowManager = flowManager;
+        this._messageBoxManager = messageBoxManager;
         foreach (var item in Enum.GetValues<ErrorHandling>())
         {
             ErrorHandlings.Add(item);
@@ -213,6 +217,10 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
         await _flowManager.SaveConfig(configDefinition);
         if (run.HasValue && run.Value)
         {
+            var vm = Navigate<FlowMakerMonitorViewModel>(HostScreen);
+            //await vm.Load(configDefinition.FlowCategory, configDefinition.FlowName);
+
+            await _messageBoxManager.Window.Handle(new ModalInfo("监控", vm) { OnlyOne = true });
             await _flowManager.Run(configDefinition);
         }
         else

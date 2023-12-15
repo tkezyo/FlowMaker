@@ -220,10 +220,10 @@ public class StepRunResult
     /// 输出
     /// </summary>
     public List<NameValue> Outputs { get; set; } = [];
-    /// <summary>
-    /// 消耗时间
-    /// </summary>
-    public TimeSpan? ConsumeTime { get; set; }
+    
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+
 
 }
 

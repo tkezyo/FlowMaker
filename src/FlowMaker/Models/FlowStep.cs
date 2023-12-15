@@ -22,6 +22,10 @@ public class FlowStep
     public required string Name { get; set; }
 
     /// <summary>
+    /// 子流程
+    /// </summary>
+    public bool IsSubFlow { get; set; }
+    /// <summary>
     /// 输入
     /// </summary>
     public List<FlowInput> Inputs { get; set; } = [];
@@ -31,22 +35,22 @@ public class FlowStep
     public List<FlowOutput> Outputs { get; set; } = [];
 
     /// <summary>
-    /// 超时,秒
+    /// 超时,秒 double
     /// </summary>
-    public double TimeOut { get; set; }
+    public FlowInput TimeOut { get; set; } = new FlowInput("TimeOut");
 
     /// <summary>
-    /// 重试
+    /// 重试 int
     /// </summary>
-    public int Retry { get; set; }
+    public FlowInput Retry { get; set; } = new FlowInput("Retry");
     /// <summary>
-    /// 重复,如果是负数，则一直重复
+    /// 重复  int
     /// </summary>
-    public int Repeat { get; set; }
+    public FlowInput Repeat { get; set; } = new FlowInput("Repeat");
     /// <summary>
-    /// 出现错误时处理方式
+    /// 出现错误时处理方式 ErrorHandling
     /// </summary>
-    public ErrorHandling ErrorHandling { get; set; }
+    public FlowInput ErrorHandling { get; set; } = new FlowInput("ErrorHandling");
 
     /// <summary>
     /// 谁的回退任务,stepdId
@@ -74,10 +78,10 @@ public class FlowWait
 }
 
 
-public class FlowInput
+public class FlowInput(string name, Guid? id = null)
 {
-    public required string Name { get; set; }
-    public required Guid Id { get; set; }
+    public string Name { get; set; } = name;
+    public Guid Id { get; set; } = id ?? Guid.NewGuid();
     public string? ConverterCategory { get; set; }
     public string? ConverterName { get; set; }
 

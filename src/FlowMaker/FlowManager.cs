@@ -24,7 +24,6 @@ public class FlowManager
 
 
     public Subject<FlowStatusArgs> OnFlowChange { get; set; } = new();
-    public Subject<StepStatusArgs> OnStepChange { get; set; } = new();
 
     public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options)
     {
@@ -40,7 +39,7 @@ public class FlowManager
     }
 
     #region Run
-    class RunnerStatus(FlowRunner flowRunner, IServiceScope serviceScope, CancellationTokenSource cancellationTokenSource)
+    class RunnerStatus(FlowRunner flowRunner, IServiceScope serviceScope)
     {
         public required string ConfigCategory { get; set; }
         public required string ConfigName { get; set; }
@@ -52,12 +51,17 @@ public class FlowManager
         /// 流程的名称
         /// </summary>
         public required string FlowName { get; set; }
-        public CancellationTokenSource CancellationTokenSource { get; set; } = cancellationTokenSource;
+
         public IServiceScope ServiceScope { get; set; } = serviceScope;
         public FlowRunner FlowRunner { get; set; } = flowRunner;
-    }
-    private readonly ConcurrentDictionary<Guid, RunnerStatus> Status = [];
 
+    }
+    public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
+    private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
+    public ISubject<StepStatusArgs> GetStepChange(Guid id)
+    {
+        return _status[id].FlowRunner.OnStepChange;
+    }
     public async Task<Guid> Run(string configCategory, string configName, string flowCategory, string flowName)
     {
         var config = await LoadConfigDefinitionAsync(configCategory, configName, flowCategory, flowName);
@@ -67,30 +71,37 @@ public class FlowManager
         }
         return await Run(config);
     }
-    public async Task<Guid> Run(ConfigDefinition configDefinition)
+    public async Task<Guid> Run(ConfigDefinition configDefinition, Action<Guid>? SetId = null)
     {
         var flow = await LoadFlowDefinitionAsync(configDefinition.FlowCategory, configDefinition.FlowName);
 
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
-        CancellationTokenSource cancellationTokenSource = new();
-        Status[runner.Id] = new RunnerStatus(runner, scope, cancellationTokenSource)
+        _status[runner.Id] = new RunnerStatus(runner, scope)
         {
             ConfigCategory = configDefinition.Category,
             ConfigName = configDefinition.Name,
             FlowCategory = configDefinition.FlowCategory,
             FlowName = configDefinition.FlowName
         };
-        _ = runner.Start(flow, configDefinition, [], cancellationTokenSource.Token);
+        SetId?.Invoke(runner.Id);
+        _ = runner.Start(flow, configDefinition, []).ContinueWith(async c =>
+        {
+            await Dispose(runner.Id);
+        });
         return runner.Id;
     }
 
-    public void Dispose(Guid id)
+    public async Task Dispose(Guid id)
     {
-        Status[id].CancellationTokenSource.Cancel();
-        Status[id].ServiceScope.Dispose();
+        _status[id].ServiceScope.Dispose();
+        _status[id].FlowRunner.Dispose();
+        while (_status[id].FlowRunner.State == RunnerState.Running)
+        {
+            await Task.Delay(300);
+        }
 
-        Status.Remove(id, out _);
+        _status.Remove(id, out _);
     }
     #endregion
 

@@ -43,7 +43,9 @@ namespace Test1
 
                 services.AddBaseViews();
                 services.AddTransientFlowView<ChatViewModel, ChatView>();
+                services.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
+                services.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
                 services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
                 services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
                 services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
@@ -53,6 +55,7 @@ namespace Test1
 
                 services.AddFlowStep<Flow1>();
                 services.AddFlowStep<Flow2>();
+                services.AddFlowStep<TestFlow1>();
                 services.AddFlowConverter<ValueConverter>();
                 services.AddAutoMapper(typeof(ConfigProfile).Assembly);
                 //services.Configure<ViewForMatch>(options =>
@@ -61,7 +64,7 @@ namespace Test1
                 //});
                 services.Configure<PageOptions>(options =>
                 {
-                    options.FirstLoadPage = typeof(FlowMakerListViewModel);
+                    options.FirstLoadPage = typeof(FlowMakerMainViewModel);
                 });
                 services.Configure<FlowMakerOption>(options =>
                 {

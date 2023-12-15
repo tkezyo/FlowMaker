@@ -99,30 +99,6 @@
                                 <TextBlock Text="{Binding Path=(ItemsControl.AlternationIndex), 
                 RelativeSource={RelativeSource Mode=TemplatedParent}}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" Width="30">
                                 </TextBlock>
-                                <Button 
-                                    Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDebug}" Value="True">
-                                                    <Setter Property="Background" Value="Red"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <Button 
-                                    Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding DataContext.RunCommand,ElementName=page}" CommandParameter="{Binding .}">
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsDebug}" Value="True">
-                                                    <Setter Property="Background" Value="Yellow"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
                                 <Button x:Name="btn" 
                                         Content="{Binding DisplayName}" Command="{Binding DataContext.ChangePreCommand,ElementName=page}"   CommandParameter="{Binding .}"  Style="{StaticResource actionBtn}">
                                     <Button.Width>
@@ -234,12 +210,16 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                             <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}" hc:InfoElement.Title="名称" SelectedItem="{Binding FlowStep.Name}"></ComboBox>
                             <Button Visibility="{Binding FlowStep.IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
                         </StackPanel>
-                      
-                        <TextBox Text="{Binding FlowStep.TimeOut}" hc:InfoElement.Title="超时时间" />
+
+                        <controls:FlowInputView FlowInput="{Binding FlowStep.TimeOut}"></controls:FlowInputView>
+                        <controls:FlowInputView FlowInput="{Binding FlowStep.Repeat}"></controls:FlowInputView>
+                        <controls:FlowInputView FlowInput="{Binding FlowStep.Retry}"></controls:FlowInputView>
+                        <controls:FlowInputView FlowInput="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
+                        <!--<TextBox Text="{Binding FlowStep.TimeOut}" hc:InfoElement.Title="超时时间" />
                         <TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
                         <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />
 
-                        <ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>
+                        <ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Header="输入">
@@ -271,7 +251,7 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                                     <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
 
                                         <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
-                                        <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"></ComboBox>
+                                        <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="Name"></ComboBox>
                                         <ComboBox  Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding InputKeys}" hc:InfoElement.Title="属性" SelectedValue="{Binding InputKey}" SelectedValuePath="Value" DisplayMemberPath="Name"></ComboBox>
 
                                     </StackPanel>
