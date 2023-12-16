@@ -94,12 +94,8 @@ public interface IDataConverterInject
         if (!string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
         {
             var option = serviceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
-            var converterDefinition = option.Value.GetConverter(input.ConverterCategory, input.ConverterName);
+            var converterDefinition = option.Value.GetConverter(input.ConverterCategory, input.ConverterName) ?? throw new InvalidOperationException();
 
-            if (converterDefinition == null)
-            {
-                throw new InvalidOperationException();
-            }
             var converterObj = serviceProvider.GetRequiredKeyedService<IDataConverterInject>(converterDefinition.Category + ":" + converterDefinition.Name);
             return await converterObj.GetStringResultAsync(context, input.Inputs, serviceProvider, cancellationToken);
         }
@@ -156,3 +152,22 @@ public interface IDataConverter<T> : IDataConverter
         }
     }
 }
+
+public interface IOptionProvider<T> : IOptionProvider
+{
+    IEnumerable<NameValue> GetOptions();
+}
+public interface IOptionProvider : IOptionProvideInject
+{
+    /// <summary>
+    /// 名称
+    /// </summary>
+    static abstract string DisplayName { get; }
+    static abstract string Name { get; }
+    static abstract string Type { get; }
+}
+public interface IOptionProvideInject
+{
+
+}
+

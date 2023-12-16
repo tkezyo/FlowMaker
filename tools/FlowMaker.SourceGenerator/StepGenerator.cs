@@ -35,7 +35,12 @@ namespace FlowMaker.SourceGenerator
                         {
                             return true;
                         }
+                        if (ff.Identifier.Text == "IOptionProvider" && ff.TypeArgumentList.Arguments.Any())
+                        {
+                            return true;
+                        }
                     }
+
                     return false;
                 });
                 //if (ids.AttributeLists.Any(v => v.Attributes.Any(c =>
@@ -65,9 +70,10 @@ namespace FlowMaker.SourceGenerator
         {
             context.RegisterSourceOutput(context.SyntaxProvider.CreateSyntaxProvider<SyntaxModel>(Condition, Transform), (c, item) =>
             {
-                var attrs = item.Option.GetAttributes();
+                var attires = item.Option.GetAttributes();
                 var flowStep = item.Option.Interfaces.Any(c => c.Name == "IStep");
                 var flowConverter = item.Option.Interfaces.Any(c => c.Name == "IDataConverter");
+                var optionProvider = item.Option.Interfaces.Any(c => c.Name == "IOptionProvider");
 
                 if (flowStep)
                 {
@@ -79,7 +85,7 @@ namespace FlowMaker.SourceGenerator
 
                     StringBuilder defStringBuilder = new();
                     StringBuilder outputDefStringBuilder = new();
-                    List<string> props = new List<string>();
+                    List<string> props = [];
                     foreach (var member in item.Option.GetMembers())
                     {
                         if (member is IPropertySymbol property)
@@ -89,11 +95,11 @@ namespace FlowMaker.SourceGenerator
                                 continue;
                             }
                             var memberName = member.Name;
-                            var propAttrs = property.GetAttributes();
-                            var displayNameAttr = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
-                            var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
+                            var propAttires = property.GetAttributes();
+                            var displayNameAttr = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
+                            var input = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
 
-                            var output = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
+                            var output = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
                             if (input is null && output is null)
                             {
                                 continue;
@@ -105,8 +111,8 @@ namespace FlowMaker.SourceGenerator
                                 displayName = displayNameAttr.ConstructorArguments[0].Value.ToString();
                             }
 
-                            var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
-                            var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
+                            var options = propAttires.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
+                            var defaultValue = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
                             string defaultValueValue = string.Empty;
                             if (defaultValue is not null)
                             {
@@ -207,7 +213,7 @@ public partial class {item.Option.MetadataName}
                     StringBuilder inputStringBuilder = new();
 
                     StringBuilder defStringBuilder = new();
-                    List<string> inputs = new List<string>();
+                    List<string> inputs = [];
                     foreach (var member in item.Option.GetMembers())
                     {
                         if (member is IPropertySymbol property)
@@ -217,11 +223,11 @@ public partial class {item.Option.MetadataName}
                                 continue;
                             }
                             var memberName = member.Name;
-                            var propAttrs = property.GetAttributes();
-                            var displayNameAttr = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
-                            var input = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
+                            var propAttires = property.GetAttributes();
+                            var displayNameAttr = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
+                            var input = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
 
-                            var output = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
+                            var output = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
                             if (input is null && output is null)
                             {
                                 continue;
@@ -233,8 +239,8 @@ public partial class {item.Option.MetadataName}
                                 displayName = displayNameAttr.ConstructorArguments[0].Value.ToString();
                             }
 
-                            var options = propAttrs.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
-                            var defaultValue = propAttrs.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
+                            var options = propAttires.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
+                            var defaultValue = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
                             string defaultValueValue = string.Empty;
                             if (defaultValue is not null)
                             {
@@ -312,6 +318,31 @@ partial class {item.Option.MetadataName}
         }};
     }}
 }}
+#nullable restore
+";
+
+                    c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));
+                }
+                if (optionProvider)
+                {
+                    var type = item.Option.AllInterfaces.FirstOrDefault(c => c.Name == "IOptionProvider");
+                    if (type.TypeArguments.Any())
+                    {
+                        type = type.TypeArguments[0] as INamedTypeSymbol;
+                    }
+
+                    string baseStr = $@"
+
+namespace {item.Option.ContainingNamespace};
+
+#nullable enable
+
+    public partial class {item.Option.MetadataName}
+    {{
+        public static string Name => typeof({item.Option.MetadataName}).FullName ?? string.Empty;
+
+        public static string Type => ""{type.ToDisplayString()}"";
+    }}
 #nullable restore
 ";
 

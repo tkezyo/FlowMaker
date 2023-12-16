@@ -18,4 +18,20 @@ namespace Test1
             _logger.LogInformation(stepContext.DisplayName);
         }
     }
+
+    public partial class PortProvider : IOptionProvider<string>
+    {
+        public static string DisplayName => "串口";
+
+        public IEnumerable<NameValue> GetOptions()
+        {
+            return [new("oo", "22"), new("oo22", "2211")];
+        }
+    }
+    //public partial class PortProvider
+    //{
+    //    public static string Name => typeof(PortProvider).FullName ?? string.Empty;
+
+    //    public static string Type => "string";
+    //}
 }

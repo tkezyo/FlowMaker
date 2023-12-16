@@ -11,12 +11,22 @@ public class FlowMakerOption
     public List<string> Sections { get; set; } = [];
     public List<string> CustomViews { get; set; } = [];
     public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = [];
+    public Dictionary<string, List<string>> OptionProviders { get; set; } = [];
     public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
         if (!Group.TryGetValue(category, out var group))
         {
             group = new FlowMakerOptionGroup();
             Group.Add(category, group);
+        }
+        return group;
+    }
+    public List<string> GetOrAddType(string type)
+    {
+        if (!OptionProviders.TryGetValue(type, out var group))
+        {
+            group = [];
+            OptionProviders.Add(type, group);
         }
         return group;
     }
@@ -68,6 +78,17 @@ public static class FlowMakerExtension
             var group = c.GetOrAddGroup(T.Category);
 
             group.ConverterDefinitions.Add(T.GetDefinition());
+        });
+    }
+    public static void AddFlowOption<T>(this IServiceCollection serviceDescriptors)
+        where T : class, IOptionProvider
+    {
+        serviceDescriptors.AddKeyedTransient<IOptionProvideInject, T>(T.Type + ":" + T.Name);
+        serviceDescriptors.Configure<FlowMakerOption>(c =>
+        {
+            var group = c.GetOrAddType(T.Type);
+
+            group.Add(T.Name);
         });
     }
 
