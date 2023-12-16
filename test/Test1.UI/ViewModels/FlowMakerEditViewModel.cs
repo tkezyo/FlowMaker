@@ -1273,25 +1273,25 @@ public class FlowStepViewModel : ReactiveObject
     {
         Id = Guid.NewGuid();
         this._flowMakerEditViewModel = flowMakerEditViewModel;
-        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "ErrorHandling", "ErrorHandling", _flowMakerEditViewModel)
+        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "ErrorHandling", _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
-        Repeat = new FlowStepInputViewModel("Repeat", "Repeat", "int", _flowMakerEditViewModel)
+        Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
-        Retry = new FlowStepInputViewModel("Retry", "Retry", "int", _flowMakerEditViewModel)
+        Retry = new FlowStepInputViewModel("Retry", "重试", "int", _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
-        TimeOut = new FlowStepInputViewModel("TimeOut", "TimeOut", "double", _flowMakerEditViewModel)
+        TimeOut = new FlowStepInputViewModel("TimeOut", "超时", "double", _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
@@ -1410,24 +1410,24 @@ public class FlowStepViewModel : ReactiveObject
     /// 超时,秒
     /// </summary>
     [Reactive]
-    public FlowStepInputViewModel? TimeOut { get; set; }
+    public FlowStepInputViewModel TimeOut { get; set; }
 
     /// <summary>
     /// 重试
     /// </summary>
     [Reactive]
-    public FlowStepInputViewModel? Retry { get; set; }
+    public FlowStepInputViewModel Retry { get; set; }
     /// <summary>
     /// 重复
     /// </summary>
     [Reactive]
-    public FlowStepInputViewModel? Repeat { get; set; }
+    public FlowStepInputViewModel Repeat { get; set; }
 
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>
     [Reactive]
-    public FlowStepInputViewModel? ErrorHandling { get; set; }
+    public FlowStepInputViewModel ErrorHandling { get; set; }
     /// <summary>
     /// 前置任务
     /// </summary>

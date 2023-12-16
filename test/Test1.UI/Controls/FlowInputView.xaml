@@ -53,7 +53,7 @@
         <ItemsControl ItemsSource="{Binding SubInputs}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                    <local:FlowInputView FlowInput="{Binding .}"/>
+                    <local:FlowInputView/>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

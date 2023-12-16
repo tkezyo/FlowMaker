@@ -23,15 +23,15 @@ namespace Test1.Controls
     /// </summary>
     public partial class FlowInputView : UserControl
     {
-        public static readonly DependencyProperty FlowInputProperty =
-       DependencyProperty.Register(
-    "FlowInput", typeof(FlowStepInputViewModel), typeof(FlowInputView));
+    //    public static readonly DependencyProperty FlowInputProperty =
+    //   DependencyProperty.Register(
+    //"FlowInput", typeof(FlowStepInputViewModel), typeof(FlowInputView));
 
-        public FlowStepInputViewModel FlowInput
-        {
-            get { return (FlowStepInputViewModel)GetValue(FlowInputProperty); }
-            set { SetValue(FlowInputProperty, value); }
-        }
+    //    public FlowStepInputViewModel FlowInput
+    //    {
+    //        get { return (FlowStepInputViewModel)GetValue(FlowInputProperty); }
+    //        set { SetValue(FlowInputProperty, value); }
+    //    }
         public static readonly DependencyProperty EditModeProperty =
     DependencyProperty.Register(
  "EditMode", typeof(bool), typeof(FlowInputView));

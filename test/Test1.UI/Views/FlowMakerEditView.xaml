@@ -153,7 +153,7 @@
                                     <TextBox hc:TitleElement.Title="显示名称" Text="{Binding DisplayName}" Style="{StaticResource TextBoxExtend.Small}"/>
                                     <Button  Command="{Binding DataContext.RemoveFlowCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}" VerticalAlignment="Bottom">删除</Button>
                                 </StackPanel>
-                                <controls:FlowInputView FlowInput="{Binding .}" EditMode="True"></controls:FlowInputView>
+                                <controls:FlowInputView EditMode="True"></controls:FlowInputView>
                             </StackPanel>
                         </GroupBox>
                     </DataTemplate>
@@ -211,22 +211,22 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                             <Button Visibility="{Binding FlowStep.IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
                         </StackPanel>
 
-                        <controls:FlowInputView FlowInput="{Binding FlowStep.TimeOut}"></controls:FlowInputView>
-                        <controls:FlowInputView FlowInput="{Binding FlowStep.Repeat}"></controls:FlowInputView>
-                        <controls:FlowInputView FlowInput="{Binding FlowStep.Retry}"></controls:FlowInputView>
-                        <controls:FlowInputView FlowInput="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
+                        <controls:FlowInputView DataContext="{Binding FlowStep.TimeOut}"></controls:FlowInputView>
+                        <controls:FlowInputView DataContext="{Binding FlowStep.Repeat}"></controls:FlowInputView>
+                        <controls:FlowInputView DataContext="{Binding FlowStep.Retry}"></controls:FlowInputView>
+                        <controls:FlowInputView DataContext="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
                         <!--<TextBox Text="{Binding FlowStep.TimeOut}" hc:InfoElement.Title="超时时间" />
                         <TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
-                        <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />
+                        <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />-->
 
-                        <ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->
+                        <!--<ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Header="输入">
                     <ItemsControl ItemsSource="{Binding FlowStep.Inputs}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <controls:FlowInputView FlowInput="{Binding .}"></controls:FlowInputView>
+                                <controls:FlowInputView ></controls:FlowInputView>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -258,7 +258,7 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                                     <ItemsControl ItemsSource="{Binding Inputs}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <controls:FlowInputView FlowInput="{Binding .}" />
+                                                <controls:FlowInputView />
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
@@ -275,7 +275,7 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                                 <DataTemplate>
                                     <StackPanel Margin="5">
                                         <Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}">删除</Button>
-                                        <controls:FlowInputView FlowInput="{Binding .}" EditMode="True"></controls:FlowInputView>
+                                        <controls:FlowInputView  EditMode="True"></controls:FlowInputView>
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
