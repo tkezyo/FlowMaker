@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
 using System.Collections.Generic;
 using System.Linq;
@@ -135,13 +136,41 @@ namespace FlowMaker.SourceGenerator
                             }
                             props.Add($"{property.Name}Prop");
 
+                            if (property.Type is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Enum)
+                            {
+                                var enumValues = typeSymbol.GetMembers().Where(c => c.Kind == SymbolKind.Field).ToList();
+                                foreach (var enumValue in enumValues)
+                                {
+                                    var enumAttires = enumValue.GetAttributes();
+                                    var enumDisplayNameAttr = enumAttires.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
+                                    var enumDisplayName = enumValue.Name;
+                                    if (enumDisplayNameAttr is not null)
+                                    {
+                                        enumDisplayName = enumDisplayNameAttr.ConstructorArguments[0].Value.ToString();
+                                    }
+                                    defStringBuilder.AppendLine($$"""
+        {{property.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", "{{enumValue.Name}}"));
+""");
+                                }
+                            }
                             if (options.Any())
                             {
                                 foreach (var option in options)
                                 {
-                                    defStringBuilder.AppendLine($$"""
+                                    if (option.ConstructorArguments.Length == 2)
+                                    {
+                                        defStringBuilder.AppendLine($$"""
         {{property.Name}}Prop.Options.Add(new OptionDefinition("{{option.ConstructorArguments[0].Value}}", "{{option.ConstructorArguments[1].Value}}"));
 """);
+                                    }
+                                    if (option.ConstructorArguments.Length == 1)
+                                    {
+                                        var type = option.ConstructorArguments[0].Value;
+                                        defStringBuilder.AppendLine($$"""
+        {{property.Name}}Prop.OptionProviderName = "{{option.ConstructorArguments[0].Value}}";
+""");
+                                    }
+
                                 }
                             }
                             if (input is not null)
@@ -339,6 +368,7 @@ namespace {item.Option.ContainingNamespace};
 
     public partial class {item.Option.MetadataName}
     {{
+        public const string FullName = ""{type.ToDisplayString()}"" + "":"" + nameof({item.Option.ContainingNamespace}) + ""."" + nameof({item.Option.MetadataName});
         public static string Name => typeof({item.Option.MetadataName}).FullName ?? string.Empty;
 
         public static string Type => ""{type.ToDisplayString()}"";

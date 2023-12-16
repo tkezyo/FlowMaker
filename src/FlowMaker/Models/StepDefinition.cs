@@ -65,7 +65,7 @@ public class StepDataDefinition(string name, string displayName, string type, st
     public Guid? FromStepId { get; set; }
     public string? FromStepPropName { get; set; }
 
-
+    public string? OptionProviderName { get; set; }
     public List<OptionDefinition> Options { get; set; } = [];
 }
 

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 namespace FlowMaker.Models;
 
@@ -130,11 +131,13 @@ public class FlowResult
     public required string Value { get; set; }
     public required string Type { get; set; }
 }
+[Flags]
 public enum ErrorHandling
 {
     /// <summary>
     /// 跳过
     /// </summary>
+    [Description("跳过")]
     Skip,
     /// <summary>
     /// 暂停,需要添加恢复事件

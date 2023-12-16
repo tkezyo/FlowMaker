@@ -11,7 +11,7 @@ public class FlowMakerOption
     public List<string> Sections { get; set; } = [];
     public List<string> CustomViews { get; set; } = [];
     public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = [];
-    public Dictionary<string, List<string>> OptionProviders { get; set; } = [];
+    public Dictionary<string, List<NameValue>> OptionProviders { get; set; } = [];
     public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
         if (!Group.TryGetValue(category, out var group))
@@ -21,7 +21,7 @@ public class FlowMakerOption
         }
         return group;
     }
-    public List<string> GetOrAddType(string type)
+    public List<NameValue> GetOrAddType(string type)
     {
         if (!OptionProviders.TryGetValue(type, out var group))
         {
@@ -88,7 +88,7 @@ public static class FlowMakerExtension
         {
             var group = c.GetOrAddType(T.Type);
 
-            group.Add(T.Name);
+            group.Add(new NameValue(T.DisplayName, T.Name));
         });
     }
 

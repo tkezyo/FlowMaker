@@ -9,6 +9,10 @@ public partial class MyClass : IStep
 
     public static string Name => "123";
 
+    [Input]
+    [Description("错误处理")]
+    public ErrorHandling ErrorHandling { get; set; }
+
     public Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
@@ -22,6 +26,7 @@ public partial class Flow1 : IStep
     public static string Name => "Flow1";
 
     [Input]
+    [Option(PortProvider.FullName)]
     public int Prop1 { get; set; }
 
     [Input]
