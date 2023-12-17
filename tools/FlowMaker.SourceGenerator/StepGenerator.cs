@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -113,6 +114,7 @@ namespace FlowMaker.SourceGenerator
                             }
 
                             var options = propAttires.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
+                            var optionProviderAttr = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "OptionProviderAttribute");
                             var defaultValue = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
                             string defaultValueValue = string.Empty;
                             if (defaultValue is not null)
@@ -153,24 +155,23 @@ namespace FlowMaker.SourceGenerator
 """);
                                 }
                             }
+                            if (optionProviderAttr is not null && optionProviderAttr.AttributeClass.TypeArguments.Length > 0)
+                            {
+                                if (optionProviderAttr.AttributeClass.TypeArguments[0] is INamedTypeSymbol namedType)
+                                {
+                                    defStringBuilder.AppendLine($$"""
+        {{property.Name}}Prop.OptionProviderName = {{namedType}}.Type + ":" + {{namedType}}.Name;
+""");
+                                }
+
+                            }
                             if (options.Any())
                             {
                                 foreach (var option in options)
                                 {
-                                    if (option.ConstructorArguments.Length == 2)
-                                    {
-                                        defStringBuilder.AppendLine($$"""
+                                    defStringBuilder.AppendLine($$"""
         {{property.Name}}Prop.Options.Add(new OptionDefinition("{{option.ConstructorArguments[0].Value}}", "{{option.ConstructorArguments[1].Value}}"));
 """);
-                                    }
-                                    if (option.ConstructorArguments.Length == 1)
-                                    {
-                                        var type = option.ConstructorArguments[0].Value;
-                                        defStringBuilder.AppendLine($$"""
-        {{property.Name}}Prop.OptionProviderName = "{{option.ConstructorArguments[0].Value}}";
-""");
-                                    }
-
                                 }
                             }
                             if (input is not null)

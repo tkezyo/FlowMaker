@@ -26,7 +26,7 @@ public partial class Flow1 : IStep
     public static string Name => "Flow1";
 
     [Input]
-    [Option(PortProvider.FullName)]
+    [OptionProvider<PortProvider>]
     public int Prop1 { get; set; }
 
     [Input]

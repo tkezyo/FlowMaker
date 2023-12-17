@@ -23,8 +23,9 @@ namespace Test1
     {
         public static string DisplayName => "串口";
 
-        public IEnumerable<NameValue> GetOptions()
+        public async Task<IEnumerable<NameValue>> GetOptions()
         {
+            await Task.CompletedTask;
             return [new("oo", "22"), new("oo22", "2211")];
         }
     }

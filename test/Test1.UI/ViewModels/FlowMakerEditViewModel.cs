@@ -3,6 +3,7 @@ using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.Services;
 using FlowMaker.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -21,8 +22,9 @@ public class FlowMakerEditViewModel : ViewModelBase
     private readonly FlowMakerOption _flowMakerOption;
     private readonly FlowManager _flowManager;
     private readonly IMessageBoxManager _messageBoxManager;
+    private readonly IServiceProvider _serviceProvider;
 
-    public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager)
+    public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager, IServiceProvider serviceProvider)
     {
         _flowMakerOption = options.Value;
         CreateCommand = ReactiveCommand.CreateFromTask(Create);
@@ -57,6 +59,7 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         this._flowManager = flowManager;
         this._messageBoxManager = messageBoxManager;
+        this._serviceProvider = serviceProvider;
     }
     [Reactive]
     public string? Category { get; set; }
@@ -1021,6 +1024,28 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
         }
     }
+
+
+    public async Task InitOptions(FlowStepInputViewModel flowStepInputViewModel, StepDataDefinition stepDataDefinition)
+    {
+        if (!string.IsNullOrEmpty(stepDataDefinition.OptionProviderName))
+        {
+            var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(stepDataDefinition.OptionProviderName);
+            if (pp is null)
+            {
+                return;
+            }
+            var options = await pp.GetOptions();
+
+            flowStepInputViewModel.Options.Clear();
+            foreach (var item in options)
+            {
+                flowStepInputViewModel.Options.Add(new FlowStepOptionViewModel(item.Name, item.Value));
+            }
+         
+
+        }
+    }
     #endregion
 
 }
@@ -1301,7 +1326,7 @@ public class FlowStepViewModel : ReactiveObject
 
     public void Init()
     {
-      
+
         this.WhenAnyValue(c => c.Category).WhereNotNull().DistinctUntilChanged().Subscribe(c =>
         {
             _flowMakerEditViewModel.SetStepDefinitions(this);
@@ -1341,13 +1366,15 @@ public class FlowStepViewModel : ReactiveObject
                 var flowInput = flowStep?.Inputs.FirstOrDefault(c => c.Name == item.Name);
 
                 var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerEditViewModel);
-                if (item.Options.Count != 0)
-                {
-                    input.HasOption = true;
-                }
+             
+                await _flowMakerEditViewModel.InitOptions(input, item);
                 foreach (var item2 in item.Options)
                 {
                     input.Options.Add(new FlowStepOptionViewModel(item2.DisplayName, item2.Name));
+                }
+                if (input.Options.Count != 0)
+                {
+                    input.HasOption = true;
                 }
                 if (flowInput is not null)
                 {

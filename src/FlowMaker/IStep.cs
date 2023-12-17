@@ -155,9 +155,8 @@ public interface IDataConverter<T> : IDataConverter
 
 public interface IOptionProvider<T> : IOptionProvider
 {
-    IEnumerable<NameValue> GetOptions();
 }
-public interface IOptionProvider : IOptionProvideInject
+public interface IOptionProvider : IOptionProviderInject
 {
     /// <summary>
     /// 名称
@@ -166,8 +165,8 @@ public interface IOptionProvider : IOptionProvideInject
     static abstract string Name { get; }
     static abstract string Type { get; }
 }
-public interface IOptionProvideInject
+public interface IOptionProviderInject
 {
-
+    Task<IEnumerable<NameValue>> GetOptions();
 }
 

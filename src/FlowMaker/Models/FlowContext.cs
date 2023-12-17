@@ -16,9 +16,9 @@ public class FlowContext
     public FlowContext(FlowDefinition flowDefinition)
     {
         FlowDefinition = flowDefinition;
-        InitExcuteStepIds();
+        InitExecuteStepIds();
     }
-    public void InitExcuteStepIds()
+    public void InitExecuteStepIds()
     {
         ExcuteStepIds.Clear();
         foreach (var item in FlowDefinition.Steps)

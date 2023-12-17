@@ -20,7 +20,6 @@ public sealed class OptionAttribute : Attribute
     //  http://go.microsoft.com/fwlink/?LinkId=85236
     readonly string displayName;
     readonly string value;
-    readonly string? providerName;
 
     // This is a positional argument
     public OptionAttribute(string displayName, string value)
@@ -28,17 +27,7 @@ public sealed class OptionAttribute : Attribute
         this.displayName = displayName;
         this.value = value;
     }
-    public OptionAttribute(string providerName)
-    {
-        this.providerName = providerName;
-        this.displayName = string.Empty;
-        this.value = string.Empty;
-    }
 
-    public string? ProviderName
-    {
-        get { return providerName; }
-    }
     public string DisplayName
     {
         get { return displayName; }
@@ -47,4 +36,11 @@ public sealed class OptionAttribute : Attribute
     {
         get { return value; }
     }
+}
+
+[System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
+public sealed class OptionProviderAttribute<T> : Attribute
+    where T : IOptionProvider
+{
+
 }

@@ -83,7 +83,7 @@ public static class FlowMakerExtension
     public static void AddFlowOption<T>(this IServiceCollection serviceDescriptors)
         where T : class, IOptionProvider
     {
-        serviceDescriptors.AddKeyedTransient<IOptionProvideInject, T>(T.Type + ":" + T.Name);
+        serviceDescriptors.AddKeyedTransient<IOptionProviderInject, T>(T.Type + ":" + T.Name);
         serviceDescriptors.Configure<FlowMakerOption>(c =>
         {
             var group = c.GetOrAddType(T.Type);
