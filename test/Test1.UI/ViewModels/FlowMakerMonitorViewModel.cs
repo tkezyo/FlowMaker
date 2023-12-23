@@ -44,6 +44,8 @@ namespace Test1.ViewModels
             RunCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Run);
             StopCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Stop);
             LockCommand = ReactiveCommand.Create<MonitorInfoViewModel>(Lock);
+            AddDebugCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(AddDebug);
+            RemoveDebugCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(RemoveDebug);
 
             foreach (var item in Enum.GetValues<ErrorHandling>())
             {
@@ -353,6 +355,34 @@ namespace Test1.ViewModels
                 await _flowManager.Dispose(monitorInfoViewModel.Id.Value);
             }
         }
+        public ReactiveCommand<MonitorStepInfoViewModel, Unit> AddDebugCommand { get; }
+        public void AddDebug(MonitorStepInfoViewModel monitorInfoViewModel)
+        {
+            if (!monitorInfoViewModel.Id.HasValue)
+            {
+                return;
+            }
+            monitorInfoViewModel.IsDebug = true;
+            var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, "debug");
+            if (mid is DebugMiddleware debug)
+            {
+                debug.AddDebug(monitorInfoViewModel.Id.Value);
+            }
+        }
+        public ReactiveCommand<MonitorStepInfoViewModel, Unit> RemoveDebugCommand { get; }
+        public void RemoveDebug(MonitorStepInfoViewModel monitorInfoViewModel)
+        {
+            if (!monitorInfoViewModel.Id.HasValue)
+            {
+                return;
+            }
+            monitorInfoViewModel.IsDebug = false;
+            var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, "debug");
+            if (mid is DebugMiddleware debug)
+            {
+                debug.RemoveDebug(monitorInfoViewModel.Id.Value);
+            }
+        }
     }
 
 
@@ -408,17 +438,9 @@ namespace Test1.ViewModels
     }
     public class MonitorStepInfoViewModel : ReactiveObject
     {
-        public MonitorStepInfoViewModel()
-        {
-            ToggleDebugCommand = ReactiveCommand.Create(ToggleDebug);
-        }
         [Reactive]
         public bool IsDebug { get; set; }
-        public ReactiveCommand<Unit, Unit> ToggleDebugCommand { get; }
-        public void ToggleDebug()
-        {
-            IsDebug = !IsDebug;
-        }
+
         [Reactive]
         public TimeSpan? UsedTime { get; set; }
         public DateTime StartTime { get; set; }

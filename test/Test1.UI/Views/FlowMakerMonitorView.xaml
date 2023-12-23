@@ -81,12 +81,16 @@
                               DataType="vms:MonitorStepInfoViewModel">
                                     <StackPanel Orientation="Horizontal">
                                         <Button 
-Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}" Visibility="{Binding DataContext.Debug,Converter={StaticResource Boolean2VisibilityConverter},RelativeSource={RelativeSource AncestorType=TreeView,Mode=FindAncestor}}">
+Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" CommandParameter="{Binding .}" Visibility="{Binding DataContext.Debug,Converter={StaticResource Boolean2VisibilityConverter},RelativeSource={RelativeSource AncestorType=TreeView,Mode=FindAncestor}}">
                                             <Button.Style>
                                                 <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding IsDebug}" Value="True">
                                                             <Setter Property="Background" Value="Orange"/>
+                                                            <Setter Property="Command" Value="{Binding DataContext.RemoveDebugCommand,ElementName=page}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsDebug}" Value="False">
+                                                            <Setter Property="Command" Value="{Binding DataContext.AddDebugCommand,ElementName=page}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>

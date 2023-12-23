@@ -54,6 +54,7 @@ namespace Test1
                 services.AddSingleton<FlowManager>();
                 services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
                 services.AddKeyedScoped<IStepOnceMiddleware, MonitorStepOnceMiddleware>("monitor");
+                services.AddKeyedScoped<IStepOnceMiddleware, DebugMiddleware>("debug");
                 services.AddKeyedScoped<IFlowMiddleware, MonitorFlowMiddleware>("monitor");
 
                 services.AddFlowStep<Flow1>();
@@ -75,6 +76,7 @@ namespace Test1
                     options.Sections.Add("设备2");
                     options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
                     options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("监控", "monitor"));
+                    options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("调试", "debug"));
                 });
             });
 

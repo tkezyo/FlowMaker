@@ -66,7 +66,7 @@ public class FlowRunner : IDisposable
                           }
                       }
 
-                      if (Context.StepState[item].Waits.Count == 0 && !_flowManager.CheckDebug(Context.FlowIds[0], step.Id))
+                      if (Context.StepState[item].Waits.Count == 0 )
                       {
                           _ = Run(step, _cancellationToken);
                       }
@@ -408,6 +408,7 @@ public class FlowRunner : IDisposable
     {
         CancellationTokenSource.Cancel();
         CancellationTokenSource.Dispose();
+        
         Disposables.Dispose();
     }
 }
