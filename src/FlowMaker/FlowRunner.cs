@@ -4,13 +4,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Polly;
-using System;
-using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Reflection.Metadata;
 
 namespace FlowMaker;
 
@@ -25,7 +22,7 @@ public class FlowRunner : IDisposable
     /// </summary>
     public FlowContext Context { get; set; } = null!;
 
-    private Subject<ExcuteStep> ExcuteStepSubject { get; } = new();
+    private Subject<ExecuteStep> ExecuteStepSubject { get; } = new();
     private readonly Subject<Unit> _locker = new();
     private CancellationToken _cancellationToken;
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -39,17 +36,16 @@ public class FlowRunner : IDisposable
         _flowMakerOption = option.Value;
         this._serviceProvider = serviceProvider;
         this._flowManager = flowManager;
-        var d = ExcuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
+        var d = ExecuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
           {
               var key = c.Type + c.Type switch
               {
-                  EventType.Step => c.StepId?.ToString(),
+                  EventType.PreStep => c.StepId?.ToString(),
                   EventType.Event => c.EventName,
-                  EventType.Debug => c.StepId?.ToString() + "Debug",
                   EventType.StartFlow => "",
                   _ => ""
               };
-              if (Context.ExcuteStepIds.TryGetValue(key, out var steps))
+              if (Context.ExecuteStepIds.TryGetValue(key, out var steps))
               {
                   foreach (var item in steps)
                   {
@@ -58,21 +54,19 @@ public class FlowRunner : IDisposable
                       Context.StepState[item].Waits.RemoveAll(c => c == key);
                       if (c.Type == EventType.Event)//通过事件传递数据
                       {
-                          //ChangeStepState(step, StepState.ReceivedEventData);
-
-                          foreach (var input in step.Inputs)
+                          if (!string.IsNullOrEmpty(c.EventData))
                           {
-                              if (input.Mode == InputMode.Event && input.Value == c.EventName)
+                              foreach (var input in step.Inputs)
                               {
-                                  input.Value = c.EventData;
+                                  if (input.Mode == InputMode.Event && input.Value == c.EventName)
+                                  {
+                                      input.Value = c.EventData;
+                                  }
                               }
                           }
                       }
-                      if (c.Type == EventType.Debug)
-                      {
-                          //ChangeStepState(step, StepState.ReceivedCancelDebug);
-                      }
-                      if (Context.StepState[item].Waits.Count == 0)
+
+                      if (Context.StepState[item].Waits.Count == 0 && !_flowManager.CheckDebug(Context.FlowIds[0], step.Id))
                       {
                           _ = Run(step, _cancellationToken);
                       }
@@ -187,12 +181,11 @@ public class FlowRunner : IDisposable
         {
             TaskCompletionSource = new TaskCompletionSource<List<FlowResult>>();
 
-            Context = new(flowInfo);
-            Context.FlowIds = [.. parentIds, Id];
+            Context = new(flowInfo, [.. parentIds, Id]);
             Context.InitState();
 
 
-            foreach (var item in flowInfo.Data)//写入globe data
+            foreach (var item in flowInfo.Data)//写入 globe data
             {
                 if (!item.IsInput)
                 {
@@ -218,11 +211,11 @@ public class FlowRunner : IDisposable
             {
                 await middleware.OnExecuting(Context, State, CancellationTokenSource.Token);
             }
-            ExcuteStepSubject.OnNext(new ExcuteStep
+            ExecuteStepSubject.OnNext(new ExecuteStep
             {
                 Type = EventType.StartFlow,
             });
-         
+
             var result = await TaskCompletionSource.Task;
 
             State = RunnerState.Complete;
@@ -248,7 +241,7 @@ public class FlowRunner : IDisposable
 
     public void SendEvent(string eventName, string? eventData)
     {
-        ExcuteStepSubject.OnNext(new ExcuteStep
+        ExecuteStepSubject.OnNext(new ExecuteStep
         {
             Type = EventType.Event,
             EventData = eventData,
@@ -260,23 +253,15 @@ public class FlowRunner : IDisposable
         }
     }
 
-    public void SendDebug(Guid stepId, bool debug)
+    public void ExecuteStep(Guid stepId)
     {
-        if (debug)
+        if (Context.StepState[stepId].Waits.Count == 0)
         {
-            var key = stepId.ToString() + "Debug";
-            Context.ExcuteStepIds[key].Add(stepId);
-            Context.StepState[stepId].Waits.Add(key);
-        }
-        else
-        {
-            ExcuteStepSubject.OnNext(new ExcuteStep
-            {
-                Type = EventType.Debug,
-                StepId = stepId
-            });
+            var step = Context.FlowDefinition.Steps.First(c => c.Id == stepId);
+            _ = Run(step, _cancellationToken);
         }
     }
+
     protected async Task Run(FlowStep step, CancellationToken cancellationToken)
     {
         DateTime start = DateTime.Now;
@@ -402,9 +387,9 @@ public class FlowRunner : IDisposable
                 await item.OnExecuted(Context, step, Context.StepState[step.Id], CancellationTokenSource.Token);
             }
             //执行下一步
-            ExcuteStepSubject.OnNext(new ExcuteStep
+            ExecuteStepSubject.OnNext(new ExecuteStep
             {
-                Type = EventType.Step,
+                Type = EventType.PreStep,
                 StepId = step.Id,
             });
         }
@@ -469,7 +454,7 @@ public enum StepOnceState
 /// <summary>
 /// 事件
 /// </summary>
-public class ExcuteStep
+public class ExecuteStep
 {
     public EventType Type { get; set; }
     public Guid? StepId { get; set; }
@@ -481,10 +466,10 @@ public class ExcuteStep
 /// </summary>
 public enum EventType
 {
-    Step,
+    PreStep,
     Event,
-    Debug,
     StartFlow,
+    NextStep,
 }
 /// <summary>
 /// 步骤运行状态

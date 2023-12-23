@@ -53,7 +53,7 @@ public class FlowManager
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
         public FlowRunner FlowRunner { get; set; } = flowRunner;
-
+        public List<Guid> DebugStepId { get; set; } = [];
     }
     public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
@@ -88,6 +88,10 @@ public class FlowManager
         return runner.Id;
     }
 
+    public bool CheckDebug(Guid flowId, Guid stepId)
+    {
+        return _status[flowId].DebugStepId.Contains(stepId);
+    }
     public async Task Dispose(Guid id)
     {
         _status[id].ServiceScope.Dispose();

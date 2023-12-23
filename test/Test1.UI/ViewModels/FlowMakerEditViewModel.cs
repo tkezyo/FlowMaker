@@ -147,7 +147,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 f.WaitEvents.Add(new FlowWait
                 {
-                    Type = EventType.Step,
+                    Type = EventType.PreStep,
                     StepId = preStep
                 });
             }
@@ -321,7 +321,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 switch (wait.Type)
                 {
-                    case EventType.Step when wait.StepId.HasValue:
+                    case EventType.PreStep when wait.StepId.HasValue:
                         flowStepViewModel.PreSteps.Add(wait.StepId.Value);
                         break;
                     case EventType.Event when !string.IsNullOrEmpty(wait.EventName):

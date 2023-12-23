@@ -7,28 +7,29 @@ public class FlowContext
     /// <summary>
     /// 父流程Id
     /// </summary>
-    public Guid[] FlowIds { get; set; } = [];
+    public Guid[] FlowIds { get; }
     /// <summary>
     /// 流程配置
     /// </summary>
     public FlowDefinition FlowDefinition { get; }
 
-    public FlowContext(FlowDefinition flowDefinition)
+    public FlowContext(FlowDefinition flowDefinition, Guid[] flowIds)
     {
         FlowDefinition = flowDefinition;
+        FlowIds = flowIds;
         InitExecuteStepIds();
     }
     public void InitExecuteStepIds()
     {
-        ExcuteStepIds.Clear();
+        ExecuteStepIds.Clear();
         foreach (var item in FlowDefinition.Steps)
         {
             if (item.WaitEvents.Count == 0)
             {
-                if (!ExcuteStepIds.TryGetValue(EventType.StartFlow.ToString(), out var list))
+                if (!ExecuteStepIds.TryGetValue(EventType.StartFlow.ToString(), out var list))
                 {
                     list = [];
-                    ExcuteStepIds.Add(EventType.StartFlow.ToString(), list);
+                    ExecuteStepIds.Add(EventType.StartFlow.ToString(), list);
                 }
                 list.Add(item.Id);
                 continue;
@@ -40,15 +41,15 @@ public class FlowContext
                     if (input.Mode == InputMode.Event)
                     {
                         var key = flowInput.Mode + flowInput.Value;
-                        if (!ExcuteStepIds.TryGetValue(key, out var list))
+                        if (!ExecuteStepIds.TryGetValue(key, out var list))
                         {
                             list = [];
-                            ExcuteStepIds.Add(key, list);
+                            ExecuteStepIds.Add(key, list);
                         }
                         list.Add(flowInput.Id);
-                        foreach (var subinput in flowInput.Inputs)
+                        foreach (var subInput in flowInput.Inputs)
                         {
-                            register(input);
+                            register(subInput);
                         }
                     }
                 }
@@ -58,17 +59,16 @@ public class FlowContext
             {
                 var key = wait.Type + wait.Type switch
                 {
-                    EventType.Step => wait.StepId?.ToString(),
+                    EventType.PreStep => wait.StepId?.ToString(),
                     EventType.Event => wait.EventName,
-                    EventType.Debug => item.Id.ToString(),
                     EventType.StartFlow => "",
                     _ => ""
                 };
 
-                if (!ExcuteStepIds.TryGetValue(key, out var list))
+                if (!ExecuteStepIds.TryGetValue(key, out var list))
                 {
                     list = [];
-                    ExcuteStepIds.Add(key, list);
+                    ExecuteStepIds.Add(key, list);
                 }
                 list.Add(item.Id);
             }
@@ -88,9 +88,8 @@ public class FlowContext
             {
                 var key = wait.Type + wait.Type switch
                 {
-                    EventType.Step => wait.StepId?.ToString(),
+                    EventType.PreStep => wait.StepId?.ToString(),
                     EventType.Event => wait.EventName,
-                    EventType.Debug => item.Id.ToString() + "Debug",
                     EventType.StartFlow => "",
                     _ => ""
                 };
@@ -111,7 +110,7 @@ public class FlowContext
     /// <summary>
     /// 触发某事件时需要执行的Step
     /// </summary>
-    public Dictionary<string, List<Guid>> ExcuteStepIds { get; } = [];
+    public Dictionary<string, List<Guid>> ExecuteStepIds { get; } = [];
     /// <summary>
     /// 所有的全局变量
     /// </summary>
