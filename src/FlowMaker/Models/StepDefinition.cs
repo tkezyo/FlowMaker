@@ -101,6 +101,7 @@ public class ConfigDefinition
     /// </summary>
     public ErrorHandling ErrorHandling { get; set; }
     public List<NameValue> Data { get; set; } = [];
+    public List<string> Middlewares { get; set; } = [];
 }
 
 public enum InputDisplayType

@@ -27,6 +27,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBox Grid.Row="0" Grid.Column="0" Text="{Binding Model.Category,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置类别:" MinWidth="90" hc:TitleElement.TitlePlacement="Top"/>
         <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Model.Name,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend}" hc:TitleElement.Title="配置名称:" MinWidth="90"  hc:TitleElement.TitlePlacement="Top"/>
@@ -41,14 +42,23 @@
                 <DataTemplate>
                     <StackPanel>
                         <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Top" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Top" ItemsSource="{Binding Options}" SelectedItem="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Top" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
                     </StackPanel>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <Button Margin="10" Grid.Row="5" Grid.Column="0" Content="保存" Style="{StaticResource ButtonSuccess}" Command="{Binding SaveOrRunCommand}"/>
-        <Button Margin="10" Grid.Row="5" Grid.Column="1" Content="保存并执行" Style="{StaticResource ButtonPrimary}" Command="{Binding SaveOrRunCommand}" >
+        <ItemsControl ItemsSource="{Binding Middlewares}" Grid.Row="5"  Grid.ColumnSpan="2" Margin="0,5">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+
+        <Button Margin="10" Grid.Row="6" Grid.Column="0" Content="保存" Style="{StaticResource ButtonSuccess}" Command="{Binding SaveOrRunCommand}"/>
+        <Button Margin="10" Grid.Row="6" Grid.Column="1" Content="保存并执行" Style="{StaticResource ButtonPrimary}" Command="{Binding SaveOrRunCommand}" >
             <Button.CommandParameter>
                 <s:Boolean>True</s:Boolean>
             </Button.CommandParameter>

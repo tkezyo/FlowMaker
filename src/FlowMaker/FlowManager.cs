@@ -23,14 +23,13 @@ public class FlowManager
     private readonly FlowMakerOption _flowMakerOption;
 
 
-    public Subject<FlowStatusArgs> OnFlowChange { get; set; } = new();
-
     public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options)
     {
         _jsonSerializerOptions = new()
         {
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
             WriteIndented = true,
+            IncludeFields = false
         };
         _flowMakerOption = options.Value;
         FlowDir = Path.Combine(_flowMakerOption.RootDir, flowDir);
@@ -58,10 +57,7 @@ public class FlowManager
     }
     public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
-    public ISubject<StepStatusArgs> GetStepChange(Guid id)
-    {
-        return _status[id].FlowRunner.OnStepChange;
-    }
+
     public async Task<Guid> Run(string configCategory, string configName, string flowCategory, string flowName)
     {
         var config = await LoadConfigDefinitionAsync(configCategory, configName, flowCategory, flowName);
@@ -102,6 +98,22 @@ public class FlowManager
         }
 
         _status.Remove(id, out _);
+    }
+
+    public T? GetRunnerService<T>(Guid id, string? key = null)
+    {
+        if (_status.TryGetValue(id, out var status))
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                return status.ServiceScope.ServiceProvider.GetService<T>();
+            }
+            else
+            {
+                return status.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
+            }
+        }
+        return default;
     }
     #endregion
 
@@ -205,7 +217,7 @@ public class FlowManager
         }
 
         string json = await File.ReadAllTextAsync(file);
-        var df = JsonSerializer.Deserialize<FlowDefinition>(json);
+        var df = JsonSerializer.Deserialize<FlowDefinition>(json, _jsonSerializerOptions);
         if (df is null)
         {
             throw new Exception($"步骤文件错误:{category},{name}");

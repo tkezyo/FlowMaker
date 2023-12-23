@@ -1,11 +1,6 @@
 ﻿using FlowMaker;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Test1.ViewModels;
 
 namespace System
@@ -14,9 +9,9 @@ namespace System
     {
         public static void AddSingletonFlowView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
             where TView : class, IViewFor<TViewModel>
-            where TViewModel : class, ISpikeViewModel
+            where TViewModel : class, ICustomPageViewModel
         {
-            serviceDescriptors.AddKeyedSingleton<ISpikeInjectViewModel, TViewModel>(TViewModel.ViewName);
+            serviceDescriptors.AddKeyedSingleton<ICustomPageInjectViewModel, TViewModel>(TViewModel.ViewName);
             serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {
@@ -25,9 +20,9 @@ namespace System
         }
         public static void AddTransientFlowView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
             where TView : class, IViewFor<TViewModel>
-            where TViewModel : class, ISpikeViewModel
+            where TViewModel : class, ICustomPageViewModel
         {
-            serviceDescriptors.AddKeyedTransient<ISpikeInjectViewModel, TViewModel>(TViewModel.ViewName);
+            serviceDescriptors.AddKeyedTransient<ICustomPageInjectViewModel, TViewModel>(TViewModel.ViewName);
             serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {

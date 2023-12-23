@@ -169,8 +169,8 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
 
                             <StackPanel Margin="5">
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBox Text="{Binding Type}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="类型" Style="{StaticResource TextBoxExtend.Small}"/>
                                     <TextBox Text="{Binding Name}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                    <TextBox Text="{Binding Type}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="类型" Style="{StaticResource TextBoxExtend.Small}"/>
 
                                     <Button VerticalAlignment="Bottom" Content="删除" Command="{Binding DataContext.RemoveGlobeDataCommand,RelativeSource={RelativeSource AncestorType=ItemsControl,Mode=FindAncestor}}" Visibility="{Binding IsStepOutput,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}"/>
                                 </StackPanel>
@@ -179,19 +179,23 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                                     <CheckBox Content="输入" IsChecked="{Binding IsInput}"/>
                                     <CheckBox Content="输出" IsChecked="{Binding IsOutput}"/>
                                 </StackPanel>
-                                <TextBox Text="{Binding DefaultValue}" hc:TitleElement.Title="默认值" Style="{StaticResource TextBoxExtend.Small}" Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                                <Button HorizontalAlignment="Left" Command="{Binding AddOptionCommand}" Content="添加选项" Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource ButtonPrimary.Small}"/>
-                                <ItemsControl ItemsSource="{Binding Options}"  Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
-                                                <TextBox Text="{Binding Name}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
-                                                <Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <StackPanel  Visibility="{Binding IsInput,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                    <TextBox Text="{Binding DefaultValue}" hc:TitleElement.Title="默认值" Style="{StaticResource TextBoxExtend.Small}" />
+                                    <ComboBox  hc:TitleElement.Title="选项集" Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding OptionProviders}" SelectedValuePath="Value" SelectedValue="{Binding OptionProviderName}" DisplayMemberPath="Name" />
+                                    <Button HorizontalAlignment="Left" Command="{Binding AddOptionCommand}" Content="添加选项" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding OptionProviderName,Converter={StaticResource String2VisibilityReConverter}}"/>
+                                    <ItemsControl ItemsSource="{Binding Options}"  Visibility="{Binding OptionProviderName,Converter={StaticResource String2VisibilityReConverter}}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                                    <TextBox Text="{Binding Name}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                                    <Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                              
                                 <Separator  Margin="0,10"/>
                             </StackPanel>
                         </GroupBox>

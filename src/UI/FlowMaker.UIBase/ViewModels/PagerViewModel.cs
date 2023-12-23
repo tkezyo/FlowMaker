@@ -114,7 +114,7 @@ namespace FlowMaker.ViewModels
             }
             else
             {
-                if (Sorting.Contains(newSorting))
+                if (Sorting!.Contains(newSorting))
                 {
                     if (Sorting.Contains("asc"))
                     {

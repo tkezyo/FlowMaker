@@ -170,3 +170,21 @@ public interface IOptionProviderInject
     Task<IEnumerable<NameValue>> GetOptions();
 }
 
+public interface IFlowMiddleware
+{
+    Task OnExecuting(FlowContext flowContext, RunnerState runnerState, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, RunnerState runnerState, CancellationToken cancellationToken);
+    Task OnError(FlowContext flowContext, RunnerState runnerState, Exception exception, CancellationToken cancellationToken);
+}
+public interface IStepMiddleware
+{
+    Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
+    Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception exception, CancellationToken cancellationToken);
+}
+public interface IStepOnceMiddleware
+{
+    Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken);
+    Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken);
+}

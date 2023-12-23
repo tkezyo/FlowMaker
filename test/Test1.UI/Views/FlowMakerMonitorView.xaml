@@ -9,112 +9,98 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Test1.Views"
                           xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:converters="clr-namespace:Test1.Converters" d:DataContext="{d:DesignInstance Type=vms:FlowMakerMonitorViewModel}"
+  xmlns:app="clr-namespace:FlowMaker;assembly=FlowMaker.WPFBase"
                           mc:Ignorable="d" 
                           x:Name="page"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
-        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}"></Style>
-        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend.Small}"></Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend.Small}"></Style>
         <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
     </UserControl.Resources>
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
-        <Menu ItemsSource="{Binding Menus}" Grid.Row="0">
-            <Menu.ItemContainerStyle>
-                <Style TargetType="MenuItem" BasedOn="{StaticResource  MenuItemBaseStyle}">
-                    <Setter Property="Command"  Value="{Binding Command}"/>
-                    <Setter Property="CommandParameter"  Value="{Binding CommandParameter}"/>
-                </Style>
-            </Menu.ItemContainerStyle>
-            <Menu.ItemTemplate>
-                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
 
-                        <TextBlock x:Name="Header" Grid.Column="1" 
-              VerticalAlignment="Center"
-              Text="{Binding Name}" />
-                    </Grid>
-                </HierarchicalDataTemplate>
-            </Menu.ItemTemplate>
-        </Menu>
+    <ItemsControl ItemsSource="{Binding Flows}" >
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <UniformGrid Columns="{Binding DataContext.ColCount, ElementName=page}" Rows="{Binding DataContext.RowCount, ElementName=page}"/>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <DockPanel>
+                    <ToolBarTray DockPanel.Dock="Top" Orientation="Horizontal">
+                        <ToolBar>
+                            <StackPanel Visibility="{Binding Running,Converter={StaticResource Boolean2VisibilityReConverter}}" Orientation="Horizontal">
+                                <Button Content="运行" Command="{Binding DataContext.RunCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonPrimary.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                <Button Content="删除" Command="{Binding DataContext.DeleteCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                            </StackPanel>
+                            <StackPanel Visibility="{Binding Running,Converter={StaticResource Boolean2VisibilityConverter}}">
+                                <Button Content="停止" Command="{Binding DataContext.StopCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
 
-        <DockPanel Grid.Row="1">
-            <ItemsControl ItemsSource="{Binding Flows}" >
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <UniformGrid Columns="{Binding DataContext.ColCount, ElementName=page}" Rows="{Binding DataContext.RowCount, ElementName=page}"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <DockPanel>
-                            <ToolBarTray DockPanel.Dock="Top" Orientation="Horizontal">
-                                <ToolBar>
-                                    <StackPanel Visibility="{Binding Running,Converter={StaticResource Boolean2VisibilityReConverter}}" Orientation="Horizontal">
-                                        <Button Content="运行" Command="{Binding DataContext.RunCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonPrimary.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                                        <Button Content="删除" Command="{Binding DataContext.DeleteCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                            </StackPanel>
+                            <Button  Content="锁定" Command="{Binding DataContext.LockCommand,ElementName=page}" CommandParameter="{Binding .}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDefault.Small}"/>
+
+
+                            <TextBox Text="{Binding DisplayName}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" IsReadOnly="True"/>
+                            <TextBox Text="{Binding Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
+                            <TextBox Text="{Binding Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
+                            <ComboBox ItemsSource="{Binding DataContext.ErrorHandlings,ElementName=page}" Style="{StaticResource ComboBoxExtend.Small}" SelectedItem="{Binding ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理:" hc:TitleElement.TitlePlacement="Left"/>
+                        </ToolBar>
+                        <ToolBar  Band="2" 
+                                  ItemsSource="{Binding Data}" Visibility="{Binding Data.Count,Converter={StaticResource CountToVisibilityReConverter},ConverterParameter=0}">
+
+                            <ToolBar.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
                                     </StackPanel>
-                                    <StackPanel Visibility="{Binding Running,Converter={StaticResource Boolean2VisibilityConverter}}">
-                                        <Button Content="停止" Command="{Binding DataContext.StopCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
+                                </DataTemplate>
+                            </ToolBar.ItemTemplate>
+                        </ToolBar>
+                    </ToolBarTray>
 
+                  
+                    <rxui:RoutedViewHost DockPanel.Dock="Bottom" 
+   Visibility="{Binding ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
+   Router="{Binding Router}"  >
+                        <rxui:RoutedViewHost.DefaultContent>
+                            <WrapPanel>
+                            </WrapPanel>
+                        </rxui:RoutedViewHost.DefaultContent>
+                        <rxui:RoutedViewHost.ViewLocator>
+                            <app:AppViewLocator />
+                        </rxui:RoutedViewHost.ViewLocator>
+                    </rxui:RoutedViewHost>
+
+                    <ScrollViewer>
+                        <TreeView ItemsSource="{Binding Steps}">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate
+                              ItemsSource="{Binding Steps}"
+                              DataType="vms:MonitorStepInfoViewModel">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button 
+Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}" Visibility="{Binding DataContext.Debug,Converter={StaticResource Boolean2VisibilityConverter},RelativeSource={RelativeSource AncestorType=TreeView,Mode=FindAncestor}}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsDebug}" Value="True">
+                                                            <Setter Property="Background" Value="Orange"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                        <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
                                     </StackPanel>
-                                    <Button  Content="锁定" Command="{Binding DataContext.LockCommand,ElementName=page}" CommandParameter="{Binding .}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDefault.Small}"/>
-
-
-                                    <TextBox Text="{Binding DisplayName}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" IsReadOnly="True"/>
-                                    <TextBox Text="{Binding Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
-                                    <TextBox Text="{Binding Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
-                                    <ComboBox ItemsSource="{Binding DataContext.ErrorHandlings,ElementName=page}" Style="{StaticResource ComboBoxExtend.Small}" SelectedItem="{Binding ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理:" hc:TitleElement.TitlePlacement="Left"/>
-                                </ToolBar>
-                                <ToolBar  Band="2" ItemsSource="{Binding Data}" Visibility="{Binding Data.Count,Converter={StaticResource CountToVisibilityReConverter},ConverterParameter=0}">
-
-                                    <ToolBar.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                                                <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedItem="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </ToolBar.ItemTemplate>
-                                </ToolBar>
-                            </ToolBarTray>
-
-                            <ScrollViewer>
-                                <TreeView ItemsSource="{Binding Steps}">
-                                    <TreeView.ItemTemplate>
-                                        <HierarchicalDataTemplate ItemsSource="{Binding Steps}" DataType="vms:MonitorStepInfoViewModel">
-                                            <StackPanel Orientation="Horizontal">
-                                                <Button 
-      Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" Command="{Binding ToggleDebugCommand}" Visibility="{Binding DataContext.Debug,Converter={StaticResource Boolean2VisibilityConverter},RelativeSource={RelativeSource AncestorType=TreeView,Mode=FindAncestor}}">
-                                                    <Button.Style>
-                                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
-                                                            <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsDebug}" Value="True">
-                                                                    <Setter Property="Background" Value="Orange"/>
-                                                                </DataTrigger>
-                                                            </Style.Triggers>
-                                                        </Style>
-                                                    </Button.Style>
-                                                </Button>
-                                                <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
-                                                <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </HierarchicalDataTemplate>
-                                    </TreeView.ItemTemplate>
-
-                                </TreeView>
-                            </ScrollViewer>
-                        </DockPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </DockPanel>
-    </Grid>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                    </ScrollViewer>
+                </DockPanel>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
 </rxui:ReactiveUserControl>

@@ -12,21 +12,13 @@ public sealed class OutputAttribute : Attribute
 {
 }
 
-
 [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
-public sealed class OptionAttribute : Attribute
+public sealed class OptionAttribute(string displayName, string value) : Attribute
 {
     // See the attribute guidelines at 
     //  http://go.microsoft.com/fwlink/?LinkId=85236
-    readonly string displayName;
-    readonly string value;
-
-    // This is a positional argument
-    public OptionAttribute(string displayName, string value)
-    {
-        this.displayName = displayName;
-        this.value = value;
-    }
+    readonly string displayName = displayName;
+    readonly string value = value;
 
     public string DisplayName
     {

@@ -1,15 +1,12 @@
-﻿using Accessibility;
-using DynamicData;
-using DynamicData.Binding;
-using FlowMaker;
+﻿using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.Services;
 using FlowMaker.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -17,7 +14,6 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace Test1.ViewModels
 {
@@ -34,8 +30,7 @@ namespace Test1.ViewModels
         public const int MaxColCount = 4;
         public ObservableCollection<MonitorInfoViewModel> Flows { get; set; } = [];
         private readonly FlowMakerOption _flowMakerOption;
-        //[Reactive]
-        //public ObservableCollection<string> Categories { get; set; } = [];
+
         [Reactive]
         public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = [];
 
@@ -67,53 +62,6 @@ namespace Test1.ViewModels
                     RowCount = 1;
                 }
             });
-
-            //var flows = Flows.ToObservableChangeSet();
-            //flows.SubscribeMany(c =>
-            //{
-            //    return c.WhenValueChanged(v => v.Category, notifyOnInitialValue: false).WhereNotNull().Subscribe(v =>
-            //    {
-            //        c.Definitions.Clear();
-
-            //        if (_flowMakerOption.Group.TryGetValue(v, out var group))
-            //        {
-            //            foreach (var item in group.StepDefinitions)
-            //            {
-            //                c.Definitions.Add(new DefinitionInfoViewModel(v, item.Name, DefinitionType.Step));
-            //            }
-            //        }
-
-            //        foreach (var item in _flowManager.LoadFlows(v))
-            //        {
-            //            c.Definitions.Add(new DefinitionInfoViewModel(v, item.Name, DefinitionType.Flow));
-            //        }
-            //        foreach (var item in _flowManager.LoadConfigs(v))
-            //        {
-            //            c.Definitions.Add(new DefinitionInfoViewModel(v, item.Name, DefinitionType.Config));
-            //        }
-
-            //    });
-            //}).Subscribe();
-
-            //flows.SubscribeMany(c =>
-            //{
-            //    return c.WhenValueChanged(v => v.Definition, notifyOnInitialValue: false).WhereNotNull().Subscribe(async v =>
-            //    {
-            //        var stepDefinition = await _flowManager.GetStepDefinitionAsync(v.Category, v.Name);
-            //        if (stepDefinition is null)
-            //        {
-            //            return;
-            //        }
-            //        c.Data.Clear();
-            //        foreach (var item in stepDefinition.Data)
-            //        {
-            //            if (item.IsInput)
-            //            {
-            //                c.Data.Add(new InputDataViewModel(item.Name, $"{item.DisplayName}({item.Type})", item.Type, item.DefaultValue));
-            //            }
-            //        }
-            //    });
-            //}).Subscribe();
         }
 
         public CompositeDisposable? Disposables { get; set; }
@@ -121,6 +69,7 @@ namespace Test1.ViewModels
         public override async Task Activate()
         {
             Disposables = [];
+
             foreach (var item in _flowManager.RunningFlows)
             {
                 var flow = Flows.FirstOrDefault(v => v.Id == item.Id);
@@ -136,59 +85,10 @@ namespace Test1.ViewModels
                 {
                     return;
                 }
-                flow.StepChange = _flowManager.GetStepChange(flow.Id.Value).Subscribe(c =>
+                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(item.Id, "monitor");
+                if (mid is MonitorStepOnceMiddleware monitor)
                 {
-                    var steps = Flows.FirstOrDefault(v => v.Id == c.FlowIds[0])?.Steps;
-
-                    foreach (var item in c.FlowIds.Skip(1))
-                    {
-                        if (steps is null)
-                        {
-                            return;
-                        }
-                        steps = steps.FirstOrDefault(v => v.Id == item)?.Steps;
-                    }
-                    if (steps is null)
-                    {
-                        return;
-                    }
-                    var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
-                    if (step is not null)
-                    {
-                        if (c.Status == StepState.Start)
-                        {
-                            step.Start();
-                        }
-                        if (c.Status == StepState.AllComplete)
-                        {
-                            step.Stop();
-                        }
-                    }
-                });
-            }
-
-            var f = _flowManager.OnFlowChange.Synchronize().Subscribe(async c =>
-            {
-                if (c.FlowContext.FlowIds.Length > 1)
-                {
-                    return;
-                }
-                var flow = Flows.FirstOrDefault(v => v.Id == c.FlowContext.FlowIds[0]);
-
-                if (c.RunnerState == RunnerState.Running)
-                {
-                    if (flow is null)
-                    {
-                        await Load(c.FlowContext.FlowDefinition.Category, c.FlowContext.FlowDefinition.Name, false, c.FlowContext.FlowIds[0]);
-                    }
-                    flow = Flows.First(v => v.Id == c.FlowContext.FlowIds[0]);
-                    flow.Running = true;
-
-                    if (flow is null || flow.StepChange is not null)
-                    {
-                        return;
-                    }
-                    flow.StepChange = _flowManager.GetStepChange(flow.Id.Value).Subscribe(c =>
+                    flow.StepChange = monitor.StepChange.Subscribe(c =>
                     {
                         var steps = Flows.FirstOrDefault(v => v.Id == c.FlowIds[0])?.Steps;
 
@@ -204,19 +104,78 @@ namespace Test1.ViewModels
                         {
                             return;
                         }
-                        var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
+                        var step = steps.FirstOrDefault(v => v.Id == c.StepId);
                         if (step is not null)
                         {
-                            if (c.Status == StepState.Start)
+                            if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
                             {
-                                step.Start();
+                                step.Start(c.StepOnce.StartTime.Value);
                             }
-                            if (c.Status == StepState.AllComplete)
+                            if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
                             {
-                                step.Stop();
+                                step.Stop(c.StepOnce.EndTime.Value);
                             }
                         }
                     });
+                }
+
+            }
+
+            var f = MessageBus.Current.Listen<MonitorMessage>().Subscribe(async c =>
+            {
+                if (c.Context.FlowIds.Length > 1)
+                {
+                    return;
+                }
+                var id = c.Context.FlowIds[0];
+                var flow = Flows.FirstOrDefault(v => v.Id == id);
+
+                if (c.RunnerState == RunnerState.Running)
+                {
+                    if (flow is null)
+                    {
+                        await Load(c.Context.FlowDefinition.Category, c.Context.FlowDefinition.Name, false, id);
+                    }
+                    flow = Flows.First(v => v.Id == id);
+                    flow.Running = true;
+
+                    if (flow is null || flow.StepChange is not null)
+                    {
+                        return;
+                    }
+                    var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
+                    if (mid is MonitorStepOnceMiddleware monitor)
+                    {
+                        flow.StepChange = monitor.StepChange.Subscribe(c =>
+                        {
+                            var steps = Flows.FirstOrDefault(v => v.Id == c.FlowIds[0])?.Steps;
+
+                            foreach (var item in c.FlowIds.Skip(1))
+                            {
+                                if (steps is null)
+                                {
+                                    return;
+                                }
+                                steps = steps.FirstOrDefault(v => v.Id == item)?.Steps;
+                            }
+                            if (steps is null)
+                            {
+                                return;
+                            }
+                            var step = steps.FirstOrDefault(v => v.Id == c.StepId);
+                            if (step is not null)
+                            {
+                                if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
+                                {
+                                    step.Start(c.StepOnce.StartTime.Value);
+                                }
+                                if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
+                                {
+                                    step.Stop(c.StepOnce.EndTime.Value);
+                                }
+                            }
+                        });
+                    }
                 }
                 if (c.RunnerState == RunnerState.Complete)
                 {
@@ -302,7 +261,32 @@ namespace Test1.ViewModels
                 {
                     if (item.IsInput)
                     {
-                        flow.Data.Add(new InputDataViewModel(item.Name, $"{item.DisplayName}({item.Type})", item.Type, item.DefaultValue));
+                        var data = new InputDataViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                        if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
+                        {
+                            var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
+                            if (pp is not null)
+                            {
+                                var options = await pp.GetOptions();
+                                foreach (var option in options)
+                                {
+                                    data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (var option in item.Options)
+                            {
+                                data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                            }
+                        }
+
+                        if (data.Options.Count != 0)
+                        {
+                            data.HasOption = true;
+                        }
+                        flow.Data.Add(data);
                     }
                 }
             }
@@ -372,8 +356,12 @@ namespace Test1.ViewModels
     }
 
 
-    public class MonitorInfoViewModel(string category, string name, DefinitionType type) : ReactiveObject
+    public class MonitorInfoViewModel(string category, string name, DefinitionType type) : ReactiveObject, IScreen
     {
+        [Reactive]
+        public bool ShowView { get; set; } = true;
+        [Reactive]
+        public RoutingState Router { get; set; } = new RoutingState();
         public IDisposable? StepChange { get; set; }
         [Reactive]
         public Guid? Id { get; set; }
@@ -435,19 +423,19 @@ namespace Test1.ViewModels
         public TimeSpan? UsedTime { get; set; }
         public DateTime StartTime { get; set; }
         public IDisposable? Timer { get; set; }
-        public void Start()
+        public void Start(DateTime startTime)
         {
-            StartTime = DateTime.Now;
+            StartTime = startTime;
             Timer?.Dispose();
             Timer = Observable.Interval(TimeSpan.FromMilliseconds(20)).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
                 {
                     UsedTime = DateTime.Now - StartTime;
                 });
         }
-        public void Stop()
+        public void Stop(DateTime endTime)
         {
             Timer?.Dispose();
-            UsedTime = DateTime.Now - StartTime;
+            UsedTime = endTime - StartTime;
         }
         [Reactive]
         public Guid? Id { get; set; }
@@ -488,4 +476,6 @@ namespace Test1.ViewModels
         [Reactive]
         public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];
     }
+
+
 }

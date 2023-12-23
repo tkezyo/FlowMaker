@@ -1,17 +1,43 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.DependencyInjection;
-using System.Numerics;
 
 namespace FlowMaker;
 
 public class FlowMakerOption
 {
+    /// <summary>
+    /// 文件的目录
+    /// </summary>
     public string RootDir { get; set; } = string.Empty;
+    /// <summary>
+    /// 是否可编辑
+    /// </summary>
     public bool Edit { get; set; } = true;
+    /// <summary>
+    /// 自定义页面
+    /// </summary>
     public List<string> Sections { get; set; } = [];
+    /// <summary>
+    /// 自定义box视图
+    /// </summary>
     public List<string> CustomViews { get; set; } = [];
+    /// <summary>
+    /// 包含所有的步骤及转换器
+    /// </summary>
     public Dictionary<string, FlowMakerOptionGroup> Group { get; set; } = [];
+    /// <summary>
+    /// 选项集
+    /// </summary>
     public Dictionary<string, List<NameValue>> OptionProviders { get; set; } = [];
+    /// <summary>
+    /// 可选的中间件
+    /// </summary>
+    public List<NameValue> Middlewares { get; set; } = [];
+    /// <summary>
+    /// 默认插入的中间件
+    /// </summary>
+    public List<NameValue> DefaultMiddlewares { get; set; } = [];
+
     public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
         if (!Group.TryGetValue(category, out var group))
@@ -91,5 +117,4 @@ public static class FlowMakerExtension
             group.Add(new NameValue(T.DisplayName, T.Name));
         });
     }
-
 }

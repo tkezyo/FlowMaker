@@ -2,6 +2,7 @@
 using FlowMaker.Models;
 using FlowMaker.Services;
 using FlowMaker.ViewModels;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -20,16 +21,22 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
     private readonly FlowMakerOption _flowMakerOption;
     private readonly FlowManager _flowManager;
     private readonly IMessageBoxManager _messageBoxManager;
+    private readonly IServiceProvider _serviceProvider;
 
-    public FlowMakerConfigEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager,IMessageBoxManager messageBoxManager)
+    public FlowMakerConfigEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager, IServiceProvider serviceProvider)
     {
         SaveOrRunCommand = ReactiveCommand.CreateFromTask<bool?>(SaveOrRun);
         _flowMakerOption = options.Value;
         this._flowManager = flowManager;
         this._messageBoxManager = messageBoxManager;
+        this._serviceProvider = serviceProvider;
         foreach (var item in Enum.GetValues<ErrorHandling>())
         {
             ErrorHandlings.Add(item);
+        }
+        foreach (var item in _flowMakerOption.Middlewares)
+        {
+            Middlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
         }
 
         this.WhenAnyValue(c => c.Model.FlowCategory).Subscribe(c =>
@@ -60,6 +67,7 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
         }
     }
 
+    public ObservableCollection<MiddlewareSelectViewModel> Middlewares { get; set; } = [];
     public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = [];
     /// <summary>
     /// 载入配置
@@ -85,6 +93,11 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
             {
                 data.Value = item.Value;
             }
+        }
+
+        foreach (var item in Middlewares)
+        {
+            item.Selected = cd.Middlewares.Contains(item.Value);
         }
     }
     /// <summary>
@@ -170,10 +183,26 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
         foreach (var item in stepDef.Data)
         {
             var data = new InputDataViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
-            foreach (var option in item.Options)
+            if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
             {
-                data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
+                if (pp is not null)
+                {
+                    var options = await pp.GetOptions();
+                    foreach (var option in options)
+                    {
+                        data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                    }
+                }
             }
+            else
+            {
+                foreach (var option in item.Options)
+                {
+                    data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                }
+            }
+
             if (data.Options.Count != 0)
             {
                 data.HasOption = true;
@@ -213,6 +242,13 @@ public class FlowMakerConfigEditViewModel : ViewModelBase
                 return;
             }
             configDefinition.Data.Add(new NameValue(item.Name, item.Value));
+        }
+        foreach (var item in Middlewares)
+        {
+            if (item.Selected)
+            {
+                configDefinition.Middlewares.Add(item.Value);
+            }
         }
         await _flowManager.SaveConfig(configDefinition);
         if (run.HasValue && run.Value)
@@ -354,4 +390,15 @@ public class FlowStepRuntimeViewModel(Guid id, string displayName, Guid? subFlow
     public Guid? SubFlowId { get; set; } = subFlowId;
     public string DisplayName { get; set; } = displayName;
     public ObservableCollection<FlowStepRuntimeViewModel> Children { get; set; } = [];
+}
+
+public class MiddlewareSelectViewModel(string name, string value) : ReactiveObject
+{
+    [Reactive]
+    public string Name { get; set; } = name;
+
+    [Reactive]
+    public string Value { get; set; } = value;
+    [Reactive]
+    public bool Selected { get; set; }
 }

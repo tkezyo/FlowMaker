@@ -40,21 +40,21 @@ namespace Test1.ViewModels
         {
             ChangeView("流程");
 
-            _flowManager.OnFlowChange.Subscribe(c =>
-            {
-                if (c.FlowContext.FlowIds.Length > 1)
-                {
-                    return;
-                }
-                if (c.RunnerState == RunnerState.Running)
-                {
-                    RunningFlows.Add($"{c.FlowContext.FlowDefinition.Category}:{c.FlowContext.FlowDefinition.Name}");
-                }
-                else
-                {
-                    RunningFlows.Remove($"{c.FlowContext.FlowDefinition.Category}:{c.FlowContext.FlowDefinition.Name}");
-                }
-            }).DisposeWith(Disposable);
+            //_flowManager.OnFlowChange.Subscribe(c =>
+            //{
+            //    if (c.FlowContext.FlowIds.Length > 1)
+            //    {
+            //        return;
+            //    }
+            //    if (c.RunnerState == RunnerState.Running)
+            //    {
+            //        RunningFlows.Add($"{c.FlowContext.FlowDefinition.Category}:{c.FlowContext.FlowDefinition.Name}");
+            //    }
+            //    else
+            //    {
+            //        RunningFlows.Remove($"{c.FlowContext.FlowDefinition.Category}:{c.FlowContext.FlowDefinition.Name}");
+            //    }
+            //}).DisposeWith(Disposable);
             return Task.CompletedTask;
         }
         public ReactiveCommand<string, Unit> ChangeViewCommand { get; set; }
@@ -103,6 +103,7 @@ namespace Test1.ViewModels
             {
                 case "流程":
                     {
+                        Menus.Add(new MenuItemViewModel("监控") { Command = ChangeViewCommand, CommandParameter = "监控" });
                     }
                     break;
                 case "监控":
@@ -114,6 +115,7 @@ namespace Test1.ViewModels
                 default:
                     {
                         Menus.Add(new MenuItemViewModel("流程") { Command = ChangeViewCommand, CommandParameter = "流程" });
+                        Menus.Add(new MenuItemViewModel("监控") { Command = ChangeViewCommand, CommandParameter = "监控" });
                     }
                     break;
 

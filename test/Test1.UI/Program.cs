@@ -52,6 +52,9 @@ namespace Test1
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
                 services.AddTransient<FlowRunner>();
                 services.AddSingleton<FlowManager>();
+                services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
+                services.AddKeyedScoped<IStepOnceMiddleware, MonitorStepOnceMiddleware>("monitor");
+                services.AddKeyedScoped<IFlowMiddleware, MonitorFlowMiddleware>("monitor");
 
                 services.AddFlowStep<Flow1>();
                 services.AddFlowStep<Flow2>();
@@ -60,10 +63,7 @@ namespace Test1
                 services.AddFlowConverter<ValueConverter>();
                 services.AddFlowOption<PortProvider>();
                 services.AddAutoMapper(typeof(ConfigProfile).Assembly);
-                //services.Configure<ViewForMatch>(options =>
-                //{
-                //    options.Add(Test1UIViewLocatorMatcher.Match);
-                //});
+
                 services.Configure<PageOptions>(options =>
                 {
                     options.FirstLoadPage = typeof(FlowMakerMainViewModel);
@@ -73,6 +73,8 @@ namespace Test1
                     options.RootDir = "D:\\FlowMaker";
                     options.Sections.Add("设备1");
                     options.Sections.Add("设备2");
+                    options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
+                    options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("监控", "monitor"));
                 });
             });
 

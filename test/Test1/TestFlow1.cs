@@ -15,7 +15,7 @@ namespace Test1
         public async Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
         {
             await Task.Delay(5000, cancellationToken);
-            _logger.LogInformation(stepContext.DisplayName);
+            _logger.LogInformation(stepContext.Step.DisplayName);
         }
     }
 

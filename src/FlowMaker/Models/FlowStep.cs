@@ -1,10 +1,18 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FlowMaker.Models;
 
 public class FlowStep
 {
+    public FlowStep()
+    {
+        TimeOut = new FlowInput("TimeOut");
+        Retry = new FlowInput("Retry");
+        Repeat = new FlowInput("Repeat");
+        ErrorHandling = new FlowInput("ErrorHandling");
+    }
     /// <summary>
     /// 步骤唯一Id
     /// </summary>
@@ -38,27 +46,20 @@ public class FlowStep
     /// <summary>
     /// 超时,秒 double
     /// </summary>
-    public FlowInput TimeOut { get; set; } = new FlowInput("TimeOut");
+    public FlowInput TimeOut { get; set; }
 
     /// <summary>
     /// 重试 int
     /// </summary>
-    public FlowInput Retry { get; set; } = new FlowInput("Retry");
+    public FlowInput Retry { get; set; }
     /// <summary>
     /// 重复  int
     /// </summary>
-    public FlowInput Repeat { get; set; } = new FlowInput("Repeat");
+    public FlowInput Repeat { get; set; }
     /// <summary>
     /// 出现错误时处理方式 ErrorHandling
     /// </summary>
-    public FlowInput ErrorHandling { get; set; } = new FlowInput("ErrorHandling");
-
-    /// <summary>
-    /// 谁的回退任务,stepdId
-    /// </summary>
-    public Guid? Compensate { get; set; }
-
-
+    public FlowInput ErrorHandling { get; set; }
 
     /// <summary>
     /// 是否可执行，同时可作为Break的条件
@@ -79,10 +80,20 @@ public class FlowWait
 }
 
 
-public class FlowInput(string name, Guid? id = null)
+public class FlowInput
 {
-    public string Name { get; set; } = name;
-    public Guid Id { get; set; } = id ?? Guid.NewGuid();
+    public FlowInput()
+    {
+    }
+    [SetsRequiredMembers]
+    public FlowInput(string name, Guid? id = null)
+    {
+        Name = name;
+        Id = id ?? Guid.NewGuid();
+    }
+
+    public required string Name { get; set; }
+    public required Guid Id { get; set; }
     public string? ConverterCategory { get; set; }
     public string? ConverterName { get; set; }
 

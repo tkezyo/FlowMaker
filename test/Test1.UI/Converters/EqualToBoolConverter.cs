@@ -61,7 +61,7 @@ namespace Test1.Converters
             {
                 return Visibility.Collapsed;
             }
-            return value.ToString().StartsWith(parameter.ToString()) ? Visibility.Visible : Visibility.Collapsed;
+            return value.ToString()!.StartsWith(parameter.ToString()!) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

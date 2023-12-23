@@ -1,24 +1,21 @@
-﻿using FlowMaker.Models;
+﻿using AutoMapper;
+using FlowMaker;
+using FlowMaker.Models;
+using FlowMaker.Services;
 using FlowMaker.ViewModels;
-using ReactiveUI.Fody.Helpers;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Reactive;
 using System.IO;
-using System.Text.Json;
-using AutoMapper;
-using Microsoft.Extensions.DependencyInjection;
-using FlowMaker.Services;
+using System.Linq;
+using System.Reactive;
 using System.Reactive.Linq;
-using FlowMaker;
-using Windows.ApplicationModel.VoiceCommands;
-using Microsoft.Extensions.Options;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Test1.ViewModels
 {
@@ -56,7 +53,7 @@ namespace Test1.ViewModels
             ChangeEditCommand = ReactiveCommand.Create(ChangeEdit);
             LoadTabsCommand = ReactiveCommand.CreateFromTask<string>(LoadTabs);
             RunCommand = ReactiveCommand.CreateFromTask<SpikeActionViewModel>(Run);
-            
+
             this._mapper = mapper;
             this._serviceProvider = serviceProvider;
             this._messageBoxManager = messageBoxManager;
@@ -136,6 +133,20 @@ namespace Test1.ViewModels
         public void ChangeEdit()
         {
             Edit = !Edit;
+            if (!Edit)
+            {
+                if (CurrentBox is not null)
+                {
+                    CurrentBox.Editing = false;
+                    CurrentBox = null;
+                }
+                if (CurrentAction is not null)
+                {
+                    CurrentAction.Editing = false;
+                    CurrentAction = null;
+                }
+            }
+
             if (ReloadMenuCommand is not null && Section is not null)
             {
                 var list = InitMenu();
@@ -299,8 +310,8 @@ namespace Test1.ViewModels
                 {
                     if (!string.IsNullOrEmpty(box.ViewName))
                     {
-                        var vm = _serviceProvider.GetKeyedService<ISpikeInjectViewModel>(box.ViewName);
-                        if (vm is ISpikeViewModel sVm)
+                        var vm = _serviceProvider.GetKeyedService<ICustomPageInjectViewModel>(box.ViewName);
+                        if (vm is ICustomPageViewModel sVm)
                         {
                             box.DisplayView(box.ViewName, sVm);
                         }
@@ -488,8 +499,8 @@ namespace Test1.ViewModels
             }
             else
             {
-                var vm = _serviceProvider.GetKeyedService<ISpikeInjectViewModel>(viewName);
-                if (vm is ISpikeViewModel sVm)
+                var vm = _serviceProvider.GetKeyedService<ICustomPageInjectViewModel>(viewName);
+                if (vm is ICustomPageViewModel sVm)
                 {
                     CurrentBox.DisplayView(viewName, sVm);
                 }
@@ -610,12 +621,16 @@ namespace Test1.ViewModels
         #endregion
 
         #region 执行
-        public ReactiveCommand<SpikeActionViewModel, Unit> RunCommand { get;  }
+        public ReactiveCommand<SpikeActionViewModel, Unit> RunCommand { get; }
         public async Task Run(SpikeActionViewModel action)
         {
             var config = new ConfigDefinition() { Category = action.Category, FlowCategory = action.Category, FlowName = action.Name, Name = action.Name, ErrorHandling = ErrorHandling.Terminate, Repeat = 0, Retry = 0, Timeout = 0 };
             foreach (var item in action.Inputs)
             {
+                if (string.IsNullOrEmpty(item.Value))
+                {
+                    throw new Exception($"{item.DisplayName}不能为空");
+                }
                 config.Data.Add(new NameValue(item.DisplayName, item.Value));
             }
             await _flowManager.Run(config);
@@ -713,7 +728,7 @@ namespace Test1.ViewModels
         [Reactive]
         public string? ViewName { get; set; }
         [Reactive]
-        public ISpikeViewModel? SpikeViewModel { get; set; }
+        public ICustomPageViewModel? SpikeViewModel { get; set; }
         public bool ShowView
         {
             get => showView; set
@@ -736,7 +751,7 @@ namespace Test1.ViewModels
         [Reactive]
         public RoutingState Router { get; set; } = new RoutingState();
 
-        public void DisplayView(string? viewName, ISpikeViewModel? spikeViewModel)
+        public void DisplayView(string? viewName, ICustomPageViewModel? spikeViewModel)
         {
             ViewName = viewName;
             SpikeViewModel = spikeViewModel;
@@ -891,11 +906,12 @@ namespace Test1.ViewModels
     {
     }
 
-    public interface ISpikeViewModel : ISpikeInjectViewModel, IRoutableViewModel
+    public interface ICustomPageViewModel : ICustomPageInjectViewModel, IRoutableViewModel
     {
         static abstract string ViewName { get; }
+        Task SetInfo(string info);
     }
-    public interface ISpikeInjectViewModel
+    public interface ICustomPageInjectViewModel
     {
     }
     #endregion

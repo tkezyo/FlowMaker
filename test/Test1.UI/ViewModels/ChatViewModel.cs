@@ -7,10 +7,15 @@ using System.Threading.Tasks;
 
 namespace Test1.ViewModels
 {
-    public class ChatViewModel : ViewModelBase, ISpikeViewModel
+    public class ChatViewModel : ViewModelBase, ICustomPageViewModel
     {
         public string Name { get; set; } = "sdfwef";
 
         public static string ViewName => "Chat";
+
+        public Task SetInfo(string info)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

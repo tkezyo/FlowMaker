@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using DynamicData.Binding;
 using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.Services;
@@ -60,6 +61,28 @@ public class FlowMakerEditViewModel : ViewModelBase
         this._flowManager = flowManager;
         this._messageBoxManager = messageBoxManager;
         this._serviceProvider = serviceProvider;
+
+        this.GlobeDatas.ToObservableChangeSet().SubscribeMany(c =>
+        {
+            return c.WhenValueChanged(v => v.Type, notifyOnInitialValue: false).WhereNotNull().Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().ObserveOn(RxApp.MainThreadScheduler).Subscribe(v =>
+            {
+                if (_flowMakerOption.OptionProviders.TryGetValue(v, out var list))
+                {
+                    c.OptionProviders.Clear();
+                    c.OptionProviders.Add(new NameValue("无", ""));
+                    foreach (var item in list)
+                    {
+                        c.OptionProviders.Add(new NameValue(item.Name, item.Value));
+                    }
+                    var op = c.OptionProviders.FirstOrDefault(x => x.Value == c.OptionProviderName);
+                    if (op is not null)
+                    {
+                        c.OptionProviderName = op.Value;
+                    }
+                }
+            });
+        }).Subscribe();
+
     }
     [Reactive]
     public string? Category { get; set; }
@@ -98,7 +121,6 @@ public class FlowMakerEditViewModel : ViewModelBase
                 Category = item.Category,
                 DisplayName = item.DisplayName,
                 Name = item.Name,
-                Compensate = item.Compensate,
                 ErrorHandling = CreateInput(item.ErrorHandling),
                 Id = item.Id,
                 Repeat = CreateInput(item.Repeat),
@@ -178,11 +200,16 @@ public class FlowMakerEditViewModel : ViewModelBase
                 IsOutput = item.IsOutput,
                 FromStepId = item.FromStepId,
                 FromStepPropName = item.FromStepPropName,
+                OptionProviderName = item.OptionProviderName,
             };
-            foreach (var option in item.Options)
+            if (string.IsNullOrEmpty(data.OptionProviderName))
             {
-                data.Options.Add(new OptionDefinition(option.DisplayName, option.Name));
+                foreach (var option in item.Options)
+                {
+                    data.Options.Add(new OptionDefinition(option.DisplayName, option.Name));
+                }
             }
+      
             flowDefinition.Data.Add(data);
         }
         await _flowManager.SaveFlow(flowDefinition);
@@ -199,7 +226,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             flowDefinition = await _flowManager.LoadFlowDefinitionAsync(category, name);
         }
-        catch
+        catch (Exception e)
         {
             return;
         }
@@ -221,14 +248,15 @@ public class FlowMakerEditViewModel : ViewModelBase
                 DefaultValue = item.DefaultValue,
                 Name = item.Name,
                 DisplayName = item.DisplayName,
-                Type = item.Type,
                 IsStepOutput = item.FromStepId.HasValue,
+                OptionProviderName = item.OptionProviderName,
             };
             foreach (var option in item.Options)
             {
                 data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
             }
             GlobeDatas.Add(data);
+            data.Type = item.Type;//data添加到GlobeDatas后,再赋值Type可以初始化选项集
         }
 
         foreach (var item in flowDefinition.Checkers)
@@ -248,7 +276,6 @@ public class FlowMakerEditViewModel : ViewModelBase
             FlowStepViewModel flowStepViewModel = new(this)
             {
                 DisplayName = item.DisplayName,
-                Compensate = item.Compensate,
                 Id = item.Id,
                 Status = StepStatus.Normal,
                 Time = TimeSpan.FromSeconds(1),
@@ -299,8 +326,6 @@ public class FlowMakerEditViewModel : ViewModelBase
                         break;
                     case EventType.Event when !string.IsNullOrEmpty(wait.EventName):
                         flowStepViewModel.WaitEvents.Add(wait.EventName);
-                        break;
-                    case EventType.EventData:
                         break;
                     case EventType.StartFlow:
                         break;
@@ -1042,7 +1067,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 flowStepInputViewModel.Options.Add(new FlowStepOptionViewModel(item.Name, item.Value));
             }
-         
+
 
         }
     }
@@ -1085,6 +1110,9 @@ public class StepDataDefinitionViewModel : ReactiveObject
     public string? FromStepPropName { get; set; }
     public Guid? FromStepId { get; set; }
 
+    [Reactive]
+    public string? OptionProviderName { get; set; }
+
     public ReactiveCommand<Unit, Unit> AddOptionCommand { get; }
     public void AddOption()
     {
@@ -1098,6 +1126,8 @@ public class StepDataDefinitionViewModel : ReactiveObject
 
     [Reactive]
     public ObservableCollection<FlowStepOptionViewModel> Options { get; set; } = [];
+    [Reactive]
+    public ObservableCollection<NameValue> OptionProviders { get; set; } = [];
 }
 
 public class FlowIfViewModel : ReactiveObject
@@ -1366,7 +1396,7 @@ public class FlowStepViewModel : ReactiveObject
                 var flowInput = flowStep?.Inputs.FirstOrDefault(c => c.Name == item.Name);
 
                 var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerEditViewModel);
-             
+
                 await _flowMakerEditViewModel.InitOptions(input, item);
                 foreach (var item2 in item.Options)
                 {
@@ -1459,10 +1489,7 @@ public class FlowStepViewModel : ReactiveObject
     /// 前置任务
     /// </summary>
     public List<Guid> PreSteps { get; set; } = [];
-    /// <summary>
-    /// 回退任务
-    /// </summary>
-    public Guid? Compensate { get; set; }
+
 
 
     [Reactive]
