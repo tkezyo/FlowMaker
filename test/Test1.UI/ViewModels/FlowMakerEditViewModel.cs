@@ -2,6 +2,7 @@
 using DynamicData.Binding;
 using FlowMaker;
 using FlowMaker.Models;
+using FlowMaker.Persistence;
 using FlowMaker.Services;
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,8 +25,9 @@ public class FlowMakerEditViewModel : ViewModelBase
     private readonly FlowManager _flowManager;
     private readonly IMessageBoxManager _messageBoxManager;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IFlowProvider _flowProvider;
 
-    public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager, IServiceProvider serviceProvider)
+    public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager, IServiceProvider serviceProvider,IFlowProvider flowProvider)
     {
         _flowMakerOption = options.Value;
         CreateCommand = ReactiveCommand.CreateFromTask(Create);
@@ -61,7 +63,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         this._flowManager = flowManager;
         this._messageBoxManager = messageBoxManager;
         this._serviceProvider = serviceProvider;
-
+        this._flowProvider = flowProvider;
         this.GlobeDatas.ToObservableChangeSet().SubscribeMany(c =>
         {
             return c.WhenValueChanged(v => v.Type, notifyOnInitialValue: false).WhereNotNull().Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().ObserveOn(RxApp.MainThreadScheduler).Subscribe(v =>
@@ -212,19 +214,19 @@ public class FlowMakerEditViewModel : ViewModelBase
       
             flowDefinition.Data.Add(data);
         }
-        await _flowManager.SaveFlow(flowDefinition);
+        await _flowProvider.SaveFlow(flowDefinition);
         CloseModal(true);
     }
     public async Task Load(string? category = null, string? name = null)
     {
-        foreach (var item in _flowManager.LoadFlowCategories())
+        foreach (var item in _flowProvider.LoadCategories())
         {
             StepGroups.Add(item);
         }
         FlowDefinition flowDefinition;
         try
         {
-            flowDefinition = await _flowManager.LoadFlowDefinitionAsync(category, name);
+            flowDefinition = await _flowProvider.LoadFlowDefinitionAsync(category, name);
         }
         catch (Exception e)
         {
@@ -374,10 +376,10 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             return;
         }
-        var vm = Navigate<FlowMakerConfigEditViewModel>(HostScreen);
-        await vm.Load(flowStepViewModel.Category, flowStepViewModel.Name);
+        //var vm = Navigate<FlowMakerConfigEditViewModel>(HostScreen);
+        //await vm.Load(flowStepViewModel.Category, flowStepViewModel.Name);
 
-        await _messageBoxManager.Modals.Handle(new ModalInfo("配置", vm));
+        //await _messageBoxManager.Modals.Handle(new ModalInfo("配置", vm));
     }
     #region Steps
 
@@ -847,7 +849,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         }
         else
         {
-            foreach (var item in _flowManager.LoadFlows(flowStepViewModel.Category))
+            foreach (var item in _flowProvider.LoadFlows(flowStepViewModel.Category))
             {
                 flowStepViewModel.StepDefinitions.Add(item.Name);
             }
@@ -855,7 +857,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     public async Task<IStepDefinition?> GetStepDefinitionAsync(string category, string name)
     {
-        return await _flowManager.GetStepDefinitionAsync(category, name);
+        return await _flowProvider.GetStepDefinitionAsync(category, name);
     }
 
 

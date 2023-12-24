@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using FlowMaker.Persistence;
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
@@ -13,14 +14,16 @@ namespace Test1.ViewModels
     public class FlowMakerSelectViewModel : ViewModelBase
     {
         private readonly FlowManager _flowManager;
+        private readonly IFlowProvider _flowProvider;
         private readonly FlowMakerOption _flowMakerOption;
 
         /// <summary>
         /// Represents a view model for selecting flow makers.
         /// </summary>
-        public FlowMakerSelectViewModel(FlowManager flowManager, IOptions<FlowMakerOption> options)
+        public FlowMakerSelectViewModel(FlowManager flowManager, IOptions<FlowMakerOption> options, IFlowProvider flowProvider)
         {
             this._flowManager = flowManager;
+            this._flowProvider = flowProvider;
             _flowMakerOption = options.Value;
             SaveCommand = ReactiveCommand.Create(Save);
             this.WhenAnyValue(c => c.Category).WhereNotNull().Subscribe(c =>
@@ -35,13 +38,13 @@ namespace Test1.ViewModels
                     }
                 }
 
-                foreach (var item in _flowManager.LoadFlows(c))
+                foreach (var item in _flowProvider.LoadFlows(c))
                 {
                     Definitions.Add(new DefinitionInfoViewModel(c, item.Name, DefinitionType.Flow));
-                }
-                foreach (var item in _flowManager.LoadConfigs(c))
-                {
-                    Definitions.Add(new DefinitionInfoViewModel(c, item.Name, DefinitionType.Config));
+                    foreach (var item2 in item.Configs)
+                    {
+                        Definitions.Add(new DefinitionInfoViewModel(c, item.Name + ":" + item2, DefinitionType.Config));
+                    }
                 }
             });
         }
@@ -68,20 +71,14 @@ namespace Test1.ViewModels
                 }
             }
 
-            foreach (var item in _flowManager.LoadFlowCategories())
+            foreach (var item in _flowProvider.LoadCategories())
             {
                 if (!Categories.Contains(item))
                 {
                     Categories.Add(item);
                 }
             }
-            foreach (var item in _flowManager.LoadConfigCategories())
-            {
-                if (!Categories.Contains(item))
-                {
-                    Categories.Add(item);
-                }
-            }
+          
             return Task.CompletedTask;
         }
 

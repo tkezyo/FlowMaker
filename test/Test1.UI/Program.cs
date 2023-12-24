@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using FlowMaker.Persistence;
 using FlowMaker.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -48,9 +49,10 @@ namespace Test1
                 services.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
                 services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
                 services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
-                services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
+                //  services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
                 services.AddTransient<FlowRunner>();
+                services.AddTransient<IFlowProvider, FileFlowProvider>();
                 services.AddSingleton<FlowManager>();
                 services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
                 services.AddKeyedScoped<IStepOnceMiddleware, MonitorStepOnceMiddleware>("monitor");

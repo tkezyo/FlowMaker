@@ -20,6 +20,7 @@ public class FlowDefinitionFileInfo
     public required string Name { get; set; }
     public required DateTime CreationTime { get; set; }
     public required DateTime ModifyTime { get; set; }
+    public List<string> Configs { get; set; } = [];
 }
 /// <summary>
 /// 流程文件信息
@@ -79,14 +80,8 @@ public class ConfigDefinition
 {
     public required string Category { get; set; }
     public required string Name { get; set; }
-    /// <summary>
-    /// 流程的类别
-    /// </summary>
-    public required string FlowCategory { get; set; }
-    /// <summary>
-    /// 流程的名称
-    /// </summary>
-    public required string FlowName { get; set; }
+    public required string ConfigName { get; set; }
+  
     /// <summary>
     /// 重试
     /// </summary>

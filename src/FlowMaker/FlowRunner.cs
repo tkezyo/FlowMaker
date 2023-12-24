@@ -1,4 +1,5 @@
 ﻿using FlowMaker.Models;
+using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -16,6 +17,7 @@ public class FlowRunner : IDisposable
     private readonly ILogger<FlowRunner> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly FlowManager _flowManager;
+    private readonly IFlowProvider _flowProvider;
     private readonly FlowMakerOption _flowMakerOption;
     /// <summary>
     /// 全局上下文
@@ -30,12 +32,13 @@ public class FlowRunner : IDisposable
     private readonly List<string> _middlewareNames = [];
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
-    public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option, FlowManager flowManager)
+    public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option, FlowManager flowManager,IFlowProvider flowProvider)
     {
         this._logger = NullLogger<FlowRunner>.Instance;
         _flowMakerOption = option.Value;
         this._serviceProvider = serviceProvider;
         this._flowManager = flowManager;
+        this._flowProvider = flowProvider;
         var d = ExecuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
           {
               var key = c.Type + c.Type switch
@@ -115,10 +118,10 @@ public class FlowRunner : IDisposable
         }
         else
         {
-            var subFlowDefinition = await _flowManager.LoadFlowDefinitionAsync(step.Category, step.Name);
+            var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.Category, step.Name);
             var flowRunner = _serviceProvider.GetRequiredService<FlowRunner>();
 
-            var config = new ConfigDefinition { Category = string.Empty, Name = string.Empty, FlowCategory = step.Category, FlowName = step.Name };
+            var config = new ConfigDefinition { ConfigName = string.Empty, Category = step.Category, Name = step.Name };
             foreach (var item in subFlowDefinition.Data)
             {
                 if (!item.IsInput)

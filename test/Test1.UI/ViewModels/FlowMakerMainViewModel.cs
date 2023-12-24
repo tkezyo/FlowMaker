@@ -79,7 +79,7 @@ namespace Test1.ViewModels
 
                         await Router.NavigateAndReset.Execute(vm);
 
-                        InitMenu(name);
+                        InitMenu(name, vm.InitMenu());
                     }
                     break;
                 default:

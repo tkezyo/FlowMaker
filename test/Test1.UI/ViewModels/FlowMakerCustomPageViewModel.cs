@@ -624,7 +624,7 @@ namespace Test1.ViewModels
         public ReactiveCommand<SpikeActionViewModel, Unit> RunCommand { get; }
         public async Task Run(SpikeActionViewModel action)
         {
-            var config = new ConfigDefinition() { Category = action.Category, FlowCategory = action.Category, FlowName = action.Name, Name = action.Name, ErrorHandling = ErrorHandling.Terminate, Repeat = 0, Retry = 0, Timeout = 0 };
+            var config = new ConfigDefinition() { Category = action.Category,  Name = action.Name, ConfigName = action.Name, ErrorHandling = ErrorHandling.Terminate, Repeat = 0, Retry = 0, Timeout = 0 };
             foreach (var item in action.Inputs)
             {
                 if (string.IsNullOrEmpty(item.Value))
