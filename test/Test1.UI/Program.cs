@@ -73,6 +73,7 @@ namespace Test1
                 services.Configure<PageOptions>(options =>
                 {
                     options.FirstLoadPage = typeof(FlowMakerMainViewModel);
+                    options.Title = "FlowMaker";
                 });
                 services.Configure<FlowMakerOption>(options =>
                 {

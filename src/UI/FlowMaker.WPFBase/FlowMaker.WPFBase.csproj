@@ -14,8 +14,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Ty.WPFBase" Version="0.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <ProjectReference Include="..\FlowMaker.UIBase\FlowMaker.UIBase.csproj" />
-	  <ProjectReference Include="..\Ty.WPFBase\Ty.WPFBase.csproj" />
 	</ItemGroup>
 
 </Project>
