@@ -8,7 +8,8 @@ public class FlowMakerOption
     /// <summary>
     /// 文件的目录
     /// </summary>
-    public string RootDir { get; set; } = string.Empty;
+    public string CustomPageRootDir { get; set; } = string.Empty;
+    public string FlowRootDir { get; set; } = string.Empty;
     /// <summary>
     /// 是否可编辑
     /// </summary>

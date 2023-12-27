@@ -1,5 +1,7 @@
 ﻿using FlowMaker;
+using FlowMaker.Middlewares;
 using FlowMaker.Persistence;
+using FlowMaker.ViewModels;
 using FlowMaker.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,6 +13,8 @@ using System.Reactive.Linq;
 using Test1.UI;
 using Test1.ViewModels;
 using Test1.Views;
+using Ty;
+using Ty.Views;
 
 namespace Test1
 {
@@ -47,7 +51,6 @@ namespace Test1
                 services.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
-                services.AddTransientView<FlowMakerListViewModel, FlowMakerListView>();
                 services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
                 //  services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
@@ -55,8 +58,8 @@ namespace Test1
                 services.AddTransient<IFlowProvider, FileFlowProvider>();
                 services.AddSingleton<FlowManager>();
                 services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
-                services.AddKeyedScoped<IStepOnceMiddleware, MonitorStepOnceMiddleware>("monitor");
-                services.AddKeyedScoped<IStepOnceMiddleware, DebugMiddleware>("debug");
+                services.AddKeyedScoped<IStepOnceMiddleware, MonitorMiddleware>("monitor");
+                services.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
                 services.AddKeyedScoped<IFlowMiddleware, MonitorFlowMiddleware>("monitor");
 
                 services.AddFlowStep<Flow1>();
@@ -73,7 +76,8 @@ namespace Test1
                 });
                 services.Configure<FlowMakerOption>(options =>
                 {
-                    options.RootDir = "D:\\FlowMaker";
+                    options.FlowRootDir = "D:\\FlowMaker";
+                    options.CustomPageRootDir = "D:\\FlowMakerCustomPage";
                     options.Sections.Add("设备1");
                     options.Sections.Add("设备2");
                     options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
@@ -83,7 +87,7 @@ namespace Test1
             });
 
             var host = hostBuilder.Build();
-            FlowMakerApp.ServiceProvider = host.Services;
+            TyApp.ServiceProvider = host.Services;
             using (host)
             {
                 host.Start();

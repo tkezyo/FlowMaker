@@ -1,0 +1,195 @@
+﻿<rxui:ReactiveUserControl x:Class="FlowMaker.Views.FlowMakerCustomPageView"
+             xmlns:rxui="http://reactiveui.net"
+            xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase"
+            x:TypeArguments="vms:FlowMakerCustomPageViewModel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FlowMaker.Views" d:DataContext="{d:DesignInstance Type=vms:FlowMakerCustomPageViewModel}"
+                           xmlns:hc="https://handyorg.github.io/handycontrol"
+                          mc:Ignorable="d" 
+                          x:Name="page"
+                           xmlns:converters="clr-namespace:FlowMaker.Converters"
+                            xmlns:s="clr-namespace:System;assembly=mscorlib"
+  xmlns:app="clr-namespace:Ty;assembly=Ty.WPFBase"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:SpikeDeleteBoxConverter x:Key="spikeDeleteBoxConverter"/>
+        <converters:SpikeDeleteActionConverter x:Key="spikeDeleteActionConverter"/>
+    </UserControl.Resources>
+
+    <TabControl ItemsSource="{Binding Tabs}" x:Name="tab"
+            HorizontalContentAlignment="Center" TabStripPlacement="Left" SelectedItem="{Binding CurrentTab}">
+        <TabControl.ItemTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding Name}"></TextBlock>
+            </DataTemplate>
+        </TabControl.ItemTemplate>
+        <TabControl.ContentTemplate>
+            <DataTemplate>
+                <ItemsControl ItemsSource="{Binding Boxes}">
+                    <ItemsControl.ItemContainerStyle>
+                        <Style>
+                            <Setter Property="Grid.Row" Value="{Binding Size.Top}" />
+                            <Setter Property="Grid.Column" Value="{Binding Size.Left}" />
+                            <Setter Property="Grid.ColumnSpan" Value="{Binding Size.Width}" />
+                            <Setter Property="Grid.RowSpan" Value="{Binding Size.Height}" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                            </Grid>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+
+                            <GroupBox Margin="4">
+                                <GroupBox.Style>
+                                    <Style TargetType="GroupBox" BasedOn="{StaticResource GroupBoxTab.Small}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Editing}" Value="True">
+                                                <Setter Property="BorderBrush" Value="Blue"/>
+                                                <Setter  Property="BorderThickness" Value="1"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </GroupBox.Style>
+                                <GroupBox.Header>
+                                    <Button  Command="{Binding DataContext.SelectBoxCommand,ElementName=page}" IsEnabled="{Binding DataContext.Edit,ElementName=page}" Style="{StaticResource ButtonCustom}" Content="{Binding Name}"  CommandParameter="{Binding .}" >
+                                    </Button>
+                                </GroupBox.Header>
+                                <Grid>
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                 Visibility="{Binding ShowView,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                                        <ItemsControl ItemsSource="{Binding Actions}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center" ></WrapPanel>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border HorizontalAlignment="Center" VerticalAlignment="Center" Name="BoxBorder" BorderThickness="1" CornerRadius="5" Background="Transparent">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}">
+                                                                        <DataTrigger.Value>
+                                                                            <s:Boolean>True</s:Boolean>
+                                                                        </DataTrigger.Value>
+                                                                        <Setter Property="BorderBrush" Value="Black"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Canvas Width="{Binding ActionSize.Width}" Height="{Binding ActionSize.Height}">
+                                                            <Button Content="{Binding DisplayName}"  Canvas.Left="{Binding ButtonSize.Left}" Canvas.Top="{Binding ButtonSize.Top}" Height="{Binding ButtonSize.Height}" Width="{Binding ButtonSize.Width}">
+                                                                <Button.Style>
+                                                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonDefault}">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}" Value="False">
+                                                                                <Setter  Property="Command" Value="{Binding DataContext.RunCommand,ElementName=page}" />
+                                                                                <Setter  Property="CommandParameter" Value="{Binding .}" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding DataContext.Edit,ElementName=page}" Value="True">
+                                                                                <Setter  Property="Command" Value="{Binding DataContext.SelectActionCommand,ElementName=page}" />
+                                                                                <Setter  Property="CommandParameter" >
+                                                                                    <Setter.Value>
+                                                                                        <MultiBinding Converter="{StaticResource spikeDeleteActionConverter}">
+                                                                                            <Binding RelativeSource="{RelativeSource FindAncestor,AncestorType={x:Type ItemsControl}}" Path="DataContext"></Binding>
+                                                                                            <Binding  Path="."></Binding>
+                                                                                        </MultiBinding>
+                                                                                    </Setter.Value>
+                                                                                </Setter>
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding Editing}" Value="True">
+                                                                                <Setter  Property="BorderBrush" Value="Blue" />
+                                                                                <Setter  Property="BorderThickness" Value="1" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Button.Style>
+                                                            </Button>
+
+                                                            <ItemsControl
+                                                                   ItemsSource="{Binding Inputs}" Canvas.Left="{Binding InputSize.Left}" Canvas.Top="{Binding InputSize.Top}" Width="{Binding InputSize.Width}" Height="{Binding InputSize.Height}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel Orientation="Horizontal"></WrapPanel>
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel>
+                                                                            <TextBox  hc:TitleElement.Title="{Binding Description}"  Text="{Binding Value}"></TextBox>
+                                                                        </StackPanel>
+
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+                                                            <ItemsControl 
+                                                                   ItemsSource="{Binding Outputs}" Canvas.Left="{Binding OutputSize.Left}" Canvas.Top="{Binding OutputSize.Top}"  Width="{Binding OutputSize.Width}" Height="{Binding OutputSize.Height}">
+                                                                <ItemsControl.ItemsPanel>
+                                                                    <ItemsPanelTemplate>
+                                                                        <WrapPanel Orientation="Horizontal"></WrapPanel>
+                                                                    </ItemsPanelTemplate>
+                                                                </ItemsControl.ItemsPanel>
+                                                                <ItemsControl.ItemTemplate>
+                                                                    <DataTemplate>
+                                                                        <StackPanel HorizontalAlignment="Left" >
+                                                                            <TextBlock Text="{Binding Description}"></TextBlock>
+                                                                            <TextBlock Text="{Binding Value}"></TextBlock>
+                                                                        </StackPanel>
+                                                                    </DataTemplate>
+                                                                </ItemsControl.ItemTemplate>
+                                                            </ItemsControl>
+
+                                                        </Canvas>
+
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
+                                    <rxui:RoutedViewHost 
+                                       Visibility="{Binding ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
+                                       Router="{Binding Router}"  >
+                                        <rxui:RoutedViewHost.DefaultContent>
+                                            <WrapPanel>
+
+                                            </WrapPanel>
+                                        </rxui:RoutedViewHost.DefaultContent>
+                                        <rxui:RoutedViewHost.ViewLocator>
+                                            <app:AppViewLocator />
+                                        </rxui:RoutedViewHost.ViewLocator>
+                                    </rxui:RoutedViewHost>
+                                </Grid>
+
+                            </GroupBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DataTemplate>
+        </TabControl.ContentTemplate>
+    </TabControl>
+</rxui:ReactiveUserControl>

@@ -34,8 +34,8 @@ public class FlowManager
             IncludeFields = false
         };
         _flowMakerOption = options.Value;
-        FlowDir = Path.Combine(_flowMakerOption.RootDir, flowDir);
-        ConfigDir = Path.Combine(_flowMakerOption.RootDir, configDir);
+        FlowDir = Path.Combine(_flowMakerOption.FlowRootDir, flowDir);
+        ConfigDir = Path.Combine(_flowMakerOption.FlowRootDir, configDir);
         this._serviceProvider = serviceProvider;
         this._flowProvider = flowProvider;
     }
@@ -43,7 +43,7 @@ public class FlowManager
     #region Run
     class RunnerStatus(FlowRunner flowRunner, IServiceScope serviceScope)
     {
-        public required string ConfigName { get; set; }
+        public string? ConfigName { get; set; }
         /// <summary>
         /// 流程的类别
         /// </summary>
@@ -68,7 +68,7 @@ public class FlowManager
         }
         return await Run(config);
     }
-    public async Task<Guid> Run(ConfigDefinition configDefinition, Action<Guid>? SetId = null)
+    public async Task<Guid> Run(ConfigDefinition configDefinition, Action<Guid>? Init = null)
     {
         var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
 
@@ -80,25 +80,39 @@ public class FlowManager
             Category = configDefinition.Category,
             Name = configDefinition.Name
         };
-        SetId?.Invoke(runner.Id);
+        Init?.Invoke(runner.Id);
         _ = runner.Start(flow, configDefinition, []).ContinueWith(async c =>
         {
             await Dispose(runner.Id);
         });
         return runner.Id;
     }
-
+    public void SendEvent(Guid id, string eventName, string? eventData = null)
+    {
+        if (_status.TryGetValue(id, out var status))
+        {
+            status.FlowRunner.SendEvent(eventName, eventData);
+        }
+    }
+    public async Task Stop(Guid id)
+    {
+        if (_status.TryGetValue(id, out var status))
+        {
+            await status.FlowRunner.StopAsync();
+        }
+    }
 
     public async Task Dispose(Guid id)
     {
-        _status[id].ServiceScope.Dispose();
-        _status[id].FlowRunner.Dispose();
-        while (_status[id].FlowRunner.State == RunnerState.Running)
+        if (_status.TryGetValue(id, out var status))
         {
-            await Task.Delay(300);
+            status.ServiceScope.Dispose();
+            while (status.FlowRunner.State == RunnerState.Running)
+            {
+                await Task.Delay(300);
+            }
+            _status.Remove(id, out _);
         }
-
-        _status.Remove(id, out _);
     }
 
     public T? GetRunnerService<T>(Guid id, string? key = null)

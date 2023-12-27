@@ -12,11 +12,14 @@ public class FlowContext
     /// 流程配置
     /// </summary>
     public FlowDefinition FlowDefinition { get; }
-
-    public FlowContext(FlowDefinition flowDefinition, Guid[] flowIds)
+    public ConfigDefinition ConfigDefinition { get; set; }
+    public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
+    public FlowContext(FlowDefinition flowDefinition, ConfigDefinition configDefinition, Guid[] flowIds)
     {
         FlowDefinition = flowDefinition;
+        ConfigDefinition = configDefinition;
         FlowIds = flowIds;
+
         InitExecuteStepIds();
     }
     public void InitExecuteStepIds()
@@ -24,35 +27,37 @@ public class FlowContext
         ExecuteStepIds.Clear();
         foreach (var item in FlowDefinition.Steps)
         {
-            if (item.WaitEvents.Count == 0)
+            List<string> waitEvent = [];
+
+            void register(FlowInput flowInput)
             {
-                if (!ExecuteStepIds.TryGetValue(EventType.StartFlow.ToString(), out var list))
+                if (flowInput.Mode == InputMode.Event)
                 {
-                    list = [];
-                    ExecuteStepIds.Add(EventType.StartFlow.ToString(), list);
+                    var key = flowInput.Mode + flowInput.Value;
+                    waitEvent.Add(key);
+                    if (!ExecuteStepIds.TryGetValue(key, out var list))
+                    {
+                        list = [];
+                        ExecuteStepIds.Add(key, list);
+                    }
+                    list.Add(item.Id);
+                    foreach (var subInput in flowInput.Inputs)
+                    {
+                        register(subInput);
+                    }
                 }
-                list.Add(item.Id);
-                continue;
+            }
+            foreach (var wait in item.Ifs)
+            {
+                var checker = FlowDefinition.Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
+                if (checker is null)
+                {
+                    continue;
+                }
+                register(checker);
             }
             foreach (var input in item.Inputs)
             {
-                void register(FlowInput flowInput)
-                {
-                    if (input.Mode == InputMode.Event)
-                    {
-                        var key = flowInput.Mode + flowInput.Value;
-                        if (!ExecuteStepIds.TryGetValue(key, out var list))
-                        {
-                            list = [];
-                            ExecuteStepIds.Add(key, list);
-                        }
-                        list.Add(flowInput.Id);
-                        foreach (var subInput in flowInput.Inputs)
-                        {
-                            register(subInput);
-                        }
-                    }
-                }
                 register(input);
             }
             foreach (var wait in item.WaitEvents)
@@ -64,6 +69,7 @@ public class FlowContext
                     EventType.StartFlow => "",
                     _ => ""
                 };
+                waitEvent.Add(key);
 
                 if (!ExecuteStepIds.TryGetValue(key, out var list))
                 {
@@ -71,6 +77,17 @@ public class FlowContext
                     ExecuteStepIds.Add(key, list);
                 }
                 list.Add(item.Id);
+            }
+
+            if (waitEvent.Count == 0)
+            {
+                if (!ExecuteStepIds.TryGetValue(EventType.StartFlow.ToString(), out var list))
+                {
+                    list = [];
+                    ExecuteStepIds.Add(EventType.StartFlow.ToString(), list);
+                }
+                list.Add(item.Id);
+                continue;
             }
         }
     }
@@ -115,6 +132,7 @@ public class FlowContext
     /// 所有的全局变量
     /// </summary>
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
+
 }
 
 public class StepContext(FlowStep step, StepStatus status, StepOnceStatus stepOnceStatus)

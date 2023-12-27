@@ -10,28 +10,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Compile Remove="Views\FlowMakerConfigEditView.xaml.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+	
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 		<PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
 		<PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
 		<PackageReference Include="Serilog.Sinks.Async" Version="1.5.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-		<PackageReference Include="ReactiveUI.Fody" Version="19.5.1" />
+		<PackageReference Include="ReactiveUI.Fody" Version="19.5.31" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<None Remove="appsettings.json" />
 		<None Remove="Views\ChatView.xaml" />
-		<None Remove="Views\FlowMakerConfigEditView.xaml" />
-		<None Remove="Views\FlowMakerCustomPageView.xaml" />
-		<None Remove="Views\FlowMakerMainView.xaml" />
-		<None Remove="Views\FlowMakerMonitorView.xaml" />
-		<None Remove="Views\FlowMakerSelectView.xaml" />
-		<Page Remove="Views\FlowMakerConfigEditView.xaml" />
 		<Content Include="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>

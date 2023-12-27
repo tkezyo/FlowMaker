@@ -13,7 +13,8 @@ public partial class MyClass : IStep
     [Description("错误处理")]
     public ErrorHandling ErrorHandling { get; set; }
 
-    public Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
+   
+    public Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -46,7 +47,7 @@ public partial class Flow1 : IStep
     /// 执行的命令
     /// </summary>
     /// <returns></returns>
-    public Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken)
+    public Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
     {
         Prop3 = 100;
         return Task.CompletedTask;

@@ -77,6 +77,7 @@ public class FlowWait
     public EventType Type { get; set; }
     public Guid? StepId { get; set; }
     public string? EventName { get; set; }
+    public string? EventDataType { get; set; }
 }
 
 
@@ -153,10 +154,12 @@ public enum ErrorHandling
     /// <summary>
     /// 暂停,需要添加恢复事件
     /// </summary>
+    [Description("暂停")]
     Suspend,
     /// <summary>
     /// 停止
     /// </summary>
+    [Description("停止")]
     Terminate
 }
 

@@ -20,8 +20,8 @@ public interface IStep : IStepInject
 
 public interface IStepInject
 {
-    Task Run(FlowContext context, StepContext stepContext, FlowStep step, CancellationToken cancellationToken);
-    Task WrapAsync(FlowContext context, StepContext stepContext, FlowStep step, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken);
+    Task WrapAsync(FlowContext context, StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
 
@@ -120,7 +120,7 @@ public interface IDataConverter<T> : IDataConverter
 
     public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
     {
-        if (!string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
+        if (input.Mode == InputMode.Converter && !string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
         {
             var option = serviceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
             var converterDefinition = option.Value.GetConverter(input.ConverterCategory, input.ConverterName);
@@ -144,6 +144,10 @@ public interface IDataConverter<T> : IDataConverter
             if (input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
             {
                 return convert.Invoke(data.Value ?? string.Empty);
+            }
+            else if (input.Mode == InputMode.Event && !string.IsNullOrEmpty(input.Value) && context.EventData.TryGetValue(input.Value, out var eventData))
+            {
+                return convert.Invoke(eventData ?? string.Empty);
             }
             else
             {

@@ -80,7 +80,7 @@ public class ConfigDefinition
 {
     public required string Category { get; set; }
     public required string Name { get; set; }
-    public required string ConfigName { get; set; }
+    public  string? ConfigName { get; set; }
   
     /// <summary>
     /// 重试

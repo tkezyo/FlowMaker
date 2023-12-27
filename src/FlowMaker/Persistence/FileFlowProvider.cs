@@ -14,7 +14,7 @@ namespace FlowMaker.Persistence
         public FileFlowProvider(IOptions<FlowMakerOption> options)
         {
             _flowMakerOption = options.Value;
-            FlowDir = Path.Combine(_flowMakerOption.RootDir);
+            FlowDir = Path.Combine(_flowMakerOption.FlowRootDir);
             _jsonSerializerOptions = new()
             {
                 Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
@@ -132,7 +132,11 @@ namespace FlowMaker.Persistence
             {
                 File.Delete(file);
             }
-            Directory.Delete(Path.Combine(FlowDir, category, name), true);
+            var configDir = Path.Combine(FlowDir, category, name);
+            if (Directory.Exists(configDir))
+            {
+                Directory.Delete(configDir, true);
+            }
             return Task.CompletedTask;
         }
 
