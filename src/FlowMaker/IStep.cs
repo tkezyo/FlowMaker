@@ -1,6 +1,7 @@
 ﻿using FlowMaker.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using System.Collections;
 using System.Text.Json;
 
 namespace FlowMaker;
@@ -111,14 +112,7 @@ public interface IDataConverterInject
             }
         }
     }
-}
-public interface IDataConverter<T> : IDataConverter
-{
-    Task<T> Convert(FlowContext context, CancellationToken cancellationToken);
-    Task<T> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
-
-
-    public static async Task<T> GetValue(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
+    public static async Task<T> GetValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
     {
         if (input.Mode == InputMode.Converter && !string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
         {
@@ -155,6 +149,58 @@ public interface IDataConverter<T> : IDataConverter
             }
         }
     }
+    public static async Task<List<T>> GetListValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
+    {
+        List<T> list = [];
+        foreach (var item in input.Inputs)
+        {
+            list.Add(await GetValue<T>(item, serviceProvider, context, convert, cancellationToken));
+        }
+        return list;
+    }
+    public static async Task<T[]> GetArrayValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
+    {
+        T[] values = new T[input.Inputs.Count];
+        for (int i = 0; i < input.Inputs.Count; i++)
+        {
+            values[i] = await GetValue<T>(input.Inputs[i], serviceProvider, context, convert, cancellationToken);
+        }
+
+        return values;
+    }
+ 
+    public static Array Reshape<T>(int[] dims, T[] list)
+    {
+        return ReshapeRecursive(dims, list, 0);
+    }
+
+    private static Array ReshapeRecursive<T>(int[] dims, T[] list, int start)
+    {
+        if (dims.Length == 1)
+        {
+            T[] result = new T[dims[0]];
+            Array.Copy(list, start, result, 0, dims[0]);
+            return result;
+        }
+        else
+        {
+            Array[] result = new Array[dims[0]];
+            int size = dims.Skip(1).Aggregate(1, (a, b) => a * b);
+            for (int i = 0; i < dims[0]; i++)
+            {
+                result[i] = ReshapeRecursive(dims.Skip(1).ToArray(), list, start + i * size);
+            }
+            return result;
+        }
+    }
+}
+public interface IDataConverter<T> : IDataConverter
+{
+    Task<T> Convert(FlowContext context, CancellationToken cancellationToken);
+    Task<T> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+
+
+
 }
 
 public interface IOptionProvider<T> : IOptionProvider

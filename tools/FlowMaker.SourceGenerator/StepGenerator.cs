@@ -97,6 +97,7 @@ namespace FlowMaker.SourceGenerator
                                 continue;
                             }
                             var memberName = member.Name;
+
                             var propAttires = property.GetAttributes();
                             var displayNameAttr = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
                             var input = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
@@ -137,6 +138,32 @@ namespace FlowMaker.SourceGenerator
 """);
                             }
                             props.Add($"{property.Name}Prop");
+                            bool isArray = false;
+                            string subType = string.Empty;
+                            int rank = 0;
+
+                            if (property.Type.TypeKind == TypeKind.Array && property.Type is IArrayTypeSymbol arrayTypeSymbol)
+                            {
+                                string GetSubType(IArrayTypeSymbol arrayType)
+                                {
+                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
+                                    {
+                                        return GetSubType(subArrayType);
+                                    }
+                                    else
+                                    {
+                                        return arrayType.ElementType.ToDisplayString();
+                                    }
+                                }
+                                isArray = true;
+                                subType = GetSubType(arrayTypeSymbol);
+                                rank = arrayTypeSymbol.ToDisplayString().Count(c => c == '[');
+                                defStringBuilder.AppendLine($$"""
+        {{property.Name}}Prop.IsArray = true;        
+        {{property.Name}}Prop.Rank = {{rank}};        
+        {{property.Name}}Prop.SubType = "{{subType}}";
+""");
+                            }
 
                             if (property.Type is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Enum)
                             {
@@ -155,6 +182,7 @@ namespace FlowMaker.SourceGenerator
 """);
                                 }
                             }
+
                             if (optionProviderAttr is not null && optionProviderAttr.AttributeClass.TypeArguments.Length > 0)
                             {
                                 if (optionProviderAttr.AttributeClass.TypeArguments[0] is INamedTypeSymbol namedType)
@@ -176,10 +204,26 @@ namespace FlowMaker.SourceGenerator
                             }
                             if (input is not null)
                             {
-                                inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IDataConverter<{{property.Type.ToDisplayString()}}>.GetValue(stepContext.Step.Inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+                                if (isArray)
+                                {
+                                    inputStringBuilder.AppendLine($$"""
+        var {{memberName}}Input = stepContext.Step.Inputs.First(v=> v.Name == "{{memberName}}");
+        if ({{memberName}}Input.Mode == InputMode.Array)
+        {
+            {{memberName}} = ({{property.Type.ToDisplayString()}})IDataConverter.Reshape<{{subType}}>({{memberName}}Input.Dims, await IDataConverter.GetArrayValue<{{subType}}>({{memberName}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
+        }
+        else
+        {
+            {{memberName}} = await IDataConverter.GetValue<{{property.Type.ToDisplayString()}}>({{memberName}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        }
 """);
-
+                                }
+                                else
+                                {
+                                    inputStringBuilder.AppendLine($$"""
+        {{memberName}} = await IDataConverter.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+""");
+                                }
                             }
 
 

@@ -20,7 +20,6 @@
         <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
         <converters:MonitorDebugConverter x:Key="MonitorDebugConverter" />
     </UserControl.Resources>
-
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -78,7 +77,7 @@
                                     <Button Content="运行" Command="{Binding DataContext.RunCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonPrimary.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                     <Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonSuccess.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
                                     <Button Content="删除" Command="{Binding DataContext.DeleteCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
-                              
+
                                 </StackPanel>
                                 <StackPanel Visibility="{Binding Running,Converter={StaticResource Boolean2VisibilityConverter}}">
                                     <Button Content="停止" Command="{Binding DataContext.StopCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Debug,Converter={StaticResource Boolean2VisibilityConverter}}"/>
@@ -118,7 +117,7 @@
                                 <TextBox Text="{Binding EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="事件名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
                                 <TextBox Text="{Binding EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="事件数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
                                 <Button Content="发送事件" Command="{Binding DataContext.SendEventCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonDashedPrimary.Small}"/>
-                            
+
                             </ToolBar>
                         </ToolBarTray>
 
@@ -167,7 +166,7 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="" 
                                                                 <DataTrigger Binding="{Binding IsDebug}" Value="False">
                                                                     <Setter Property="Command" Value="{Binding DataContext.AddDebugCommand,ElementName=page}"/>
                                                                 </DataTrigger>
-                                                          
+
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Button.Style>

@@ -62,6 +62,9 @@ public class StepDataDefinition(string name, string displayName, string type, st
     public string? DefaultValue { get; set; } = defaultValue;
     public bool IsInput { get; set; }
     public bool IsOutput { get; set; }
+    public bool IsArray { get; set; }
+    public int Rank { get; set; }
+    public string? SubType { get; set; }
 
     public Guid? FromStepId { get; set; }
     public string? FromStepPropName { get; set; }
@@ -80,8 +83,8 @@ public class ConfigDefinition
 {
     public required string Category { get; set; }
     public required string Name { get; set; }
-    public  string? ConfigName { get; set; }
-  
+    public string? ConfigName { get; set; }
+
     /// <summary>
     /// 重试
     /// </summary>

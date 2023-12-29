@@ -1,20 +1,14 @@
 ﻿using DynamicData;
 using DynamicData.Binding;
-using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -108,6 +102,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 ConverterName = flowStepInputViewModel.ConverterName,
                 Mode = flowStepInputViewModel.Mode,
                 Value = flowStepInputViewModel.Value,
+                Dims = flowStepInputViewModel.Dims.Select(c => c.Count).ToArray()
             };
 
             foreach (var subInput in flowStepInputViewModel.SubInputs)
@@ -267,7 +262,7 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         foreach (var item in flowDefinition.Checkers)
         {
-            Checkers.Add(new FlowStepInputViewModel("", item.Name, "bool", this)
+            Checkers.Add(new FlowStepInputViewModel("", item.Name, "bool", 0, this)
             {
                 Value = item.Value,
                 Mode = item.Mode,
@@ -291,7 +286,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             await flowStepViewModel.SetInputOutputs(item);
             flowStepViewModel.Init();
 
-            flowStepViewModel.ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "ErrorHandling", "ErrorHandling", this)
+            flowStepViewModel.ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "ErrorHandling", "ErrorHandling", 0, this)
             {
                 Value = item.ErrorHandling.Value,
                 Mode = item.ErrorHandling.Mode,
@@ -299,7 +294,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 ConverterCategory = item.ErrorHandling.ConverterCategory,
                 ConverterName = item.ErrorHandling.ConverterName,
             };
-            flowStepViewModel.Repeat = new FlowStepInputViewModel("Repeat", "Repeat", "int", this)
+            flowStepViewModel.Repeat = new FlowStepInputViewModel("Repeat", "Repeat", "int", 0, this)
             {
                 Value = item.Repeat.Value,
                 Mode = item.Repeat.Mode,
@@ -307,7 +302,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 ConverterCategory = item.Repeat.ConverterCategory,
                 ConverterName = item.Repeat.ConverterName,
             };
-            flowStepViewModel.Retry = new FlowStepInputViewModel("Retry", "Retry", "int", this)
+            flowStepViewModel.Retry = new FlowStepInputViewModel("Retry", "Retry", "int", 0, this)
             {
                 Value = item.Retry.Value,
                 Mode = item.Retry.Mode,
@@ -315,7 +310,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 ConverterCategory = item.Retry.ConverterCategory,
                 ConverterName = item.Retry.ConverterName,
             };
-            flowStepViewModel.TimeOut = new FlowStepInputViewModel("TimeOut", "TimeOut", "double", this)
+            flowStepViewModel.TimeOut = new FlowStepInputViewModel("TimeOut", "TimeOut", "double", 0, this)
             {
                 Value = item.TimeOut.Value,
                 Mode = item.TimeOut.Mode,
@@ -342,7 +337,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             //checker
             foreach (var checker in item.Checkers)
             {
-                flowStepViewModel.Checkers.Add(new FlowStepInputViewModel("", checker.Name, "bool", this)
+                flowStepViewModel.Checkers.Add(new FlowStepInputViewModel("", checker.Name, "bool", 0, this)
                 {
                     Value = checker.Value,
                     Mode = checker.Mode,
@@ -459,7 +454,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             return;
         }
-        FlowStep.Checkers.Add(new FlowStepInputViewModel("", "", "bool", this));
+        FlowStep.Checkers.Add(new FlowStepInputViewModel("", "", "bool", 0, this));
     }
     public ReactiveCommand<FlowStepInputViewModel, Unit> RemoveCheckerCommand { get; }
     public void RemoveChecker(FlowStepInputViewModel input)
@@ -801,7 +796,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> AddFlowCheckerCommand { get; }
     public void AddFlowChecker()
     {
-        Checkers.Add(new FlowStepInputViewModel("", "", "bool", this));
+        Checkers.Add(new FlowStepInputViewModel("", "", "bool", 0, this));
     }
     public ReactiveCommand<FlowStepInputViewModel, Unit> RemoveFlowCheckerCommand { get; }
     public void RemoveFlowChecker(FlowStepInputViewModel input)
@@ -938,9 +933,10 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             return;
         }
-        flowStepInputViewModel.SubInputs.Clear();
         if (flowStepInputViewModel.Mode == InputMode.Converter && !string.IsNullOrWhiteSpace(flowStepInputViewModel.ConverterCategory) && !string.IsNullOrWhiteSpace(flowStepInputViewModel.ConverterName))
         {
+            flowStepInputViewModel.SubInputs.Clear();
+
             var converter = _flowMakerOption.GetConverter(flowStepInputViewModel.ConverterCategory, flowStepInputViewModel.ConverterName);
             if (converter is null)
             {
@@ -949,7 +945,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             for (int i = 0; i < converter.Inputs.Count; i++)
             {
                 var item = converter.Inputs[i];
-                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, this);
+                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, item.Rank, this);
                 if (item.Options.Count != 0)
                 {
                     input.HasOption = true;
@@ -990,6 +986,81 @@ public class FlowMakerEditViewModel : ViewModelBase
                 flowStepInputViewModel.SubInputs.Add(input);
             }
         }
+        else if (flowStepInputViewModel.Mode == InputMode.Array && !string.IsNullOrEmpty(flowStepInputViewModel.SubType))
+        {
+            if (flowInput is not null)
+            {
+                for (int i = 0; i < flowInput.Dims.Length; i++)
+                {
+                    if (flowStepInputViewModel.Dims.Count>i)
+                    {
+                        flowStepInputViewModel.Dims[i].Count = flowInput.Dims[i];
+                    }
+                }
+              
+            }
+            int count = flowStepInputViewModel.Dims.Select(c => c.Count).Aggregate((a, b) => a * b);
+            List<string> newDisplayNames = [];
+
+            for (int i = 0; i < count; i++)
+            {
+                int index = i;  // 一维索引
+
+                int[] indices = new int[flowStepInputViewModel.Dims.Count];
+
+                for (int j = flowStepInputViewModel.Dims.Count - 1; j >= 0; j--)
+                {
+                    indices[j] = (index % flowStepInputViewModel.Dims[j].Count) + 1;
+                    index /= flowStepInputViewModel.Dims[j].Count;
+                }
+                var displayName = string.Join(",", indices);
+                if (flowInput is not null)
+                {
+                    var input = new FlowStepInputViewModel(displayName, displayName, flowStepInputViewModel.SubType, 0, this);
+
+                    var sub = flowInput.Inputs.FirstOrDefault(c => c.Name == displayName);
+                    if (sub is not null)
+                    {
+                        input.Mode = sub.Mode;
+                        input.ConverterCategory = sub.ConverterCategory;
+                        input.ConverterName = sub.ConverterName;
+                        input.Id = sub.Id;
+                        input.Value = sub.Value;
+
+                        InsertConverterInput(input, sub);
+                    }
+                    flowStepInputViewModel.SubInputs.Add(input);
+                }
+                newDisplayNames.Add(displayName);
+
+                if (!flowStepInputViewModel.SubInputs.Any(s => s.DisplayName == displayName))
+                {
+                    var input = new FlowStepInputViewModel(displayName, displayName, flowStepInputViewModel.SubType, 0, this);
+                    if (flowStepInputViewModel.Options.Count != 0)
+                    {
+                        input.HasOption = true;
+                        foreach (var item2 in flowStepInputViewModel.Options)
+                        {
+                            input.Options.Add(new FlowStepOptionViewModel(item2.DisplayName, item2.Name));
+                        }
+                    }
+                    flowStepInputViewModel.SubInputs.Add(input);
+                }
+            }
+
+            var itemsToRemove = flowStepInputViewModel.SubInputs.Where(s => !newDisplayNames.Contains(s.DisplayName)).ToList();
+            foreach (var item in itemsToRemove)
+            {
+                flowStepInputViewModel.SubInputs.Remove(item);
+            }
+
+            var sortedSubInputs = flowStepInputViewModel.SubInputs.OrderBy(s => s.DisplayName).ToList();
+            flowStepInputViewModel.SubInputs.Clear();
+            foreach (var item in sortedSubInputs)
+            {
+                flowStepInputViewModel.SubInputs.Add(item);
+            }
+        }
     }
     public void InsertConverterInput(FlowStepOutputViewModel flowStepOutputViewModel, FlowOutput? flowOutput = null)
     {
@@ -1009,7 +1080,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             for (int i = 0; i < converter.Inputs.Count; i++)
             {
                 var item = converter.Inputs[i];
-                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, this);
+                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, item.Rank, this);
                 if (item.Options.Count != 0)
                 {
                     input.HasOption = true;
@@ -1153,14 +1224,18 @@ public class FlowStepInputViewModel : ReactiveObject
 
     [Reactive]
     public Guid Id { get; set; }
-    public FlowStepInputViewModel(string name, string displayName, string type, FlowMakerEditViewModel flowStepEditViewModel)
+    public FlowStepInputViewModel(string name, string displayName, string type, int rank, FlowMakerEditViewModel flowStepEditViewModel)
     {
         Id = Guid.NewGuid();
         Name = name;
         DisplayName = displayName;
         Type = type;
         _flowStepEditViewModel = flowStepEditViewModel;
-
+        Rank = rank;
+        for (int i = 0; i < rank; i++)
+        {
+            Dims.Add(new DimViewModel() { Name = (i + 1).ToString() });
+        }
 
         this.WhenAnyValue(c => c.Type).WhereNotNull().DistinctUntilChanged().Subscribe(c =>
         {
@@ -1182,6 +1257,14 @@ public class FlowStepInputViewModel : ReactiveObject
             _flowStepEditViewModel.InsertConverterInput(this);
             _flowStepEditViewModel.InitGlobe(this);
         });
+        Dims.ToObservableChangeSet().SubscribeMany(c =>
+        {
+            return c.WhenValueChanged(v => v.Count, notifyOnInitialValue: false).WhereNotNull().Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().ObserveOn(RxApp.MainThreadScheduler).Subscribe(v =>
+            {
+                _flowStepEditViewModel.InsertConverterInput(this);
+            });
+        }).Subscribe();
+
     }
 
 
@@ -1201,6 +1284,12 @@ public class FlowStepInputViewModel : ReactiveObject
     public bool HasConverter { get; set; }
     [Reactive]
     public bool HasGlobe { get; set; }
+
+    [Reactive]
+    public bool IsArray { get; set; }
+
+    [Reactive]
+    public string? SubType { get; set; }
     /// <summary>
     /// 显示名称，描述
     /// </summary>
@@ -1210,6 +1299,10 @@ public class FlowStepInputViewModel : ReactiveObject
     public string Type { get; set; }
     [Reactive]
     public string? Value { get; set; }
+    [Reactive]
+    public int Rank { get; set; }
+    [Reactive]
+    public ObservableCollection<DimViewModel> Dims { get; set; } = [];
 
     [Reactive]
     public string? ConverterCategory { get; set; }
@@ -1241,6 +1334,13 @@ public class FlowStepInputViewModel : ReactiveObject
 
     [Reactive]
     public ObservableCollection<StepDataDefinitionViewModel> GlobeDatas { get; set; } = [];
+}
+public class DimViewModel : ReactiveObject
+{
+    [Reactive]
+    public required string Name { get; set; }
+    [Reactive]
+    public int Count { get; set; }
 }
 public class FlowStepOptionViewModel(string name, string displayName) : ReactiveObject
 {
@@ -1334,25 +1434,25 @@ public class FlowStepViewModel : ReactiveObject
     {
         Id = Guid.NewGuid();
         _flowMakerEditViewModel = flowMakerEditViewModel;
-        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "ErrorHandling", _flowMakerEditViewModel)
+        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "ErrorHandling", 0, _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
-        Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", _flowMakerEditViewModel)
+        Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", 0, _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
-        Retry = new FlowStepInputViewModel("Retry", "重试", "int", _flowMakerEditViewModel)
+        Retry = new FlowStepInputViewModel("Retry", "重试", "int", 0, _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
-        TimeOut = new FlowStepInputViewModel("TimeOut", "超时", "double", _flowMakerEditViewModel)
+        TimeOut = new FlowStepInputViewModel("TimeOut", "超时", "double", 0, _flowMakerEditViewModel)
         {
             Value = "",
             Mode = InputMode.Normal,
@@ -1401,7 +1501,9 @@ public class FlowStepViewModel : ReactiveObject
             {
                 var flowInput = flowStep?.Inputs.FirstOrDefault(c => c.Name == item.Name);
 
-                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerEditViewModel);
+                var input = new FlowStepInputViewModel(item.Name, item.DisplayName, item.Type, item.Rank, _flowMakerEditViewModel);
+                input.IsArray = item.IsArray;
+                input.SubType = item.SubType;
 
                 await _flowMakerEditViewModel.InitOptions(input, item);
                 foreach (var item2 in item.Options)

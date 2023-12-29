@@ -99,6 +99,7 @@ public class FlowInput
     public string? ConverterName { get; set; }
 
     public InputMode Mode { get; set; }
+    public int[] Dims { get; set; } = [];
     /// <summary>
     /// Globe模式下为全局变量, 普通或选项为具体的值,Wait为事件名称
     /// </summary>
@@ -108,6 +109,7 @@ public class FlowInput
 public enum InputMode
 {
     Normal,
+    Array,
     Option,
     Globe,
     Converter,
