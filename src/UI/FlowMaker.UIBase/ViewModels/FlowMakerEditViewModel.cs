@@ -190,7 +190,7 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         foreach (var item in GlobeDatas)
         {
-            var data = new StepDataDefinition(item.Name, item.DisplayName, item.Type, item.DefaultValue)
+            var data = new DataDefinition(item.Name, item.DisplayName, item.Type, item.DefaultValue)
             {
                 IsInput = item.IsInput,
                 IsOutput = item.IsOutput,
@@ -1128,7 +1128,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
 
 
-    public async Task InitOptions(FlowStepInputViewModel flowStepInputViewModel, StepDataDefinition stepDataDefinition)
+    public async Task InitOptions(FlowStepInputViewModel flowStepInputViewModel, DataDefinition stepDataDefinition)
     {
         if (!string.IsNullOrEmpty(stepDataDefinition.OptionProviderName))
         {

@@ -18,10 +18,7 @@ public class FlowMakerOption
     /// 自定义页面
     /// </summary>
     public List<string> Sections { get; set; } = [];
-    /// <summary>
-    /// 自定义box视图
-    /// </summary>
-    public List<string> CustomViews { get; set; } = [];
+  
     /// <summary>
     /// 包含所有的步骤及转换器
     /// </summary>
@@ -80,6 +77,7 @@ public class FlowMakerOptionGroup
 {
     public List<StepDefinition> StepDefinitions { get; set; } = [];
     public List<ConverterDefinition> ConverterDefinitions { get; set; } = [];
+    public List<CustomViewDefinition> CustomViewDefinitions { get; set; } = [];
 }
 
 public static class FlowMakerExtension

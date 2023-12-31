@@ -4,7 +4,7 @@ public interface IStepDefinition
 {
     string Category { get; set; }
     string Name { get; set; }
-    List<StepDataDefinition> Data { get; set; }
+    List<DataDefinition> Data { get; set; }
 }
 public class FlowDefinition : StepDefinition, IStepDefinition
 {
@@ -41,16 +41,26 @@ public class StepDefinition : IStepDefinition
     /// 名称
     /// </summary>
     public required string Name { get; set; }
-    public List<StepDataDefinition> Data { get; set; } = [];
+    public List<DataDefinition> Data { get; set; } = [];
 }
+public class CustomViewDefinition
+{
+    public required string Category { get; set; }
+    /// <summary>
+    /// 名称
+    /// </summary>
+    public required string Name { get; set; }
+    public List<DataDefinition> Data { get; set; } = [];
+}
+
 public class ConverterDefinition
 {
     public required string Category { get; set; }
     public required string Name { get; set; }
-    public List<StepDataDefinition> Inputs { get; set; } = [];
+    public List<DataDefinition> Inputs { get; set; } = [];
     public required string Output { get; set; }
 }
-public class StepDataDefinition(string name, string displayName, string type, string? defaultValue = null)
+public class DataDefinition(string name, string displayName, string type, string? defaultValue = null)
 {
     public string Type { get; set; } = type;
     public string Name { get; set; } = name;

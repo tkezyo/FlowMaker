@@ -1,20 +1,14 @@
 ﻿using AutoMapper;
-using FlowMaker;
 using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -117,11 +111,11 @@ namespace FlowMaker.ViewModels
 
 
             var customViews = new MenuItemViewModel("自定义视图");
-            foreach (var item in _flowMakerOption.CustomViews)
-            {
-                customViews.Children.Add(new MenuItemViewModel("指令") { Command = ChangeCustomViewCommand });
-                customViews.Children.Add(new MenuItemViewModel(item) { Command = ChangeCustomViewCommand, CommandParameter = item });
-            }
+            //foreach (var item in _flowMakerOption.cu)
+            //{
+            //    customViews.Children.Add(new MenuItemViewModel("指令") { Command = ChangeCustomViewCommand });
+            //    customViews.Children.Add(new MenuItemViewModel(item) { Command = ChangeCustomViewCommand, CommandParameter = item });
+            //}
             menus.Add(customViews);
 
             return menus;
@@ -940,8 +934,17 @@ namespace FlowMaker.ViewModels
 
     public interface ICustomPageViewModel : ICustomPageInjectViewModel, IRoutableViewModel
     {
-        static abstract string ViewName { get; }
-        Task SetInfo(string info);
+        /// <summary>
+        /// 类别
+        /// </summary>
+        static abstract string Category { get; }
+        /// <summary>
+        /// 名称
+        /// </summary>
+        static abstract string Name { get; }
+        static abstract CustomViewDefinition GetDefinition();
+        Task WrapAsync(List<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+        Task Load();
     }
     public interface ICustomPageInjectViewModel
     {

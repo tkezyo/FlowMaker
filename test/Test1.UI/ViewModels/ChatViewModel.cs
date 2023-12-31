@@ -1,20 +1,16 @@
 ﻿using FlowMaker.ViewModels;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Ty.ViewModels;
 
 namespace Test1.ViewModels
 {
-    public class ChatViewModel : ViewModelBase, ICustomPageViewModel
+    public partial class ChatViewModel : ViewModelBase, ICustomPageViewModel
     {
-        public string Name { get; set; } = "sdfwef";
+        public static string Category => "Chat";
 
-        public static string ViewName => "Chat";
+        public static string Name => "Chat";
 
-        public Task SetInfo(string info)
+        public Task Load()
         {
             return Task.CompletedTask;
         }

@@ -273,7 +273,7 @@ public class FlowRunner : IDisposable
                 }
                 await item.OnExecuting(Context, step, Context.StepState[step.Id], CancellationTokenSource.Token);
             }
-            var repeat = await IDataConverter<int>.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
+            var repeat = await IDataConverterInject.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
             int errorIndex = 0;
             bool skip = false;
             for (int i = 0; i < repeat; i++)//重复执行

@@ -47,13 +47,16 @@ namespace Test1
                 services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
                 services.AddBaseViews();
+
                 services.AddTransientFlowView<ChatViewModel, ChatView>();
                 services.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
                 services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
-                //  services.AddTransientView<FlowMakerConfigEditViewModel, FlowMakerConfigEditView>();
+                services.AddSingletonView<FlowMakerDebugViewModel, FlowMakerDebugView>();
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
+
+
                 services.AddTransient<FlowRunner>();
                 services.AddTransient<IFlowProvider, FileFlowProvider>();
                 services.AddSingleton<FlowManager>();

@@ -123,7 +123,7 @@ namespace FlowMaker.SourceGenerator
                                 defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
                             }
                             defStringBuilder.AppendLine($$"""
-        var {{property.Name}}Prop = new StepDataDefinition("{{property.Name}}", "{{displayName}}", "{{property.Type.ToDisplayString().Trim('?')}}", "{{defaultValueValue}}");
+        var {{property.Name}}Prop = new DataDefinition("{{property.Name}}", "{{displayName}}", "{{property.Type.ToDisplayString().Trim('?')}}", "{{defaultValueValue}}");
 """);
                             if (input is not null)
                             {
@@ -321,7 +321,7 @@ public partial class {item.Option.MetadataName}
                                 defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
                             }
                             defStringBuilder.AppendLine($$"""
-        var {{property.Name}}Prop = new StepDataDefinition("{{property.Name}}", "{{displayName}}", "{{property.Type.ToDisplayString().Trim('?')}}", "{{defaultValueValue}}");
+        var {{property.Name}}Prop = new DataDefinition("{{property.Name}}", "{{displayName}}", "{{property.Type.ToDisplayString().Trim('?')}}", "{{defaultValueValue}}");
 """);
                             if (input is not null)
                             {

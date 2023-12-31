@@ -112,7 +112,7 @@ public interface IDataConverterInject
             }
         }
     }
-    public static async Task<T> GetValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
+    public static async Task<T> GetValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext? context, Func<string, T> convert, CancellationToken cancellationToken)
     {
         if (input.Mode == InputMode.Converter && !string.IsNullOrEmpty(input.ConverterCategory) && !string.IsNullOrEmpty(input.ConverterName))
         {
@@ -135,11 +135,11 @@ public interface IDataConverterInject
         }
         else
         {
-            if (input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
+            if (context is not null && input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value) && context.Data.TryGetValue(input.Value, out var data))
             {
                 return convert.Invoke(data.Value ?? string.Empty);
             }
-            else if (input.Mode == InputMode.Event && !string.IsNullOrEmpty(input.Value) && context.EventData.TryGetValue(input.Value, out var eventData))
+            else if (context is not null && input.Mode == InputMode.Event && !string.IsNullOrEmpty(input.Value) && context.EventData.TryGetValue(input.Value, out var eventData))
             {
                 return convert.Invoke(eventData ?? string.Empty);
             }
@@ -149,7 +149,8 @@ public interface IDataConverterInject
             }
         }
     }
-    public static async Task<List<T>> GetListValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext context, Func<string, T> convert, CancellationToken cancellationToken)
+
+    public static async Task<List<T>> GetListValue<T>(FlowInput input, IServiceProvider serviceProvider, FlowContext? context, Func<string, T> convert, CancellationToken cancellationToken)
     {
         List<T> list = [];
         foreach (var item in input.Inputs)
@@ -168,7 +169,9 @@ public interface IDataConverterInject
 
         return values;
     }
- 
+
+
+
     public static Array Reshape<T>(int[] dims, T[] list)
     {
         return ReshapeRecursive(dims, list, 0);
@@ -196,8 +199,8 @@ public interface IDataConverterInject
 }
 public interface IDataConverter<T> : IDataConverter
 {
-    Task<T> Convert(FlowContext context, CancellationToken cancellationToken);
-    Task<T> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    Task<T> Convert(FlowContext? context, CancellationToken cancellationToken);
+    Task<T> WrapAsync(FlowContext? context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 
 
 

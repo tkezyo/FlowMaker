@@ -21,6 +21,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\..\tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj" />
 		<ProjectReference Include="..\..\FlowMaker\FlowMaker.csproj" />
 	</ItemGroup>
 

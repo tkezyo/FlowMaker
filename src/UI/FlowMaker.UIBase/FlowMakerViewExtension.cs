@@ -11,22 +11,26 @@ namespace System
             where TView : class, IViewFor<TViewModel>
             where TViewModel : class, ICustomPageViewModel
         {
-            serviceDescriptors.AddKeyedSingleton<ICustomPageInjectViewModel, TViewModel>(TViewModel.ViewName);
+            serviceDescriptors.AddKeyedSingleton<ICustomPageInjectViewModel, TViewModel>(TViewModel.Category + ":" + TViewModel.Name);
             serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {
-                c.CustomViews.Add(TViewModel.ViewName);
+                var group = c.GetOrAddGroup(TViewModel.Category);
+
+                group.CustomViewDefinitions.Add(TViewModel.GetDefinition());
             });
         }
         public static void AddTransientFlowView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
             where TView : class, IViewFor<TViewModel>
             where TViewModel : class, ICustomPageViewModel
         {
-            serviceDescriptors.AddKeyedTransient<ICustomPageInjectViewModel, TViewModel>(TViewModel.ViewName);
+            serviceDescriptors.AddKeyedTransient<ICustomPageInjectViewModel, TViewModel>(TViewModel.Category + ":" + TViewModel.Name);
             serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {
-                c.CustomViews.Add(TViewModel.ViewName);
+                var group = c.GetOrAddGroup(TViewModel.Category);
+
+                group.CustomViewDefinitions.Add(TViewModel.GetDefinition());
             });
         }
     }
