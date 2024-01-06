@@ -10,8 +10,6 @@ public partial class Flow2 : IStep
 
     public static string Name => "只有一个输入";
 
-    [Input]
-    public string[]? MyProperty { get; set; }
 
     [Input]
     [Description("数字类型")]
