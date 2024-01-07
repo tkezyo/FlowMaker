@@ -53,7 +53,7 @@ namespace Test1
                 services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
                 services.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
                 services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
-                services.AddSingletonView<FlowMakerDebugViewModel, FlowMakerDebugView>();
+                services.AddTransientView<FlowMakerDebugViewModel, FlowMakerDebugView>();
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
 
 

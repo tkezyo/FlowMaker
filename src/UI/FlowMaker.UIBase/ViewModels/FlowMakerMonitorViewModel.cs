@@ -29,6 +29,7 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     public int RowCount { get; set; } = 1;
     public const int MaxColCount = 4;
     public ObservableCollection<FlowMakerDebugViewModel> Flows { get; set; } = [];
+    public ObservableCollection<MonitorRunningViewModel> Runnings { get; set; } = [];
     private readonly FlowMakerOption _flowMakerOption;
 
     [Reactive]
@@ -47,7 +48,6 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         CreateCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel?>(Create);
         RemoveCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(Remove);
         ExecuteFlowCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(ExecuteFlow);
-        SaveConfigCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SaveConfig);
         RemoveConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RemoveConfig);
         RunConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RunConfig);
         LoadConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(LoadConfig);
@@ -79,6 +79,21 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     {
         Disposables = [];
         await LoadFlows();
+
+        MessageBus.Current.Listen<MonitorMessage>().Subscribe(c =>
+        {
+            var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);
+            if (running is null)
+            {
+                Runnings.Add(new MonitorRunningViewModel() { DisplayName = c.Context.FlowDefinition.Category + ":" + c.Context.FlowDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0] });
+            }
+            else
+            {
+                running.RunnerState = c.RunnerState;
+            }
+
+        }).DisposeWith(Disposables);
+
     }
     public override Task Deactivate()
     {
@@ -126,7 +141,6 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     {
         var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
         await vm.Load(flowDefinitionInfoViewModel?.Category, flowDefinitionInfoViewModel?.Name);
-        await Task.CompletedTask;
         _messageBoxManager.Window.Handle(new ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
         {
             LoadFlows();
@@ -151,48 +165,7 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     }
 
 
-    public ReactiveCommand<MonitorInfoViewModel, Unit> SaveConfigCommand { get; set; }
-    public async Task SaveConfig(MonitorInfoViewModel model)
-    {
-        if (string.IsNullOrEmpty(model.ConfigName))
-        {
-            var configName = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入名称"));
-            if (configName.Ok)
-            {
-                model.ConfigName = configName.Value;
-            }
-        }
-        if (string.IsNullOrEmpty(model.ConfigName))
-        {
-            return;
-        }
-        ConfigDefinition configDefinition = new()
-        {
-            Category = model.Category,
-            Name = model.Name,
-            ConfigName = model.ConfigName,
-            ErrorHandling = model.ErrorHandling,
-            Repeat = model.Repeat,
-            Retry = model.Retry,
-        };
-        foreach (var item in model.Data)
-        {
-            if (string.IsNullOrEmpty(item.Value))
-            {
-                return;
-            }
-            configDefinition.Data.Add(new NameValue(item.Name, item.Value));
-        }
-        foreach (var item in model.Middlewares)
-        {
-            if (item.Selected)
-            {
-                configDefinition.Middlewares.Add(item.Value);
-            }
-        }
-        await _flowProvider.SaveConfig(configDefinition);
-        await LoadFlows();
-    }
+
 
     public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> LoadConfigCommand { get; set; }
     public async Task LoadConfig(ConfigDefinitionInfoViewModel model)
@@ -230,6 +203,32 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     //    //monitorInfoViewModel.StepChange?.Dispose();
     //    Flows.Remove(monitorInfoViewModel);
     //}
+
+}
+
+public class MonitorRunningViewModel : ReactiveObject
+{
+    [Reactive]
+    public Guid Id { get; set; }
+    [Reactive]
+    public required string DisplayName { get; set; }
+    /// <summary>
+    /// 完成个数
+    /// </summary>
+    [Reactive]
+    public double CompleteCount { get; set; }
+    /// <summary>
+    /// 总个数
+    /// </summary>
+    [Reactive]
+    public int TotalCount { get; set; }
+    /// <summary>
+    /// 完成比例
+    /// </summary>
+    [Reactive]
+    public double Percent { get; set; }
+    [Reactive]
+    public RunnerState RunnerState { get; set; }
 
 }
 

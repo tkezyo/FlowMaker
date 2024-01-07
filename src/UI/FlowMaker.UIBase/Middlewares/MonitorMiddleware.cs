@@ -3,6 +3,7 @@ using FlowMaker.Models;
 using ReactiveUI;
 using System;
 using System.Reactive.Subjects;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -56,7 +57,6 @@ namespace FlowMaker.Middlewares
     public class MonitorMessage(FlowContext context, RunnerState runnerState)
     {
         public FlowContext Context { get; set; } = context;
-
         public RunnerState RunnerState { get; set; } = runnerState;
     }
     public class MonitorStepOnceMessage(StepOnceStatus stepOnce, Guid[] flowIds, Guid stepId)

@@ -10,17 +10,20 @@ using System.ComponentModel;
 using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Text;
 using System.Xml.Linq;
+using Ty.Services;
 using Ty.ViewModels;
 
 namespace FlowMaker.ViewModels
 {
-    public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewModel
+    public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewModel, IAsyncDisposable
     {
         private readonly FlowManager _flowManager;
         private readonly IFlowProvider _flowProvider;
         private readonly IServiceProvider _serviceProvider;
+        private readonly IMessageBoxManager _messageBoxManager;
         private readonly FlowMakerOption _flowMakerOption;
 
         public static string Category => "默认";
@@ -46,11 +49,12 @@ namespace FlowMaker.ViewModels
 
         [Reactive]
         public MonitorInfoViewModel? Model { get; set; }
-        public FlowMakerDebugViewModel(FlowManager flowManager, IFlowProvider flowProvider, IServiceProvider serviceProvider, IOptions<FlowMakerOption> options)
+        public FlowMakerDebugViewModel(FlowManager flowManager, IFlowProvider flowProvider, IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IMessageBoxManager messageBoxManager)
         {
             this._flowManager = flowManager;
             this._flowProvider = flowProvider;
             this._serviceProvider = serviceProvider;
+            this._messageBoxManager = messageBoxManager;
             this._flowMakerOption = options.Value;
 
             foreach (var item in Enum.GetValues<ErrorHandling>())
@@ -63,6 +67,7 @@ namespace FlowMaker.ViewModels
             RunCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Run);
             StopCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Stop);
             SendEventCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SendEvent);
+            SaveConfigCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SaveConfig);
         }
 
         public CompositeDisposable? Disposables { get; set; }
@@ -73,7 +78,7 @@ namespace FlowMaker.ViewModels
             Disposables = [];
             MessageBus.Current.Listen<DebugInfo>().Subscribe(c =>
             {
-                if (Model is null)
+                if (Model is null || Model?.Id != c.Id)
                 {
                     return;
                 }
@@ -278,7 +283,7 @@ namespace FlowMaker.ViewModels
                 var config = await _flowProvider.LoadConfigDefinitionAsync(FlowCategory, FlowName, ConfigName);
                 if (config is not null)
                 {
-                    Model.DisplayName = $"{FlowCategory}:{FlowName}";
+                    Model.DisplayName = $"{FlowCategory}:{FlowName}:{ConfigName}";
                     Model.ConfigName = ConfigName;
                     Model.Timeout = config.Timeout;
                     Model.Retry = config.Retry;
@@ -435,6 +440,57 @@ namespace FlowMaker.ViewModels
             if (mid is DebugMiddleware debug)
             {
                 debug.RemoveDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id.Value);
+            }
+        }
+        public ReactiveCommand<MonitorInfoViewModel, Unit> SaveConfigCommand { get; set; }
+        public async Task SaveConfig(MonitorInfoViewModel model)
+        {
+            if (string.IsNullOrEmpty(model.ConfigName))
+            {
+                var configName = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入名称"));
+                if (configName.Ok)
+                {
+                    model.ConfigName = configName.Value;
+                    model.DisplayName = $"{FlowCategory}:{FlowName}:{model.ConfigName}";
+                }
+            }
+            if (string.IsNullOrEmpty(model.ConfigName))
+            {
+                return;
+            }
+            ConfigDefinition configDefinition = new()
+            {
+                Category = model.Category,
+                Name = model.Name,
+                ConfigName = model.ConfigName,
+                ErrorHandling = model.ErrorHandling,
+                Repeat = model.Repeat,
+                Retry = model.Retry,
+            };
+            foreach (var item in model.Data)
+            {
+                if (string.IsNullOrEmpty(item.Value))
+                {
+                    return;
+                }
+                configDefinition.Data.Add(new NameValue(item.Name, item.Value));
+            }
+            foreach (var item in model.Middlewares)
+            {
+                if (item.Selected)
+                {
+                    configDefinition.Middlewares.Add(item.Value);
+                }
+            }
+            await _flowProvider.SaveConfig(configDefinition);
+        }
+
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Model is not null && Model.Id.HasValue)
+            {
+                await _flowManager.Stop(Model.Id.Value);
             }
         }
     }

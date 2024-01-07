@@ -22,19 +22,22 @@
     <DockPanel>
         <ToolBarTray DockPanel.Dock="Top" Orientation="Horizontal">
             <ToolBar>
+                <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0"/>
+                <Button Content="运行" Command="{Binding RunCommand}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
 
-                <StackPanel Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" Orientation="Horizontal">
-                    <Button Content="运行" Command="{Binding RunCommand}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonPrimary.Small}"/>
-                    <Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonSuccess.Small}"/>
+                <Button Content="停止" Command="{Binding StopCommand}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}"/>
 
-                </StackPanel>
-                <StackPanel Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}">
-                    <Button Content="停止" Command="{Binding StopCommand}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonWarning.Small}"/>
-                </StackPanel>
-
-                <TextBox Text="{Binding Model.DisplayName}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" IsReadOnly="True"/>
                 <Separator Margin="10,0"/>
 
+
+                <TextBox Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="事件名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
+                <TextBox Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="事件数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
+                <Button Content="发送事件" Command="{Binding DataContext.SendEventCommand,ElementName=page}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonDashedPrimary.Small}"/>
+                <CheckBox Content="编辑"  x:Name="edit"/>
+
+            </ToolBar>
+            <ToolBar Visibility="{Binding IsChecked,ElementName=edit,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
+                <Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonSuccess.Small}"/>
                 <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
@@ -60,11 +63,6 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <Separator Margin="10,0"/>
-
-                <TextBox Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="事件名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
-                <TextBox Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="事件数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
-                <Button Content="发送事件" Command="{Binding DataContext.SendEventCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonDashedPrimary.Small}"/>
 
             </ToolBar>
         </ToolBarTray>
