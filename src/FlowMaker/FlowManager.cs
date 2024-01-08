@@ -91,7 +91,7 @@ public class FlowManager
     {
         if (_status.TryGetValue(id, out var status))
         {
-            status.FlowRunner.SendEvent(eventName, eventData);
+            status.FlowRunner.SendEventAsync(eventName, eventData);
         }
     }
     public async Task Stop(Guid id)

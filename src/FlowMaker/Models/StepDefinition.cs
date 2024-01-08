@@ -22,18 +22,7 @@ public class FlowDefinitionFileInfo
     public required DateTime ModifyTime { get; set; }
     public List<string> Configs { get; set; } = [];
 }
-/// <summary>
-/// 流程文件信息
-/// </summary>
-public class ConfigDefinitionFileInfo
-{
-    public required string Category { get; set; }
-    public required string Name { get; set; }
-    public required string FlowCategory { get; set; }
-    public required string FlowName { get; set; }
-    public required DateTime CreationTime { get; set; }
-    public required DateTime ModifyTime { get; set; }
-}
+
 public class StepDefinition : IStepDefinition
 {
     public required string Category { get; set; }

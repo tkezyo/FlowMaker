@@ -55,15 +55,26 @@ namespace Test1
                 services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
                 services.AddTransientView<FlowMakerDebugViewModel, FlowMakerDebugView>();
                 services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
+                services.AddTransientView<FlowMakerLogViewModel, FlowMakerLogView>();
 
 
                 services.AddTransient<FlowRunner>();
                 services.AddTransient<IFlowProvider, FileFlowProvider>();
                 services.AddSingleton<FlowManager>();
+                services.AddSingleton<MemoryFlowLogProvider>();
+                services.AddSingleton<IFlowLogReader>(c => c.GetRequiredService<MemoryFlowLogProvider>());
+                services.AddSingleton<IFlowLogWriter>(c => c.GetRequiredService<MemoryFlowLogProvider>());
+
+
                 services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
-                services.AddKeyedScoped<IStepOnceMiddleware, MonitorMiddleware>("monitor");
+                services.AddKeyedScoped<IStepOnceMiddleware, MonitorStepOnceMiddleware>("monitor");
                 services.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
                 services.AddKeyedScoped<IFlowMiddleware, MonitorFlowMiddleware>("monitor");
+
+                services.AddKeyedScoped<IFlowMiddleware, LogFlowMiddleware>("log");
+                services.AddKeyedScoped<IStepMiddleware, LogStepMiddleware>("log");
+                services.AddKeyedScoped<IStepOnceMiddleware, LogStepOnceMiddleware>("log");
+                services.AddKeyedScoped<IEventMiddleware, LogEventMiddleware>("log");
 
                 services.AddFlowStep<Flow1>();
                 services.AddFlowStep<Flow2>();
@@ -87,6 +98,7 @@ namespace Test1
                     options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
                     options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("监控", "monitor"));
                     options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("调试", "debug"));
+                    options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("日志", "log"));
                 });
             });
 

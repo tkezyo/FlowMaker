@@ -51,6 +51,7 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         RemoveConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RemoveConfig);
         RunConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RunConfig);
         LoadConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(LoadConfig);
+        ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
 
 
         foreach (var item in Enum.GetValues<ErrorHandling>())
@@ -80,18 +81,46 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         Disposables = [];
         await LoadFlows();
 
+        MessageBus.Current.Listen<FlowMakerDebugViewModel>("RemoveDebug").Subscribe(c =>
+        {
+            Flows.Remove(c);
+        }).DisposeWith(Disposables);
+
         MessageBus.Current.Listen<MonitorMessage>().Subscribe(c =>
         {
+            var id = c.Context.FlowIds[0];
             var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);
             if (running is null)
             {
-                Runnings.Add(new MonitorRunningViewModel() { DisplayName = c.Context.FlowDefinition.Category + ":" + c.Context.FlowDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0] });
+                running = new MonitorRunningViewModel() { DisplayName = c.Context.FlowDefinition.Category + ":" + c.Context.FlowDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0], TotalCount = c.TotalCount };
+                Runnings.Insert(0, running);
+                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
+                if (mid is MonitorStepOnceMiddleware monitor)
+                {
+                    running.StepChange = monitor.StepChange.Subscribe(c =>
+                    {
+                        if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
+                        {
+                            running.CompleteCount += 0.5;
+                            running.Percent = running.CompleteCount / running.TotalCount * 100;
+                        }
+                        if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
+                        {
+                            running.CompleteCount += 0.5;
+                            running.Percent = running.CompleteCount / running.TotalCount * 100;
+                        }
+                        if (c.StepOnce.State == StepOnceState.Skip)
+                        {
+                            running.CompleteCount += 1;
+                            running.Percent = running.CompleteCount / running.TotalCount * 100;
+                        }
+                    });
+                }
             }
             else
             {
                 running.RunnerState = c.RunnerState;
             }
-
         }).DisposeWith(Disposables);
 
     }
@@ -193,6 +222,16 @@ public class FlowMakerMonitorViewModel : ViewModelBase
             flowDefinitionInfoViewModel.ConfigName,
             flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
     }
+
+    public ReactiveCommand<MonitorRunningViewModel, Unit> ShowLogCommand { get; }
+    public async Task ShowLog(MonitorRunningViewModel monitorRunningViewModel)
+    {
+        var vm = _serviceProvider.GetRequiredService<FlowMakerLogViewModel>();
+        await vm.Load(monitorRunningViewModel.Id);
+        _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
+        {
+        });
+    }
     #endregion
 
 
@@ -229,6 +268,9 @@ public class MonitorRunningViewModel : ReactiveObject
     public double Percent { get; set; }
     [Reactive]
     public RunnerState RunnerState { get; set; }
+
+    public IDisposable? StepChange { get; set; }
+
 
 }
 

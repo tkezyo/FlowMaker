@@ -1,6 +1,7 @@
 ﻿using FlowMaker;
 using FlowMaker.Models;
 using System.ComponentModel;
+using System.Text.Json;
 
 namespace Test1;
 public partial class MyClass : IStep
@@ -18,6 +19,8 @@ public partial class MyClass : IStep
     {
         throw new NotImplementedException();
     }
+
+
 }
 
 public partial class Flow1 : IStep
@@ -52,6 +55,7 @@ public partial class Flow1 : IStep
         Prop3 = 100;
         return Task.CompletedTask;
     }
+
 }
 
 

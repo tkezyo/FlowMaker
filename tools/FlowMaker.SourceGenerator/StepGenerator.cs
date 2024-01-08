@@ -207,21 +207,23 @@ namespace FlowMaker.SourceGenerator
                                 if (isArray)
                                 {
                                     inputStringBuilder.AppendLine($$"""
-        var {{memberName}}Input = stepContext.Step.Inputs.First(v=> v.Name == "{{memberName}}");
+        var {{memberName}}Input = stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}}));
         if ({{memberName}}Input.Mode == InputMode.Array)
         {
-            {{memberName}} = ({{property.Type.ToDisplayString()}})IDataConverter.Reshape<{{subType}}>({{memberName}}Input.Dims, await IDataConverter.GetArrayValue<{{subType}}>({{memberName}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
+            {{memberName}} = ({{property.Type.ToDisplayString()}})IDataConverterInject.Reshape<{{subType}}>({{memberName}}Input.Dims, await IDataConverterInject.GetArrayValue<{{subType}}>({{memberName}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
         }
         else
         {
-            {{memberName}} = await IDataConverter.GetValue<{{property.Type.ToDisplayString()}}>({{memberName}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+            {{memberName}} = await IDataConverterInject.GetValue<{{property.Type.ToDisplayString()}}>({{memberName}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
         }
+        stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                                 }
                                 else
                                 {
                                     inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IDataConverter.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{memberName}} = await IDataConverterInject.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}})), serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                                 }
                             }
@@ -230,7 +232,8 @@ namespace FlowMaker.SourceGenerator
                             if (output is not null)
                             {
                                 outputStringBuilder.AppendLine($$"""
-        await IDataConverter.SetValue(stepContext.Step.Outputs.First(v=> v.Name == "{{memberName}}"), {{memberName}}, serviceProvider, context, cancellationToken);
+        await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{memberName}})), {{memberName}}, serviceProvider, context, cancellationToken);
+        stepContext.StepOnceStatus.Outputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                             }
                         }

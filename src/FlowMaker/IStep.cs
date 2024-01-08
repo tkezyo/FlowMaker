@@ -241,3 +241,7 @@ public interface IStepOnceMiddleware
     Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken);
     Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken);
 }
+public interface IEventMiddleware
+{
+    Task OnExecuting(FlowContext flowContext, string eventName, string? eventData, CancellationToken cancellationToken);
+}

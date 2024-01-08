@@ -68,6 +68,8 @@ namespace FlowMaker.ViewModels
             StopCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Stop);
             SendEventCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SendEvent);
             SaveConfigCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SaveConfig);
+            RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
+            
         }
 
         public CompositeDisposable? Disposables { get; set; }
@@ -131,7 +133,7 @@ namespace FlowMaker.ViewModels
                             return;
                         }
                         var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
-                        if (mid is MonitorMiddleware monitor)
+                        if (mid is MonitorStepOnceMiddleware monitor)
                         {
                             flow.StepChange = monitor.StepChange.Subscribe(c =>
                             {
@@ -163,6 +165,11 @@ namespace FlowMaker.ViewModels
                                         flow.CompleteCount += 0.5;
                                         flow.Percent = (double)flow.CompleteCount / flow.TotalCount * 100;
                                         step.Stop(c.StepOnce.EndTime.Value);
+                                    }
+                                    if (c.StepOnce.State == StepOnceState.Skip)
+                                    {
+                                        flow.CompleteCount += 1;
+                                        flow.Percent = (double)flow.CompleteCount / flow.TotalCount * 100;
                                     }
                                 }
                             });
@@ -305,7 +312,7 @@ namespace FlowMaker.ViewModels
             {
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(FlowInstanceId.Value, "monitor");
 
-                if (mid is MonitorMiddleware monitor)
+                if (mid is MonitorStepOnceMiddleware monitor)
                 {
                     this.Model.StepChange = monitor.StepChange.Subscribe(c =>
                     {
@@ -346,6 +353,16 @@ namespace FlowMaker.ViewModels
             }
 
             await Activate();
+        }
+
+        public ReactiveCommand<Unit, Unit> RemoveCommand { get; }
+        public async Task Remove()
+        {
+            if (Model is not null && Model.Id.HasValue)
+            {
+                await _flowManager.Stop(Model.Id.Value);
+            }
+            MessageBus.Current.SendMessage(this,"RemoveDebug");
         }
 
         public ReactiveCommand<MonitorInfoViewModel, Unit> RunCommand { get; }

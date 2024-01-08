@@ -14,6 +14,7 @@ public class FlowContext
     public FlowDefinition FlowDefinition { get; }
     public ConfigDefinition ConfigDefinition { get; set; }
     public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
+    public List<string> Middlewares { get; set; } = [];
     public FlowContext(FlowDefinition flowDefinition, ConfigDefinition configDefinition, Guid[] flowIds)
     {
         FlowDefinition = flowDefinition;
@@ -100,6 +101,7 @@ public class FlowContext
         foreach (var item in FlowDefinition.Steps)
         {
             var state = new StepStatus();
+            state.Id = item.Id;
 
             foreach (var wait in item.WaitEvents)
             {
@@ -169,6 +171,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
 
 public class StepStatus
 {
+    public Guid Id { get; set; }
     /// <summary>
     /// 已完成
     /// </summary>
@@ -214,4 +217,35 @@ public class FlowGlobeData(string name, string type, string value)
     /// 值
     /// </summary>
     public string Value { get; set; } = value;
+}
+
+public class FlowLog
+{
+    public Guid Id { get; set; }
+    public required string Category { get; set; }
+    public required string Name { get; set; }
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public List<NameValue> Inputs { get; set; } = [];
+    public List<NameValue> Outputs { get; set; } = [];
+
+    public Dictionary<string, StepLog> StepLogs { get; set; } = [];
+    public List<EventLog> Events { get; set; } = [];
+
+    public List<string> Middlewares { get; set; } = [];
+}
+public class EventLog
+{
+    public DateTime Time { get; set; }
+    public required string EventName { get; set; }
+    public string? EventData { get; set; }
+}
+public class StepLog
+{
+    public Guid[] FlowIds { get; set; } = [];
+    public Guid StepId { get; set; }
+    public required string StepName { get; set; }
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public List<StepOnceStatus> StepOnceLogs { get; set; } = [];
 }

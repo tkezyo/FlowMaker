@@ -15,11 +15,19 @@
                           x:Name="page"
              d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
-        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend.Small}"></Style>
-        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend.Small}"></Style>
-        <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
-        <converters:MonitorDebugConverter x:Key="MonitorDebugConverter" />
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"/>
+                <!--<ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/SkinDark.xaml"/>-->
+                <ResourceDictionary Source="pack://application:,,,/HandyControl;component/Themes/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend.Small}"></Style>
+            <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend.Small}"></Style>
+            <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
+            <converters:MonitorDebugConverter x:Key="MonitorDebugConverter" />
+        </ResourceDictionary>
     </UserControl.Resources>
+   
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
@@ -38,17 +46,16 @@
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                        <Button Content="编辑" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                        <Button Content="删除" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                        <Button Padding="0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource SearchGeometry}" Foreground="Blue" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0"/>
+                                                        <Button  Padding="0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Foreground="Red" BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}"/>
                                                     </StackPanel>
 
-                                                    <ItemsControl Margin="4" ItemsSource="{Binding Configs}">
+                                                    <ItemsControl Margin="8" ItemsSource="{Binding Configs}">
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <StackPanel Orientation="Horizontal">
-                                                                    <Button Content="{Binding ConfigName,StringFormat={}-{0}}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.RunConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                                    <Button Content="编辑" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                                    <Button Content="删除" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                                    <Button Content="{Binding ConfigName,StringFormat={}-{0}}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                                    <Button  Padding="0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Foreground="Red" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0"/>
                                                                 </StackPanel>
                                                             </DataTemplate>
                                                         </ItemsControl.ItemTemplate>
@@ -64,18 +71,21 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </TabItem>
-            <TabItem Header="运行中">
-                <ItemsControl ItemsSource="{Binding Runnings}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <Button Content="{Binding DisplayName}" Style="{StaticResource ButtonCustom}"/>
-                                <TextBlock Text="{Binding RunnerState}"/>
-                            </StackPanel>
+            <TabItem Header="记录">
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding Runnings}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Vertical" Margin="2,4">
+                                    <Button Content="{Binding DisplayName}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ShowLogCommand, ElementName=page}" CommandParameter="{Binding .}"/>
+                                    <ProgressBar Value="{Binding Percent}" FontSize="9" Height="10" Style="{StaticResource ProgressBarSuccess}" />
+                                    <Separator/>
+                                </StackPanel>
 
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
 
