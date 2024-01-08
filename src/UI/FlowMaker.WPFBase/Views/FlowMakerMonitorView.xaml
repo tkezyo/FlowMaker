@@ -46,8 +46,8 @@
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                        <Button Padding="0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource SearchGeometry}" Foreground="Blue" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0"/>
-                                                        <Button  Padding="0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Foreground="Red" BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                        <Button Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource SearchGeometry}" Foreground="Blue" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0"/>
+                                                        <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Foreground="Red" BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}"/>
                                                     </StackPanel>
 
                                                     <ItemsControl Margin="8" ItemsSource="{Binding Configs}">
