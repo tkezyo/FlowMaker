@@ -21,3 +21,20 @@ public partial class Flow2 : IStep
         return Task.CompletedTask;
     }
 }
+
+public partial class Flow3 : IStep
+{
+    public static string Category => "Test1";
+
+    public static string Name => "输入输出各一个";
+
+    [Input]
+    public int Input { get; set; }
+    [Output]
+    public int Output { get; set; }
+    public Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
+    {
+        Output = Input * 2;
+        return Task.CompletedTask;
+    }
+}

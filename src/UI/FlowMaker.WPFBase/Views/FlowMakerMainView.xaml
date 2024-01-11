@@ -34,11 +34,14 @@
         <Expander  ExpandDirection="Up"  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="0">
             <Expander.Header>
                 <TextBlock Text="{Binding Runnings.Count,StringFormat=记录 ({0})}">
-                    
+
                 </TextBlock>
             </Expander.Header>
-            <ScrollViewer  Padding="3,0"  Background="White">
+            <ScrollViewer  Padding="3,0" >
                 <ItemsControl  ItemsSource="{Binding Runnings}" VerticalAlignment="Bottom">
+                    <ItemsControl.Background>
+                        <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                    </ItemsControl.Background>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Vertical" Margin="2,4">
@@ -54,24 +57,39 @@
         <Expander ExpandDirection="Up"  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="1">
             <Expander.Header>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="+" Foreground="Blue" Padding="0,0,9,0" FontWeight="ExtraBold" Command="{Binding CreateCommand}"  Style="{StaticResource ButtonCustom}" />
+                    <Button Content="+"   Padding="5,0"  FontSize="14" FontWeight="ExtraBold" Command="{Binding CreateCommand}"  Style="{StaticResource ButtonCustom}" >
+                        <Button.Foreground>
+                            <SolidColorBrush Color="{StaticResource PrimaryColor}"/>
+                        </Button.Foreground>
+                    </Button>
                     <TextBlock Text="流程" VerticalAlignment="Center"/>
                 </StackPanel>
             </Expander.Header>
-            <ScrollViewer  Padding="3,0"  Background="White">
-                <ItemsControl ItemsSource="{Binding Categories}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+            <ScrollViewer  Padding="3,0" >
+                <ItemsControl ItemsSource="{Binding Categories}" >
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
                             <Expander Header="{Binding Category}"
                                       Style="{StaticResource Expander.Small}">
-                                <ItemsControl Margin="4" ItemsSource="{Binding Flows}">
+                                <ItemsControl Padding="4" ItemsSource="{Binding Flows}">
+                                    <ItemsControl.Background>
+                                        <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                                    </ItemsControl.Background>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <StackPanel>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                    <Button Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource SearchGeometry}" Foreground="Blue" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0"/>
-                                                    <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Foreground="Red" BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                    <Button Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource SearchGeometry}" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
+                                                        <Button.Foreground>
+                                                            <SolidColorBrush Color="{StaticResource PrimaryColor}"/>
+                                                        </Button.Foreground>
+                                                    </Button>
+                                                    <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}"  BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
+                                                        <Button.Foreground>
+                                                            <SolidColorBrush Color="{StaticResource DangerColor}"/>
+                                                        </Button.Foreground>
+                                                    </Button>
                                                 </StackPanel>
 
                                                 <ItemsControl Margin="8" ItemsSource="{Binding Configs}">
@@ -79,7 +97,11 @@
                                                         <DataTemplate>
                                                             <StackPanel Orientation="Horizontal">
                                                                 <Button Content="{Binding ConfigName,StringFormat={}-{0}}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                                <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" Foreground="Red" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0"/>
+                                                                <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}" hc:IconElement.Geometry="{StaticResource RemoveGeometry}" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
+                                                                    <Button.Foreground>
+                                                                        <SolidColorBrush Color="{StaticResource DangerColor}"/>
+                                                                    </Button.Foreground>
+                                                                </Button>
                                                             </StackPanel>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
@@ -89,9 +111,9 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </Expander>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </ScrollViewer>
         </Expander>
         <Button Content="{Binding PageName}" Grid.Column="2"  VerticalAlignment="Bottom" Command="{Binding ChangeViewCommand}" Style="{StaticResource ButtonDefault.Small}"></Button>

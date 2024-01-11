@@ -78,6 +78,7 @@ namespace Test1
 
                 services.AddFlowStep<Flow1>();
                 services.AddFlowStep<Flow2>();
+                services.AddFlowStep<Flow3>();
                 services.AddFlowStep<MyClass>();
                 services.AddFlowStep<TestFlow1>();
                 services.AddFlowConverter<ValueConverter>();
