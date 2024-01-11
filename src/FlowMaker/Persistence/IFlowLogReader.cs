@@ -4,7 +4,7 @@ namespace FlowMaker.Persistence;
 
 public interface IFlowLogReader
 {
-    Task<FlowLog?> GetFlowLog(Guid id);
+    Task<FlowLog[]> GetFlowLog(Guid id);
 }
 
 

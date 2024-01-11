@@ -139,6 +139,21 @@ public enum OutputMode
 
 public class FlowResult
 {
+    /// <summary>
+    /// 当前下标
+    /// </summary>
+    public int CurrentIndex { get; set; }
+    /// <summary>
+    /// 执行错误下标
+    /// </summary>
+    public int ErrorIndex { get; set; } 
+    public bool Success { get; set; }
+    public Exception? Exception { get; set; }
+    public List<FlowResultData> Data { get; set; } = [];
+
+}
+public class FlowResultData
+{
     public required string Name { get; set; }
     public required string DisplayName { get; set; }
     public required string Value { get; set; }

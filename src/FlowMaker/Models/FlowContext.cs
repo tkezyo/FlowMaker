@@ -9,18 +9,27 @@ public class FlowContext
     /// </summary>
     public Guid[] FlowIds { get; }
     /// <summary>
+    /// 当前下标
+    /// </summary>
+    public int CurrentIndex { get; }
+    /// <summary>
+    /// 执行错误下标
+    /// </summary>
+    public int ErrorIndex { get; }
+    /// <summary>
     /// 流程配置
     /// </summary>
     public FlowDefinition FlowDefinition { get; }
     public ConfigDefinition ConfigDefinition { get; set; }
     public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
     public List<string> Middlewares { get; set; } = [];
-    public FlowContext(FlowDefinition flowDefinition, ConfigDefinition configDefinition, Guid[] flowIds)
+    public FlowContext(FlowDefinition flowDefinition, ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex)
     {
         FlowDefinition = flowDefinition;
         ConfigDefinition = configDefinition;
         FlowIds = flowIds;
-
+        CurrentIndex = currentIndex;
+        ErrorIndex = errorIndex;
         InitExecuteStepIds();
     }
     public void InitExecuteStepIds()
@@ -222,6 +231,14 @@ public class FlowLog
     public Guid Id { get; set; }
     public required string Category { get; set; }
     public required string Name { get; set; }
+    /// <summary>
+    /// 当前下标
+    /// </summary>
+    public int CurrentIndex { get; set; }
+    /// <summary>
+    /// 执行错误下标
+    /// </summary>
+    public int ErrorIndex { get; set; }
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }
     public List<NameValue> Inputs { get; set; } = [];

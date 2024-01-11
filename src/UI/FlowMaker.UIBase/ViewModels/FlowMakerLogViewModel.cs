@@ -36,29 +36,31 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     public async Task Load(Guid id)
     {
         Id = id;
-        var log = await _flowLogReader.GetFlowLog(Id.Value);
-        if (log == null)
+        var logs = await _flowLogReader.GetFlowLog(Id.Value);
+        foreach (var log in logs)
         {
-            return;
-        }
-        FlowCategory = log.Category;
-        FlowName = log.Name;
-        foreach (var stepLog in log.StepLogs)
-        {
-            foreach (var item in stepLog.Value.StepOnceLogs)
+            FlowCategory = log.Category;
+            FlowName = log.Name;
+            foreach (var stepLog in log.StepLogs)
             {
-                StepLogs.Add(new StepLogViewModel
+                foreach (var item in stepLog.Value.StepOnceLogs)
                 {
-                    Name = stepLog.Value.StepName,
-                    State = item.State.ToString(),
-                    StartTime = item.StartTime,
-                    EndTime = item.EndTime,
-                    Inputs = item.Inputs,
-                    Outputs = item.Outputs
-                });
+                    StepLogs.Add(new StepLogViewModel
+                    {
+                        Name = stepLog.Value.StepName,
+                        State = item.State.ToString(),
+                        StartTime = item.StartTime,
+                        EndTime = item.EndTime,
+                        Inputs = item.Inputs,
+                        Outputs = item.Outputs,
+                        StepCurrentIndex = item.CurrentIndex,
+                        StepErrorIndex = item.ErrorIndex,
+                        FlowCurrentIndex = log.CurrentIndex,
+                        FlowErrorIndex = log.ErrorIndex
+                    });
+                }
             }
         }
-
     }
 }
 
@@ -68,6 +70,10 @@ public class StepLogViewModel : ReactiveObject
     public required string State { get; set; }
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }
+    public int FlowCurrentIndex { get; set; }
+    public int FlowErrorIndex { get; set; }
+    public int StepCurrentIndex { get; set; }
+    public int StepErrorIndex { get; set; }
     public List<NameValue> Inputs { get; set; } = [];
     public List<NameValue> Outputs { get; set; } = [];
 }

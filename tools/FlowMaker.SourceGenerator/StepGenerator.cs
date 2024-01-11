@@ -370,7 +370,7 @@ namespace {item.Option.ContainingNamespace};
 
 partial class {item.Option.MetadataName}
 {{
-    public async Task<{type.ToDisplayString()}> WrapAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    public async Task<{type.ToDisplayString()}> WrapAsync(FlowContext? context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {{
 {inputStringBuilder}
         return await Convert(context, cancellationToken);

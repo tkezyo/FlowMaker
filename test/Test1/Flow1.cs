@@ -75,7 +75,7 @@ public partial class ValueConverter : IDataConverter<int>
     [Input]
     public int Prop2 { get; set; }
 
-    public async Task<int> Convert(FlowContext context, CancellationToken cancellationToken)
+    public async Task<int> Convert(FlowContext? context, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
         return Prop1 + Prop2;

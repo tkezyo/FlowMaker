@@ -2,6 +2,7 @@
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Polly;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Reactive.Subjects;
@@ -9,6 +10,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
+using System.Threading;
 using System.Xml.Linq;
 
 namespace FlowMaker;
@@ -59,7 +61,7 @@ public class FlowManager
     public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
 
-    public async Task<Guid> Run(string configName, string flowCategory, string flowName)
+    public async Task<List<FlowResult>> Run(string configName, string flowCategory, string flowName)
     {
         var config = await _flowProvider.LoadConfigDefinitionAsync(flowCategory, flowName, configName);
         if (config is null)
@@ -68,10 +70,9 @@ public class FlowManager
         }
         return await Run(config);
     }
-    public async Task<Guid> Run(ConfigDefinition configDefinition, Action<Guid>? Init = null)
-    {
-        var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
 
+    public async Task<List<FlowResult>> Run(ConfigDefinition configDefinition, Action<Guid>? Init = null)
+    {
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
         _status[runner.Id] = new RunnerStatus(runner, scope)
@@ -81,17 +82,68 @@ public class FlowManager
             Name = configDefinition.Name
         };
         Init?.Invoke(runner.Id);
-        _ = runner.Start(flow, configDefinition, []).ContinueWith(async c =>
+
+        var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
+        if (flow is null)
         {
-            await Dispose(runner.Id);
-        });
-        return runner.Id;
+            throw new InvalidOperationException("未找到流程");
+        }
+        List<FlowResult> result = [];
+        for (int i = 0; i < configDefinition.Repeat; i++)
+        {
+            var errorTimes = 0;
+            while (true)
+            {
+                try
+                {
+                    if (configDefinition.Timeout > 0)
+                    {
+                        var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(configDefinition.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
+                        result.Add(await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, configDefinition, [], i, errorTimes)));
+                    }
+                    else
+                    {
+                        result.Add(await runner.Start(flow, configDefinition, [], i, errorTimes));
+                    }
+                    break;
+                }
+                catch (Exception e)
+                {
+                    result.Add(new FlowResult
+                    {
+                        ErrorIndex = errorTimes,
+                        Exception = e,
+                        CurrentIndex = i,
+                        Success = false,
+                    });
+                    if (errorTimes >= configDefinition.Retry)
+                    {
+                        if (configDefinition.ErrorHandling == ErrorHandling.Skip)
+                        {
+                            break;
+                        }
+                        switch (configDefinition.ErrorHandling)
+                        {
+                            case ErrorHandling.Suspend:
+                                break;
+                            case ErrorHandling.Terminate:
+                                throw new Exception("流程执行失败", e);
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        await Dispose(runner.Id);
+        return result;
+
     }
-    public void SendEvent(Guid id, string eventName, string? eventData = null)
+    public async Task SendEvent(Guid id, string eventName, string? eventData = null)
     {
         if (_status.TryGetValue(id, out var status))
         {
-            status.FlowRunner.SendEventAsync(eventName, eventData);
+            await status.FlowRunner.SendEventAsync(eventName, eventData);
         }
     }
     public async Task Stop(Guid id)

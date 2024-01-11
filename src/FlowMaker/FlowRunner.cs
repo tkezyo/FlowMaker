@@ -62,7 +62,11 @@ public class FlowRunner : IDisposable
                   //全部完成
                   if (TaskCompletionSource is not null)
                   {
-                      List<FlowResult> results = [];
+                      FlowResult flowResult = new();
+                      flowResult.Success = true;
+                      flowResult.CurrentIndex = Context.CurrentIndex;
+                      flowResult.ErrorIndex = Context.ErrorIndex;
+
                       foreach (var item in Context.FlowDefinition.Data)
                       {
                           if (!item.IsOutput)
@@ -71,11 +75,11 @@ public class FlowRunner : IDisposable
                           }
                           if (Context.Data.TryGetValue(item.Name, out var data))
                           {
-                              results.Add(new FlowResult { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value });
+                              flowResult.Data.Add(new FlowResultData { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value });
                           }
                       }
                       State = FlowState.Complete;
-                      TaskCompletionSource.SetResult(results);
+                      TaskCompletionSource.SetResult(flowResult);
                   }
               }
 
@@ -85,7 +89,7 @@ public class FlowRunner : IDisposable
     }
 
 
-    protected TaskCompletionSource<List<FlowResult>>? TaskCompletionSource { get; set; }
+    protected TaskCompletionSource<FlowResult>? TaskCompletionSource { get; set; }
     public FlowState State { get; protected set; } = FlowState.None;
 
 
@@ -118,9 +122,9 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            var results = await flowRunner.Start(subFlowDefinition, config, Context.FlowIds, cancellationToken);
+            var results = await flowRunner.Start(subFlowDefinition, config, Context.FlowIds, stepContext.StepOnceStatus.CurrentIndex, stepContext.StepOnceStatus.ErrorIndex, cancellationToken);
 
-            foreach (var item in results)
+            foreach (var item in results.Data)
             {
                 await IDataConverterInject.SetValue(step.Outputs.First(v => v.Name == item.Name), item.Value, _serviceProvider, Context, cancellationToken);
             }
@@ -131,7 +135,7 @@ public class FlowRunner : IDisposable
         var converter = Context.FlowDefinition.Checkers.FirstOrDefault(c => c.Id == convertId) ?? flowStep.Checkers.FirstOrDefault(c => c.Id == convertId) ?? throw new Exception();
         return await IDataConverterInject.GetValue(converter, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
     }
-    public async Task<List<FlowResult>> Start(FlowDefinition flowInfo, ConfigDefinition config, Guid[] parentIds, CancellationToken? cancellationToken = null)
+    public async Task<FlowResult> Start(FlowDefinition flowInfo, ConfigDefinition config, Guid[] parentIds, int currentIndex, int errorIndex, CancellationToken? cancellationToken = null)
     {
         if (cancellationToken is null)
         {
@@ -141,7 +145,7 @@ public class FlowRunner : IDisposable
         {
             _cancellationToken = cancellationToken.Value;
         }
-        if (State != FlowState.None)
+        if (State != FlowState.None && State != FlowState.Complete)
         {
             throw new Exception("正在运行中");
         }
@@ -150,9 +154,9 @@ public class FlowRunner : IDisposable
 
         try
         {
-            TaskCompletionSource = new TaskCompletionSource<List<FlowResult>>();
+            TaskCompletionSource = new TaskCompletionSource<FlowResult>();
 
-            Context = new(flowInfo, config, [.. parentIds, Id]);
+            Context = new(flowInfo, config, [.. parentIds, Id], currentIndex, errorIndex);
 
             Context.InitState();
 

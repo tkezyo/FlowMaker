@@ -44,9 +44,9 @@
             </ToolBar>
             <ToolBar Visibility="{Binding IsChecked,ElementName=edit,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
                 <Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonSuccess.Small}"/>
-                <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
-                <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
+                <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
+                <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
                 <ComboBox ItemsSource="{Binding DataContext.ErrorHandlings,ElementName=page}" Style="{StaticResource ComboBoxExtend.Small}" SelectedItem="{Binding Model.ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理:" hc:TitleElement.TitlePlacement="Left"/>
                 <Separator Margin="10,0"/>
 

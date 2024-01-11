@@ -171,22 +171,22 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     /// 重试
     /// </summary>
     [Reactive]
-    public int Retry { get; set; }
+    public int Retry { get; set; } = 0;
     /// <summary>
     /// 重复,如果是负数，则一直重复
     /// </summary>
     [Reactive]
-    public int Repeat { get; set; }
+    public int Repeat { get; set; } = 1;
     /// <summary>
     /// 超时时间
     /// </summary>
     [Reactive]
-    public int Timeout { get; set; }
+    public int Timeout { get; set; } = 0;
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>
     [Reactive]
-    public ErrorHandling ErrorHandling { get; set; }
+    public ErrorHandling ErrorHandling { get; set; } = ErrorHandling.Skip;
     [Reactive]
     public ObservableCollection<InputDataViewModel> Data { get; set; } = [];
     [Reactive]

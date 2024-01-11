@@ -427,9 +427,8 @@ namespace FlowMaker.ViewModels
         {
             if (monitorInfoViewModel.Id.HasValue && !string.IsNullOrEmpty(monitorInfoViewModel.EventName))
             {
-                _flowManager.SendEvent(monitorInfoViewModel.Id.Value, monitorInfoViewModel.EventName, monitorInfoViewModel.EventData);
+                await _flowManager.SendEvent(monitorInfoViewModel.Id.Value, monitorInfoViewModel.EventName, monitorInfoViewModel.EventData);
             }
-            await Task.CompletedTask;
         }
         public ReactiveCommand<(MonitorInfoViewModel, MonitorStepInfoViewModel), Unit> AddDebugCommand { get; }
         public void AddDebug(MonitorInfoViewModel monitorInfoViewModel, MonitorStepInfoViewModel monitorStepInfoViewModel)
