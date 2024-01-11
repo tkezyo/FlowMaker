@@ -69,7 +69,7 @@ namespace FlowMaker.ViewModels
             SendEventCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SendEvent);
             SaveConfigCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SaveConfig);
             RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
-            
+
         }
 
         public CompositeDisposable? Disposables { get; set; }
@@ -110,7 +110,7 @@ namespace FlowMaker.ViewModels
                         return;
                     }
                     var id = c.Context.FlowIds[0];
-                    if (Model.Id != id)
+                    if (Model?.Id != id)
                     {
                         return;
                     }
@@ -175,7 +175,7 @@ namespace FlowMaker.ViewModels
                             });
                         }
                     }
-                    if (c.RunnerState == RunnerState.Complete || c.RunnerState == RunnerState.Cancel)
+                    if (c.RunnerState == RunnerState.Complete || c.RunnerState == RunnerState.Cancel || c.RunnerState == RunnerState.Error)
                     {
                         if (flow is not null)
                         {
@@ -362,7 +362,7 @@ namespace FlowMaker.ViewModels
             {
                 await _flowManager.Stop(Model.Id.Value);
             }
-            MessageBus.Current.SendMessage(this,"RemoveDebug");
+            MessageBus.Current.SendMessage(this, "RemoveDebug");
         }
 
         public ReactiveCommand<MonitorInfoViewModel, Unit> RunCommand { get; }

@@ -77,7 +77,7 @@ public class FlowRunner : IDisposable
                               results.Add(new FlowResult { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value });
                           }
                       }
-
+                      State = RunnerState.Complete;
                       TaskCompletionSource.SetResult(results);
                   }
               }
@@ -210,8 +210,6 @@ public class FlowRunner : IDisposable
                 Type = EventType.StartFlow,
             });
             var result = await TaskCompletionSource.Task;
-
-            State = RunnerState.Complete;
 
             foreach (var middleware in middlewares)
             {

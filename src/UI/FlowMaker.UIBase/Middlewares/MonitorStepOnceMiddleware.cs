@@ -10,15 +10,8 @@ using System.Threading.Tasks;
 
 namespace FlowMaker.Middlewares
 {
-    public class MonitorFlowMiddleware : IFlowMiddleware
+    public class MonitorFlowMiddleware(IFlowProvider flowProvider) : IFlowMiddleware
     {
-        private readonly IFlowProvider _flowProvider;
-
-        public MonitorFlowMiddleware(IFlowProvider flowProvider)
-        {
-            this._flowProvider = flowProvider;
-        }
-
         public int TotalCount { get; set; } = -1;
         public Task OnError(FlowContext flowContext, RunnerState state, Exception exception, CancellationToken cancellationToken)
         {
@@ -36,7 +29,7 @@ namespace FlowMaker.Middlewares
         {
             if (TotalCount == -1)
             {
-                var definition = await _flowProvider.LoadFlowDefinitionAsync(flowContext.FlowDefinition.Category, flowContext.FlowDefinition.Name);
+                var definition = await flowProvider.LoadFlowDefinitionAsync(flowContext.FlowDefinition.Category, flowContext.FlowDefinition.Name);
                 if (definition is null)
                 {
                     return;
@@ -53,7 +46,7 @@ namespace FlowMaker.Middlewares
                         }
                         else
                         {
-                            var stepDefinition = await _flowProvider.GetStepDefinitionAsync(item.Category, item.Name);
+                            var stepDefinition = await flowProvider.GetStepDefinitionAsync(item.Category, item.Name);
                             if (stepDefinition is FlowDefinition fd)
                             {
                                 await SetFlowStepAsync(fd);
