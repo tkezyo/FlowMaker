@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -50,6 +51,21 @@ namespace FlowMaker.ViewModels
             LoadTabsCommand = ReactiveCommand.CreateFromTask<string>(LoadTabs);
             RunCommand = ReactiveCommand.CreateFromTask<SpikeActionViewModel>(Run);
 
+            this.WhenAnyValue(c => c.CurrentTab).Subscribe(c =>
+            {
+                if (CurrentBox is not null)
+                {
+                    CurrentBox.Editing = false;
+                    CurrentBox = null;
+                }
+                if (CurrentAction is not null)
+                {
+                    CurrentAction.Editing = false;
+                    CurrentAction = null;
+                }
+                Reload();
+            });
+
             _mapper = mapper;
             _serviceProvider = serviceProvider;
             _messageBoxManager = messageBoxManager;
@@ -77,46 +93,40 @@ namespace FlowMaker.ViewModels
                 return menus;
             }
 
-            menus.Add(new MenuItemViewModel("编辑") { Command = ChangeEditCommand });
             menus.Add(new MenuItemViewModel("保存") { Command = SaveCommand });
 
-            var tabView = new MenuItemViewModel("标签");
-            var bixView = new MenuItemViewModel("盒子");
-            var actionView = new MenuItemViewModel("按钮");
-            menus.Add(tabView);
-            menus.Add(bixView);
-            menus.Add(actionView);
+            if (CurrentAction is not null)
+            {
+                menus.Add(new MenuItemViewModel("删除按钮") { Command = DeleteActionCommand });
+                menus.Add(new MenuItemViewModel("前移按钮") { Command = MoveActionCommand, CommandParameter = true });
+                menus.Add(new MenuItemViewModel("后移按钮") { Command = MoveActionCommand, CommandParameter = false });
+                menus.Add(new MenuItemViewModel("按钮变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ButtonSize });
+                menus.Add(new MenuItemViewModel("输入变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.InputSize });
+                menus.Add(new MenuItemViewModel("输出变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.OutputSize });
+                menus.Add(new MenuItemViewModel("边框变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ActionSize });
+            }
+            else if (CurrentBox is not null)
+            {
+                menus.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
 
+                menus.Add(new MenuItemViewModel("删除盒子") { Command = DeleteBoxCommand });
+                var customViews = new MenuItemViewModel("自定义视图");
+                menus.Add(customViews);
 
-            tabView.Children.Add(new MenuItemViewModel("添加标签") { Command = AddTabCommand });
-            tabView.Children.Add(new MenuItemViewModel("前移标签") { Command = MoveTabCommand, CommandParameter = false });
-            tabView.Children.Add(new MenuItemViewModel("后移标签") { Command = MoveTabCommand, CommandParameter = true });
-            tabView.Children.Add(new MenuItemViewModel("删除标签") { Command = DeleteTabCommand });
-
-
-            bixView.Children.Add(new MenuItemViewModel("添加盒子") { Command = AddBoxCommand });
-
-            bixView.Children.Add(new MenuItemViewModel("删除盒子") { Command = DeleteBoxCommand });
-
-            actionView.Children.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
-
-
-            actionView.Children.Add(new MenuItemViewModel("删除按钮") { Command = DeleteActionCommand });
-            actionView.Children.Add(new MenuItemViewModel("前移按钮") { Command = MoveActionCommand, CommandParameter = true });
-            actionView.Children.Add(new MenuItemViewModel("后移按钮") { Command = MoveActionCommand, CommandParameter = false });
-            actionView.Children.Add(new MenuItemViewModel("按钮变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ButtonSize });
-            actionView.Children.Add(new MenuItemViewModel("输入变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.InputSize });
-            actionView.Children.Add(new MenuItemViewModel("输出变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.OutputSize });
-            actionView.Children.Add(new MenuItemViewModel("边框变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ActionSize });
-
-
-            var customViews = new MenuItemViewModel("自定义视图");
-            //foreach (var item in _flowMakerOption.cu)
-            //{
-            //    customViews.Children.Add(new MenuItemViewModel("指令") { Command = ChangeCustomViewCommand });
-            //    customViews.Children.Add(new MenuItemViewModel(item) { Command = ChangeCustomViewCommand, CommandParameter = item });
-            //}
-            menus.Add(customViews);
+                //foreach (var item in _flowMakerOption.cu)
+                //{
+                //    customViews.Children.Add(new MenuItemViewModel("指令") { Command = ChangeCustomViewCommand });
+                //    customViews.Children.Add(new MenuItemViewModel(item) { Command = ChangeCustomViewCommand, CommandParameter = item });
+                //}
+            }
+            else
+            {
+                menus.Add(new MenuItemViewModel("添加标签") { Command = AddTabCommand });
+                menus.Add(new MenuItemViewModel("添加盒子") { Command = AddBoxCommand });
+                menus.Add(new MenuItemViewModel("前移标签") { Command = MoveTabCommand, CommandParameter = false });
+                menus.Add(new MenuItemViewModel("后移标签") { Command = MoveTabCommand, CommandParameter = true });
+                menus.Add(new MenuItemViewModel("删除标签") { Command = DeleteTabCommand });
+            }
 
             return menus;
         }
@@ -140,13 +150,16 @@ namespace FlowMaker.ViewModels
                 }
             }
 
+            Reload();
+        }
+        public void Reload()
+        {
             if (ReloadMenuCommand is not null && Section is not null)
             {
                 var list = InitMenu();
                 ReloadMenuCommand.Execute((Section, list)).Subscribe();
             }
         }
-
         public ReactiveCommand<bool, Unit> AddHeightCommand { get; }
         public void AddHeight(bool c)
         {
@@ -337,6 +350,19 @@ namespace FlowMaker.ViewModels
             }
             var r = JsonSerializer.Serialize(spikeTabs);
             await File.WriteAllTextAsync(path, r);
+            Edit = false;
+            if (CurrentBox is not null)
+            {
+                CurrentBox.Editing = false;
+            }
+            CurrentBox = null;
+            if (CurrentAction is not null)
+            {
+                CurrentAction.Editing = false;
+            }
+            CurrentAction = null;
+            var list = InitMenu();
+            ReloadMenuCommand?.Execute((Section, list)).Subscribe();
         }
 
         [Reactive]
@@ -436,6 +462,10 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<SpikeBoxViewModel, Unit> SelectBoxCommand { get; }
         public void SelectBox(SpikeBoxViewModel spikeBoxViewModel)
         {
+            if (!Edit)
+            {
+                return;
+            }
             if (CurrentAction is not null)
             {
                 CurrentAction.Editing = false;
@@ -454,6 +484,8 @@ namespace FlowMaker.ViewModels
                 {
                     CurrentBox = null;
                     SelectResizable(null);
+                    Reload();
+
                     return;
                 }
                 else
@@ -463,6 +495,7 @@ namespace FlowMaker.ViewModels
                 }
                 SelectResizable(CurrentBox.Size);
             }
+            Reload();
 
         }
         public ReactiveCommand<Unit, Unit> DeleteBoxCommand { get; }
@@ -604,6 +637,7 @@ namespace FlowMaker.ViewModels
                 SelectResizable(CurrentAction.ButtonSize);
 
             }
+            Reload();
         }
         public ReactiveCommand<Unit, Unit> DeleteActionCommand { get; }
         public void DeleteAction()
@@ -932,7 +966,7 @@ namespace FlowMaker.ViewModels
     {
     }
 
-    
+
     #endregion
 
 }

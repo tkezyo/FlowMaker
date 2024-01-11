@@ -28,12 +28,11 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     [Reactive]
     public int RowCount { get; set; } = 1;
     public const int MaxColCount = 4;
-    public ObservableCollection<FlowMakerDebugViewModel> Flows { get; set; } = [];
-    public ObservableCollection<MonitorRunningViewModel> Runnings { get; set; } = [];
     private readonly FlowMakerOption _flowMakerOption;
 
     [Reactive]
     public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = [];
+    public ObservableCollection<FlowMakerDebugViewModel> Flows { get; set; } = [];
 
     public FlowMakerMonitorViewModel(FlowManager flowManager, IOptions<FlowMakerOption> options, IServiceProvider serviceProvider, IMessageBoxManager messageBoxManager, IFlowProvider flowProvider)
     {
@@ -42,16 +41,6 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         _messageBoxManager = messageBoxManager;
         _flowProvider = flowProvider;
         _flowMakerOption = options.Value;
-        //DeleteCommand = ReactiveCommand.Create<MonitorInfoViewModel>(Delete);
-
-
-        CreateCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel?>(Create);
-        RemoveCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(Remove);
-        ExecuteFlowCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(ExecuteFlow);
-        RemoveConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RemoveConfig);
-        RunConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RunConfig);
-        LoadConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(LoadConfig);
-        ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
 
 
         foreach (var item in Enum.GetValues<ErrorHandling>())
@@ -79,50 +68,17 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     public override async Task Activate()
     {
         Disposables = [];
-        await LoadFlows();
 
         MessageBus.Current.Listen<FlowMakerDebugViewModel>("RemoveDebug").Subscribe(c =>
         {
             Flows.Remove(c);
         }).DisposeWith(Disposables);
-
-        MessageBus.Current.Listen<MonitorMessage>().Subscribe(c =>
+        MessageBus.Current.Listen<FlowMakerDebugViewModel>("AddDebug").Subscribe(c =>
         {
-            var id = c.Context.FlowIds[0];
-            var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);
-            if (running is null)
-            {
-                running = new MonitorRunningViewModel() { DisplayName = c.Context.FlowDefinition.Category + ":" + c.Context.FlowDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0], TotalCount = c.TotalCount };
-                Runnings.Insert(0, running);
-                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
-                if (mid is MonitorStepOnceMiddleware monitor)
-                {
-                    running.StepChange = monitor.StepChange.Subscribe(c =>
-                    {
-                        if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
-                        {
-                            running.CompleteCount += 0.5;
-                            running.Percent = running.CompleteCount / running.TotalCount * 100;
-                        }
-                        if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
-                        {
-                            running.CompleteCount += 0.5;
-                            running.Percent = running.CompleteCount / running.TotalCount * 100;
-                        }
-                        if (c.StepOnce.State == StepOnceState.Skip)
-                        {
-                            running.CompleteCount += 1;
-                            running.Percent = running.CompleteCount / running.TotalCount * 100;
-                        }
-                    });
-                }
-            }
-            else
-            {
-                running.RunnerState = c.RunnerState;
-            }
+            Flows.Add(c);
         }).DisposeWith(Disposables);
 
+        await Task.CompletedTask;
     }
     public override Task Deactivate()
     {
@@ -133,116 +89,6 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         }
         return base.Deactivate();
     }
-    #region FlowTree
-    public IList<MenuItemViewModel> InitMenu()
-    {
-        List<MenuItemViewModel> menus = [];
-        menus.Add(new MenuItemViewModel("创建流程") { Command = CreateCommand });
-
-        return menus;
-    }
-
-    public ObservableCollection<FlowCategoryViewModel> Categories { get; set; } = [];
-    public Task LoadFlows()
-    {
-        Categories.Clear();
-        _flowProvider.LoadCategories().ToList().ForEach(c =>
-        {
-            var category = new FlowCategoryViewModel(c);
-            Categories.Add(category);
-            _flowProvider.LoadFlows(c).ToList().ForEach(c =>
-            {
-                var flow = new FlowDefinitionInfoViewModel(category.Category, c.Name);
-                category.Flows.Add(flow);
-                foreach (var item in c.Configs)
-                {
-                    flow.Configs.Add(new ConfigDefinitionInfoViewModel(c.Category, c.Name, item));
-                }
-            });
-        });
-
-        return Task.CompletedTask;
-
-    }
-
-    public ReactiveCommand<FlowDefinitionInfoViewModel?, Unit> CreateCommand { get; }
-    public async Task Create(FlowDefinitionInfoViewModel? flowDefinitionInfoViewModel)
-    {
-        var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
-        await vm.Load(flowDefinitionInfoViewModel?.Category, flowDefinitionInfoViewModel?.Name);
-        _messageBoxManager.Window.Handle(new ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
-        {
-            LoadFlows();
-        });
-    }
-    public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> RemoveCommand { get; }
-    public async Task Remove(FlowDefinitionInfoViewModel flowDefinitionInfoViewModel)
-    {
-        await _flowProvider.RemoveFlow(flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
-        await LoadFlows();
-    }
-
-    public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> ExecuteFlowCommand { get; }
-    public async Task ExecuteFlow(FlowDefinitionInfoViewModel flowDefinitionInfoViewModel)
-    {
-        var vm = _serviceProvider.GetRequiredService<FlowMakerDebugViewModel>();
-        vm.FlowCategory = flowDefinitionInfoViewModel.Category;
-        vm.FlowName = flowDefinitionInfoViewModel.Name;
-        vm.ConfigName = null;
-        await vm.Load();
-        Flows.Add(vm);
-    }
-
-
-
-
-    public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> LoadConfigCommand { get; set; }
-    public async Task LoadConfig(ConfigDefinitionInfoViewModel model)
-    {
-        var vm = _serviceProvider.GetRequiredService<FlowMakerDebugViewModel>();
-        vm.FlowCategory = model.Category;
-        vm.FlowName = model.Name;
-        vm.ConfigName = model.ConfigName;
-        await vm.Load();
-        Flows.Add(vm);
-    }
-
-    public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RemoveConfigCommand { get; }
-    public async Task RemoveConfig(ConfigDefinitionInfoViewModel flowDefinitionInfoViewModel)
-    {
-        await _flowProvider.RemoveConfig(
-               flowDefinitionInfoViewModel.ConfigName,
-               flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
-        await LoadFlows();
-    }
-    public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RunConfigCommand { get; }
-    public async Task RunConfig(ConfigDefinitionInfoViewModel flowDefinitionInfoViewModel)
-    {
-        await _flowManager.Run(
-            flowDefinitionInfoViewModel.ConfigName,
-            flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
-    }
-
-    public ReactiveCommand<MonitorRunningViewModel, Unit> ShowLogCommand { get; }
-    public async Task ShowLog(MonitorRunningViewModel monitorRunningViewModel)
-    {
-        var vm = _serviceProvider.GetRequiredService<FlowMakerLogViewModel>();
-        await vm.Load(monitorRunningViewModel.Id);
-        _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
-        {
-        });
-    }
-    #endregion
-
-
-
-    //public ReactiveCommand<FlowMakerDebugViewModel, Unit> DeleteCommand { get; }
-    //public void Delete(FlowMakerDebugViewModel monitorInfoViewModel)
-    //{
-    //    //monitorInfoViewModel.StepChange?.Dispose();
-    //    Flows.Remove(monitorInfoViewModel);
-    //}
-
 }
 
 public class MonitorRunningViewModel : ReactiveObject
@@ -435,7 +281,6 @@ public class MenuItemViewModel(string name) : ReactiveObject
     public ICommand? Command { get; set; }
     [Reactive]
     public object? CommandParameter { get; set; }
-    public ObservableCollection<MenuItemViewModel> Children { get; set; } = [];
 }
 public class FlowCategoryViewModel(string category) : ReactiveObject
 {

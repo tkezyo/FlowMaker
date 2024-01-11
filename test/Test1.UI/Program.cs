@@ -87,14 +87,13 @@ namespace Test1
                 services.Configure<PageOptions>(options =>
                 {
                     options.FirstLoadPage = typeof(FlowMakerMainViewModel);
-                    options.Title = "FlowMaker";
+                    options.Title = "牛马指挥官";
                 });
                 services.Configure<FlowMakerOption>(options =>
                 {
                     options.FlowRootDir = "D:\\FlowMaker";
                     options.CustomPageRootDir = "D:\\FlowMakerCustomPage";
-                    options.Sections.Add("设备1");
-                    options.Sections.Add("设备2");
+                    options.Section = "设备1";
                     options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
                     options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("监控", "monitor"));
                     options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("调试", "debug"));

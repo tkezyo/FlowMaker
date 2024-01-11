@@ -13,12 +13,13 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <ToolBar Grid.Row="0">
             <TextBlock Text="{Binding FlowCategory}"/>
             <TextBlock Text="{Binding FlowName}"/>
         </ToolBar>
-        <DataGrid Grid.Row="1" ItemsSource="{Binding StepLogs}" AutoGenerateColumns="False">
+        <DataGrid Grid.Row="1" ItemsSource="{Binding StepLogs}" AutoGenerateColumns="False" SelectedItem="{Binding CurrentLog}" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="名称" Binding="{Binding  Name}"/>
                 <DataGridTextColumn Header="状态" Binding="{Binding  State}"/>
@@ -26,5 +27,8 @@
                 <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
             </DataGrid.Columns>
         </DataGrid>
+        <TextBlock Text="{Binding Detail}" Grid.Row="2">
+
+        </TextBlock>
     </Grid>
 </rxui:ReactiveUserControl>

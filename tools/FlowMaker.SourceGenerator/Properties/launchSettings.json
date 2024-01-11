@@ -2,7 +2,7 @@
   "profiles": {
     "配置文件 1": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\..\\src\\UI\\FlowMaker.UIBase\\FlowMaker.UIBase.csproj"
+      "targetProject": "..\\..\\test\\Test1.UI\\Test1.UI.csproj"
     }
   }
 }

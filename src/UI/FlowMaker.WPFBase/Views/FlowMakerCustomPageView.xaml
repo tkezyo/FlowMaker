@@ -19,11 +19,12 @@
         <converters:SpikeDeleteActionConverter x:Key="spikeDeleteActionConverter"/>
     </UserControl.Resources>
 
-    <TabControl ItemsSource="{Binding Tabs}" x:Name="tab"
+    <TabControl ItemsSource="{Binding Tabs}" x:Name="tab" 
             HorizontalContentAlignment="Center" TabStripPlacement="Left" SelectedItem="{Binding CurrentTab}">
         <TabControl.ItemTemplate>
             <DataTemplate>
-                <TextBlock Text="{Binding Name}"></TextBlock>
+                <TextBlock Text="{Binding Name}" >
+                </TextBlock>
             </DataTemplate>
         </TabControl.ItemTemplate>
         <TabControl.ContentTemplate>
@@ -74,7 +75,7 @@
                                     </Style>
                                 </GroupBox.Style>
                                 <GroupBox.Header>
-                                    <Button  Command="{Binding DataContext.SelectBoxCommand,ElementName=page}" IsEnabled="{Binding DataContext.Edit,ElementName=page}" Style="{StaticResource ButtonCustom}" Content="{Binding Name}"  CommandParameter="{Binding .}" >
+                                    <Button  Command="{Binding DataContext.SelectBoxCommand,ElementName=page}" Style="{StaticResource ButtonCustom}" Content="{Binding Name}"  CommandParameter="{Binding .}" >
                                     </Button>
                                 </GroupBox.Header>
                                 <Grid>

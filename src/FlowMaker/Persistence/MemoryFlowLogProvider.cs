@@ -75,14 +75,14 @@ namespace FlowMaker.Persistence
             {
                 return;
             }
-            var stepId = string.Join(",", flowContext.FlowIds) + "," + stepStatus.Id;
+            var stepId = string.Join(",", flowContext.FlowIds) + "," + flowStep.Id;
             if (!log.StepLogs.TryGetValue(stepId, out var stepLog))
             {
                 stepLog = new StepLog
                 {
                     FlowIds = flowContext.FlowIds,
                     StepName = flowStep.DisplayName,
-                    StepId = stepStatus.Id,
+                    StepId = flowStep.Id,
                     StartTime = DateTime.Now,
                 };
                 stepLog.StepOnceLogs.Add(stepOnceStatus);
@@ -90,7 +90,6 @@ namespace FlowMaker.Persistence
             }
             else
             {
-                stepLog.StepOnceLogs.Add(stepOnceStatus);
                 if (stepStatus.Complete)
                 {
                     stepLog.EndTime = DateTime.Now;

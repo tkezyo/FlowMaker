@@ -17,7 +17,8 @@ public class FlowMakerOption
     /// <summary>
     /// 自定义页面
     /// </summary>
-    public List<string> Sections { get; set; } = [];
+    public string? Section { get; set; }
+
   
     /// <summary>
     /// 包含所有的步骤及转换器

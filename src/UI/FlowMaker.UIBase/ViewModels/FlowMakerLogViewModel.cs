@@ -1,6 +1,7 @@
 ﻿using FlowMaker.Models;
 using FlowMaker.Persistence;
 using ReactiveUI;
+using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
 using Ty.ViewModels;
 
@@ -22,8 +23,15 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     public FlowMakerLogViewModel(IFlowLogReader flowLogReader)
     {
         this._flowLogReader = flowLogReader;
+        this.WhenAnyValue(c => c.CurrentLog).WhereNotNull().Subscribe(c =>
+        {
+            Detail = string.Join(",", c.Inputs.Select(d => $"{d.Name}={d.Value}").Concat(c.Outputs.Select(d => $"{d.Name}={d.Value}")));
+        });
     }
-
+    [Reactive]
+    public string? Detail { get; set; }
+    [Reactive]
+    public StepLogViewModel? CurrentLog { get; set; }
     public ObservableCollection<StepLogViewModel> StepLogs { get; set; } = [];
     public async Task Load(Guid id)
     {

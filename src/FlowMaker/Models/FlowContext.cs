@@ -101,7 +101,6 @@ public class FlowContext
         foreach (var item in FlowDefinition.Steps)
         {
             var state = new StepStatus();
-            state.Id = item.Id;
 
             foreach (var wait in item.WaitEvents)
             {
@@ -171,7 +170,6 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
 
 public class StepStatus
 {
-    public Guid Id { get; set; }
     /// <summary>
     /// 已完成
     /// </summary>

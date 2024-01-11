@@ -2,6 +2,8 @@
 using FlowMaker.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using ReactiveUI;
+using Ty;
+using Ty.ViewModels;
 
 namespace System
 {
@@ -26,6 +28,8 @@ namespace System
         {
             serviceDescriptors.AddKeyedTransient<ICustomPageInjectViewModel, TViewModel>(TViewModel.Category + ":" + TViewModel.Name);
             serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
+            serviceDescriptors.AddTransientView<TViewModel, TView>();
+
             serviceDescriptors.Configure<FlowMakerOption>(c =>
             {
                 var group = c.GetOrAddGroup(TViewModel.Category);
