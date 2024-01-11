@@ -107,7 +107,7 @@ public class FlowManager
         if (_status.TryGetValue(id, out var status))
         {
             status.ServiceScope.Dispose();
-            while (status.FlowRunner.State == RunnerState.Running)
+            while (status.FlowRunner.State == FlowState.Running)
             {
                 await Task.Delay(300);
             }

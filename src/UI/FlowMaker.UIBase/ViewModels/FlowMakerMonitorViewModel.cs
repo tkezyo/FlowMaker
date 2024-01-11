@@ -113,7 +113,7 @@ public class MonitorRunningViewModel : ReactiveObject
     [Reactive]
     public double Percent { get; set; }
     [Reactive]
-    public RunnerState RunnerState { get; set; }
+    public FlowState RunnerState { get; set; }
 
     public IDisposable? StepChange { get; set; }
 

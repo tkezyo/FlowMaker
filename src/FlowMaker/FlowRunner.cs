@@ -21,7 +21,7 @@ public class FlowRunner : IDisposable
     /// </summary>
     public FlowContext Context { get; set; } = null!;
 
-    private Subject<ExecuteStep> ExecuteStepSubject { get; } = new();
+    private Subject<ExecuteStepEvent> ExecuteStepSubject { get; } = new();
     private readonly Subject<Unit> _locker = new();
     private CancellationToken _cancellationToken;
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -57,7 +57,7 @@ public class FlowRunner : IDisposable
                       }
                   }
               }
-              if (Context.StepState.All(c => c.Value.Complete) && State == RunnerState.Running)
+              if (Context.StepState.All(c => c.Value.Complete) && State == FlowState.Running)
               {
                   //全部完成
                   if (TaskCompletionSource is not null)
@@ -74,7 +74,7 @@ public class FlowRunner : IDisposable
                               results.Add(new FlowResult { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value });
                           }
                       }
-                      State = RunnerState.Complete;
+                      State = FlowState.Complete;
                       TaskCompletionSource.SetResult(results);
                   }
               }
@@ -86,7 +86,7 @@ public class FlowRunner : IDisposable
 
 
     protected TaskCompletionSource<List<FlowResult>>? TaskCompletionSource { get; set; }
-    public RunnerState State { get; protected set; } = RunnerState.None;
+    public FlowState State { get; protected set; } = FlowState.None;
 
 
     private Dictionary<Guid, FlowRunner> SubFlowRunners { get; set; } = [];
@@ -141,11 +141,11 @@ public class FlowRunner : IDisposable
         {
             _cancellationToken = cancellationToken.Value;
         }
-        if (State != RunnerState.None)
+        if (State != FlowState.None)
         {
             throw new Exception("正在运行中");
         }
-        State = RunnerState.Running;
+        State = FlowState.Running;
         List<IFlowMiddleware> middlewares = [];
 
         try
@@ -202,7 +202,7 @@ public class FlowRunner : IDisposable
                 await middleware.OnExecuting(Context, State, CancellationTokenSource.Token);
             }
 
-            ExecuteStepSubject.OnNext(new ExecuteStep
+            ExecuteStepSubject.OnNext(new ExecuteStepEvent
             {
                 Type = EventType.StartFlow,
             });
@@ -217,7 +217,7 @@ public class FlowRunner : IDisposable
         }
         catch (Exception e)
         {
-            State = RunnerState.Error;
+            State = FlowState.Error;
 
             foreach (var middleware in middlewares)
             {
@@ -237,7 +237,7 @@ public class FlowRunner : IDisposable
         }
 
         Context.EventData[eventName] = eventData;
-        ExecuteStepSubject.OnNext(new ExecuteStep
+        ExecuteStepSubject.OnNext(new ExecuteStepEvent
         {
             Type = EventType.Event,
             EventData = eventData,
@@ -397,7 +397,7 @@ public class FlowRunner : IDisposable
                 return;
             }
             //执行下一步
-            ExecuteStepSubject.OnNext(new ExecuteStep
+            ExecuteStepSubject.OnNext(new ExecuteStepEvent
             {
                 Type = EventType.PreStep,
                 StepId = step.Id,
@@ -421,7 +421,7 @@ public class FlowRunner : IDisposable
             CancellationTokenSource.Cancel();
         }
 
-        State = RunnerState.Cancel;
+        State = FlowState.Cancel;
 
         List<IFlowMiddleware> middlewares = [];
         foreach (var item in Context.Middlewares)
@@ -441,18 +441,26 @@ public class FlowRunner : IDisposable
         }
 
         CancellationTokenSource.Dispose();
-        State = RunnerState.Complete;
+        State = FlowState.Complete;
         Disposables.Dispose();
     }
 }
-
+/// <summary>
+/// 步骤运行状态
+/// </summary>
+public enum FlowState
+{
+    None,
+    Running,
+    Complete,
+    Cancel,
+    Error,
+}
 public enum StepState
 {
     Start,
     Complete,
     ReceivedEvent,
-    ReceivedEventData,
-    ReceivedCancelDebug,
 }
 public enum StepOnceState
 {
@@ -462,9 +470,9 @@ public enum StepOnceState
     Skip
 }
 /// <summary>
-/// 事件
+/// 触发步骤的事件
 /// </summary>
-public class ExecuteStep
+public class ExecuteStepEvent
 {
     public EventType Type { get; set; }
     public Guid? StepId { get; set; }
@@ -480,14 +488,4 @@ public enum EventType
     Event,
     StartFlow,
 }
-/// <summary>
-/// 步骤运行状态
-/// </summary>
-public enum RunnerState
-{
-    None,
-    Running,
-    Complete,
-    Cancel,
-    Error,
-}
+

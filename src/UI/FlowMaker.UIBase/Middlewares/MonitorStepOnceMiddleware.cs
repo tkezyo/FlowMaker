@@ -8,19 +8,19 @@ namespace FlowMaker.Middlewares;
 public class MonitorFlowMiddleware(IFlowProvider flowProvider) : IFlowMiddleware
 {
     public int TotalCount { get; set; } = -1;
-    public Task OnError(FlowContext flowContext, RunnerState state, Exception exception, CancellationToken cancellationToken)
+    public Task OnError(FlowContext flowContext, FlowState state, Exception exception, CancellationToken cancellationToken)
     {
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
         return Task.CompletedTask;
     }
 
-    public Task OnExecuted(FlowContext flowContext, RunnerState state, CancellationToken cancellationToken)
+    public Task OnExecuted(FlowContext flowContext, FlowState state, CancellationToken cancellationToken)
     {
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
         return Task.CompletedTask;
     }
 
-    public async Task OnExecuting(FlowContext flowContext, RunnerState state, CancellationToken cancellationToken)
+    public async Task OnExecuting(FlowContext flowContext, FlowState state, CancellationToken cancellationToken)
     {
         if (TotalCount == -1)
         {
@@ -80,10 +80,10 @@ public class MonitorStepOnceMiddleware : IStepOnceMiddleware
     }
 }
 
-public class MonitorMessage(FlowContext context, RunnerState runnerState, int totalCount)
+public class MonitorMessage(FlowContext context, FlowState runnerState, int totalCount)
 {
     public FlowContext Context { get; set; } = context;
-    public RunnerState RunnerState { get; set; } = runnerState;
+    public FlowState RunnerState { get; set; } = runnerState;
     public int TotalCount { get; set; } = totalCount;
 }
 public class MonitorStepOnceMessage(StepOnceStatus stepOnce, Guid[] flowIds, Guid stepId)

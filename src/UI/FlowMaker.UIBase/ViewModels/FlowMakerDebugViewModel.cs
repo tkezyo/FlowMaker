@@ -116,7 +116,7 @@ namespace FlowMaker.ViewModels
                     }
                     var flow = Model;
 
-                    if (c.RunnerState == RunnerState.Running)
+                    if (c.RunnerState == FlowState.Running)
                     {
                         if (flow is null)
                         {
@@ -175,7 +175,7 @@ namespace FlowMaker.ViewModels
                             });
                         }
                     }
-                    if (c.RunnerState == RunnerState.Complete || c.RunnerState == RunnerState.Cancel || c.RunnerState == RunnerState.Error)
+                    if (c.RunnerState == FlowState.Complete || c.RunnerState == FlowState.Cancel || c.RunnerState == FlowState.Error)
                     {
                         if (flow is not null)
                         {

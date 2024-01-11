@@ -15,12 +15,12 @@ public class LogEventMiddleware(IFlowLogWriter flowLogWriter) : IEventMiddleware
 }
 public class LogFlowMiddleware(IFlowLogWriter flowLogWriter) : IFlowMiddleware
 {
-    public async Task OnError(FlowContext flowContext, RunnerState runnerState, Exception exception, CancellationToken cancellationToken)
+    public async Task OnError(FlowContext flowContext, FlowState runnerState, Exception exception, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
     }
 
-    public async Task OnExecuted(FlowContext flowContext, RunnerState runnerState, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken)
     {
         if (flowContext.FlowIds.Length == 1)
         {
@@ -28,7 +28,7 @@ public class LogFlowMiddleware(IFlowLogWriter flowLogWriter) : IFlowMiddleware
         }
     }
 
-    public async Task OnExecuting(FlowContext flowContext, RunnerState runnerState, CancellationToken cancellationToken)
+    public async Task OnExecuting(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken)
     {
         if (flowContext.FlowIds.Length == 1)
         {

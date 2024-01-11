@@ -225,9 +225,9 @@ public interface IOptionProviderInject
 
 public interface IFlowMiddleware
 {
-    Task OnExecuting(FlowContext flowContext, RunnerState runnerState, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, RunnerState runnerState, CancellationToken cancellationToken);
-    Task OnError(FlowContext flowContext, RunnerState runnerState, Exception exception, CancellationToken cancellationToken);
+    Task OnExecuting(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken);
+    Task OnError(FlowContext flowContext, FlowState runnerState, Exception exception, CancellationToken cancellationToken);
 }
 public interface IStepMiddleware
 {
