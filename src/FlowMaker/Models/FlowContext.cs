@@ -187,10 +187,7 @@ public class StepStatus
     /// 已开始
     /// </summary>
     public bool Started { get; set; }
-    /// <summary>
-    /// 暂停
-    /// </summary>
-    public bool Suspend { get; set; }
+
     public StepState State { get; set; }
 
     public DateTime? StartTime { get; set; }

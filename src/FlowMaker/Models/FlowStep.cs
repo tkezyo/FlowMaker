@@ -168,11 +168,6 @@ public enum ErrorHandling
     [Description("跳过")]
     Skip,
     /// <summary>
-    /// 暂停,需要添加恢复事件
-    /// </summary>
-    [Description("暂停")]
-    Suspend,
-    /// <summary>
     /// 停止
     /// </summary>
     [Description("停止")]

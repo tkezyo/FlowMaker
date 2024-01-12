@@ -1,8 +1,11 @@
-﻿using FlowMaker.Models;
+﻿using FlowMaker.Middlewares;
+using FlowMaker.Models;
 using FlowMaker.Persistence;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using Ty.ViewModels;
 
 namespace FlowMaker.ViewModels;
@@ -10,6 +13,7 @@ namespace FlowMaker.ViewModels;
 public partial class FlowMakerLogViewModel : ViewModelBase
 {
     private readonly IFlowLogReader _flowLogReader;
+    private readonly FlowManager _flowManager;
 
     public static string Category => "Log";
 
@@ -20,13 +24,15 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     public string? FlowCategory { get; set; }
     public string? FlowName { get; set; }
 
-    public FlowMakerLogViewModel(IFlowLogReader flowLogReader)
+    public FlowMakerLogViewModel(IFlowLogReader flowLogReader, FlowManager flowManager)
     {
         this._flowLogReader = flowLogReader;
+        this._flowManager = flowManager;
         this.WhenAnyValue(c => c.CurrentLog).WhereNotNull().Subscribe(c =>
         {
             Detail = string.Join(",", c.Inputs.Select(d => $"{d.Name}={d.Value}").Concat(c.Outputs.Select(d => $"{d.Name}={d.Value}")));
         });
+
     }
     [Reactive]
     public string? Detail { get; set; }
@@ -36,6 +42,7 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     public async Task Load(Guid id)
     {
         Id = id;
+        StepLogs.Clear();
         var logs = await _flowLogReader.GetFlowLog(Id.Value);
         foreach (var log in logs)
         {
@@ -61,6 +68,35 @@ public partial class FlowMakerLogViewModel : ViewModelBase
                 }
             }
         }
+    }
+
+    public override async Task Activate()
+    {
+        if (!Id.HasValue)
+        {
+            return;
+        }
+        Disposable = [];
+        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(Id.Value, "monitor");
+
+        if (mid is MonitorMiddleware monitor)
+        {
+            monitor.PercentChange.Sample(TimeSpan.FromSeconds(1)).ObserveOn(RxApp.MainThreadScheduler).Subscribe(async c =>
+            {
+                await Load(Id.Value);
+            }).DisposeWith(Disposable);
+        }
+        await Task.CompletedTask;
+    }
+    public CompositeDisposable? Disposable { get; set; }
+    public override Task Deactivate()
+    {
+        if (Disposable is not null)
+        {
+            Disposable.Dispose();
+            Disposable = null;
+        }
+        return base.Deactivate();
     }
 }
 

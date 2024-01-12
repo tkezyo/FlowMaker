@@ -1,12 +1,9 @@
-﻿using FlowMaker.Middlewares;
-using FlowMaker.Models;
+﻿using FlowMaker.Models;
 using FlowMaker.Persistence;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
-using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -127,7 +124,7 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     public bool ShowView { get; set; } = true;
     [Reactive]
     public RoutingState Router { get; set; } = new RoutingState();
-    public IDisposable? StepChange { get; set; }
+    public CompositeDisposable StepChange { get; set; } = [];
     [Reactive]
     public Guid? Id { get; set; }
     [Reactive]

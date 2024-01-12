@@ -68,25 +68,11 @@ namespace FlowMaker.ViewModels
                     running = new MonitorRunningViewModel() { DisplayName = c.Context.FlowDefinition.Category + ":" + c.Context.FlowDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0], TotalCount = c.TotalCount };
                     Runnings.Insert(0, running);
                     var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
-                    if (mid is MonitorStepOnceMiddleware monitor)
+                    if (mid is MonitorMiddleware monitor)
                     {
-                        running.StepChange = monitor.StepChange.Subscribe(c =>
+                        running.StepChange = monitor.PercentChange.Subscribe(c =>
                         {
-                            if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
-                            {
-                                running.CompleteCount += 0.5;
-                                running.Percent = running.CompleteCount / running.TotalCount * 100;
-                            }
-                            if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
-                            {
-                                running.CompleteCount += 0.5;
-                                running.Percent = running.CompleteCount / running.TotalCount * 100;
-                            }
-                            if (c.StepOnce.State == StepOnceState.Skip)
-                            {
-                                running.CompleteCount += 1;
-                                running.Percent = running.CompleteCount / running.TotalCount * 100;
-                            }
+                            running.Percent = c;
                         });
                     }
                 }

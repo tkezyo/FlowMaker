@@ -366,9 +366,6 @@ public class FlowRunner : IDisposable
                                     await item.OnExecuted(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
                                 }
                                 break;
-                            case ErrorHandling.Suspend:
-                                Context.StepState[step.Id].Suspend = true;
-                                return;
                             case ErrorHandling.Terminate:
                                 once.EndTime = DateTime.Now;
                                 once.State = StepOnceState.Error;
@@ -436,6 +433,11 @@ public class FlowRunner : IDisposable
         {
             await middleware.OnExecuted(Context, State, CancellationTokenSource.Token);
         }
+        foreach (var item in SubFlowRunners)
+        {
+            item.Value.StopAsync();
+        }
+        TaskCompletionSource?.SetCanceled();
     }
     public void Dispose()
     {

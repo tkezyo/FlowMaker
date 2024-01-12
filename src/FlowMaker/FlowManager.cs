@@ -1,33 +1,28 @@
 ﻿using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using System.Collections.Concurrent;
 using System.Data;
-using System.Reactive.Subjects;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
-using System.Threading;
 using System.Xml.Linq;
 
 namespace FlowMaker;
 
 public class FlowManager
 {
-    private const string flowDir = "Flows";
-    private const string configDir = "Configs";
-    private string FlowDir { get; set; }
-    private string ConfigDir { get; set; }
     private readonly JsonSerializerOptions _jsonSerializerOptions;
     private readonly IServiceProvider _serviceProvider;
     private readonly IFlowProvider _flowProvider;
+    private readonly ILogger<FlowManager> _logger;
     private readonly FlowMakerOption _flowMakerOption;
 
 
-    public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IFlowProvider flowProvider)
+    public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IFlowProvider flowProvider, ILogger<FlowManager> logger)
     {
         _jsonSerializerOptions = new()
         {
@@ -36,10 +31,9 @@ public class FlowManager
             IncludeFields = false
         };
         _flowMakerOption = options.Value;
-        FlowDir = Path.Combine(_flowMakerOption.FlowRootDir, flowDir);
-        ConfigDir = Path.Combine(_flowMakerOption.FlowRootDir, configDir);
         this._serviceProvider = serviceProvider;
         this._flowProvider = flowProvider;
+        this._logger = logger;
     }
 
     #region Run
@@ -57,6 +51,8 @@ public class FlowManager
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
         public FlowRunner FlowRunner { get; set; } = flowRunner;
+
+        public CancellationTokenSource Cancel { get; set; } = new();
     }
     public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
@@ -81,6 +77,7 @@ public class FlowManager
             Category = configDefinition.Category,
             Name = configDefinition.Name
         };
+        _status[runner.Id].Cancel = new CancellationTokenSource();
         Init?.Invoke(runner.Id);
 
         var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
@@ -92,20 +89,24 @@ public class FlowManager
         for (int i = 0; i < configDefinition.Repeat; i++)
         {
             var errorTimes = 0;
-            while (true)
+            while (!_status[runner.Id].Cancel.IsCancellationRequested)
             {
                 try
                 {
                     if (configDefinition.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(configDefinition.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        result.Add(await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, configDefinition, [], i, errorTimes)));
+                        result.Add(await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token)));
                     }
                     else
                     {
-                        result.Add(await runner.Start(flow, configDefinition, [], i, errorTimes));
+                        result.Add(await runner.Start(flow, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token));
                     }
                     break;
+                }
+                catch (TaskCanceledException)
+                {
+                    _logger.LogInformation("流程被取消:{Id}", runner.Id);
                 }
                 catch (Exception e)
                 {
@@ -124,8 +125,6 @@ public class FlowManager
                         }
                         switch (configDefinition.ErrorHandling)
                         {
-                            case ErrorHandling.Suspend:
-                                break;
                             case ErrorHandling.Terminate:
                                 throw new Exception("流程执行失败", e);
                             default:
@@ -150,6 +149,7 @@ public class FlowManager
     {
         if (_status.TryGetValue(id, out var status))
         {
+            status.Cancel.Cancel();
             await status.FlowRunner.StopAsync();
         }
     }

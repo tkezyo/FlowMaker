@@ -124,18 +124,21 @@ namespace FlowMaker.ViewModels
                         }
                         flow.Running = true;
                         flow.CompleteCount = 0;
+                        flow.Percent = 0;
                         flow.Timeout = c.Context.ConfigDefinition.Timeout;
                         flow.Retry = c.Context.ConfigDefinition.Retry;
                         flow.Repeat = c.Context.ConfigDefinition.Repeat;
                         flow.ErrorHandling = c.Context.ConfigDefinition.ErrorHandling;
-                        if (flow is null || flow.StepChange is not null)
-                        {
-                            return;
-                        }
+                        Reset(flow.Steps);
+
                         var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
-                        if (mid is MonitorStepOnceMiddleware monitor)
+                        if (mid is MonitorMiddleware monitor)
                         {
-                            flow.StepChange = monitor.StepChange.Subscribe(c =>
+                            monitor.PercentChange.Subscribe(c =>
+                            {
+                                flow.Percent = c;
+                            }).DisposeWith(flow.StepChange);
+                            monitor.StepChange.Subscribe(c =>
                             {
                                 var steps = flow.Steps;
 
@@ -156,23 +159,14 @@ namespace FlowMaker.ViewModels
                                 {
                                     if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
                                     {
-                                        flow.CompleteCount += 0.5;
-                                        flow.Percent = (double)flow.CompleteCount / flow.TotalCount * 100;
                                         step.Start(c.StepOnce.StartTime.Value);
                                     }
                                     if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
                                     {
-                                        flow.CompleteCount += 0.5;
-                                        flow.Percent = (double)flow.CompleteCount / flow.TotalCount * 100;
                                         step.Stop(c.StepOnce.EndTime.Value);
                                     }
-                                    if (c.StepOnce.State == StepOnceState.Skip)
-                                    {
-                                        flow.CompleteCount += 1;
-                                        flow.Percent = (double)flow.CompleteCount / flow.TotalCount * 100;
-                                    }
                                 }
-                            });
+                            }).DisposeWith(flow.StepChange);
                         }
                     }
                     if (c.RunnerState == FlowState.Complete || c.RunnerState == FlowState.Cancel || c.RunnerState == FlowState.Error)
@@ -187,7 +181,7 @@ namespace FlowMaker.ViewModels
                                 item.Stop(null);
                             }
                             flow.Percent = 100;
-                            flow.StepChange = null;
+                            flow.StepChange = [];
                         }
                     }
                 });
@@ -312,43 +306,41 @@ namespace FlowMaker.ViewModels
             {
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(FlowInstanceId.Value, "monitor");
 
-                if (mid is MonitorStepOnceMiddleware monitor)
+                if (mid is MonitorMiddleware monitor)
                 {
-                    this.Model.StepChange = monitor.StepChange.Subscribe(c =>
+                    monitor.StepChange.Subscribe(c =>
+                     {
+                         var steps = this.Model.Steps;
+
+                         foreach (var item in c.FlowIds.Skip(1))
+                         {
+                             if (steps is null)
+                             {
+                                 return;
+                             }
+                             steps = steps.FirstOrDefault(v => v.Id == item)?.Steps;
+                         }
+                         if (steps is null)
+                         {
+                             return;
+                         }
+                         var step = steps.FirstOrDefault(v => v.Id == c.StepId);
+                         if (step is not null)
+                         {
+                             if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
+                             {
+                                 step.Start(c.StepOnce.StartTime.Value);
+                             }
+                             if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
+                             {
+                                 step.Stop(c.StepOnce.EndTime.Value);
+                             }
+                         }
+                     }).DisposeWith(Model.StepChange);
+                    monitor.PercentChange.Subscribe(c =>
                     {
-                        var steps = this.Model.Steps;
-
-                        foreach (var item in c.FlowIds.Skip(1))
-                        {
-                            if (steps is null)
-                            {
-                                return;
-                            }
-                            steps = steps.FirstOrDefault(v => v.Id == item)?.Steps;
-                        }
-                        if (steps is null)
-                        {
-                            return;
-                        }
-                        var step = steps.FirstOrDefault(v => v.Id == c.StepId);
-                        if (step is not null)
-                        {
-                            if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
-                            {
-                                this.Model.CompleteCount += 0.5;
-
-                                this.Model.Percent = (double)this.Model.CompleteCount / this.Model.TotalCount * 100;
-                                step.Start(c.StepOnce.StartTime.Value);
-                            }
-                            if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
-                            {
-                                this.Model.CompleteCount += 0.5;
-
-                                this.Model.Percent = (double)this.Model.CompleteCount / this.Model.TotalCount * 100;
-                                step.Stop(c.StepOnce.EndTime.Value);
-                            }
-                        }
-                    });
+                        Model.Percent = c;
+                    }).DisposeWith(Model.StepChange);
                 }
             }
 
@@ -393,17 +385,10 @@ namespace FlowMaker.ViewModels
                     config.Middlewares.Add(item.Value);
                 }
             }
-            void Reset(IList<MonitorStepInfoViewModel> steps)
-            {
-                foreach (var item in steps)
-                {
-                    item.UsedTime = default;
-                    Reset(item.Steps);
-                }
-            }
+
             Reset(monitorInfoViewModel.Steps);
             monitorInfoViewModel.StepChange?.Dispose();
-            monitorInfoViewModel.StepChange = null;
+            monitorInfoViewModel.StepChange = [];
             await _flowManager.Run(config, c =>
             {
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(c, "debug");
@@ -413,6 +398,14 @@ namespace FlowMaker.ViewModels
                 }
                 monitorInfoViewModel.Id = c;
             });
+        }
+        protected void Reset(IList<MonitorStepInfoViewModel> steps)
+        {
+            foreach (var item in steps)
+            {
+                item.UsedTime = default;
+                Reset(item.Steps);
+            }
         }
         public ReactiveCommand<MonitorInfoViewModel, Unit> StopCommand { get; }
         public async Task Stop(MonitorInfoViewModel monitorInfoViewModel)
