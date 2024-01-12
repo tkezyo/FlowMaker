@@ -12,7 +12,7 @@ namespace FlowMaker
 {
     public class FlowMakerWpfModule : ModuleBase
     {
-        public override void DepandOn()
+        public override void DependsOn()
         {
             AddDepand<FlowMakerUIBaseModule>();
         }

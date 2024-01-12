@@ -7,7 +7,7 @@ namespace FlowMaker
 
     public class FlowMakerModule : ModuleBase
     {
-        public override void DepandOn()
+        public override void DependsOn()
         {
           
         }
@@ -27,7 +27,7 @@ namespace FlowMaker
 
         public abstract Task ConfigureServices(IServiceCollection serviceDescriptors);
 
-        public virtual void DepandOn()
+        public virtual void DependsOn()
         {
         }
 
@@ -46,7 +46,7 @@ namespace FlowMaker
             {
                 throw new Exception($"模块 {t.Name} 依赖于 {this.Name}，但是 {this.Name} 已经依赖于 {t.Name}，这将导致循环依赖");
             }
-            t.DepandOn();
+            t.DependsOn();
         }
     }
 
@@ -54,7 +54,7 @@ namespace FlowMaker
     {
         string Name { get; }
         Dictionary<string, IModule> Modules { get; set; }
-        void DepandOn();
+        void DependsOn();
         Task ConfigureServices(IServiceCollection serviceDescriptors);
         public static List<IModule> AllModules { get; set; } = [];
         public static bool Verification(IModule newPre, IModule source)
@@ -96,7 +96,7 @@ namespace FlowMaker
                 modules.Add(moduleModel);
             }
             var t = new T();
-            t.DepandOn();
+            t.DependsOn();
             SetModules(t);
 
             List<ModuleModel> Order(IEnumerable<ModuleModel> ganttActions)

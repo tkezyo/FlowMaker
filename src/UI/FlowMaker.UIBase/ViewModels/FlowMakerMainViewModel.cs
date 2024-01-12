@@ -34,10 +34,10 @@ namespace FlowMaker.ViewModels
             this._flowProvider = flowProvider;
             ChangeViewCommand = ReactiveCommand.Create(ChangeView);
             ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
-            ReloadMenuCommand = ReactiveCommand.Create<(string, IList<MenuItemViewModel>)>(c =>
+            ReloadMenuCommand = ReactiveCommand.Create<IList<MenuItemViewModel>>(c =>
             {
                 Menus.Clear();
-                Menus.Add(c.Item2);
+                Menus.Add(c);
             });
 
             CreateCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel?>(Create);
@@ -96,6 +96,7 @@ namespace FlowMaker.ViewModels
                     {
                         var vm = _serviceProvider.GetRequiredService<FlowMakerMonitorViewModel>();
                         vm.SetScreen(this);
+                        Menus.Add(vm.InitMenu());
 
                         await Router.NavigateAndReset.Execute(vm);
                         PageName = "自定义";
@@ -110,7 +111,7 @@ namespace FlowMaker.ViewModels
                         var vm = _serviceProvider.GetRequiredService<FlowMakerCustomPageViewModel>();
                         vm.SetScreen(this);
                         await Router.NavigateAndReset.Execute(vm);
-                        await vm.LoadTabs(_flowMakerOption.Section);
+                        await vm.LoadTabs();
                         vm.ReloadMenuCommand = ReloadMenuCommand;
                         Menus.Add(vm.InitMenu());
                         PageName = "测试";
@@ -118,16 +119,14 @@ namespace FlowMaker.ViewModels
                     break;
             }
         }
-        public ReactiveCommand<(string, IList<MenuItemViewModel>), Unit> ReloadMenuCommand { get; }
+        public ReactiveCommand<IList<MenuItemViewModel>, Unit> ReloadMenuCommand { get; }
 
         public ReactiveCommand<MonitorRunningViewModel, Unit> ShowLogCommand { get; }
         public async Task ShowLog(MonitorRunningViewModel monitorRunningViewModel)
         {
             var vm = _serviceProvider.GetRequiredService<FlowMakerLogViewModel>();
             await vm.Load(monitorRunningViewModel.Id);
-            _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
-            {
-            });
+            _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c => { });
         }
 
 

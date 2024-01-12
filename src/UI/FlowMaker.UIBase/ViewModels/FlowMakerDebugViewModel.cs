@@ -64,10 +64,10 @@ namespace FlowMaker.ViewModels
             AddDebugCommand = ReactiveCommand.Create<(MonitorInfoViewModel, MonitorStepInfoViewModel)>(c => AddDebug(c.Item1, c.Item2));
             RemoveDebugCommand = ReactiveCommand.Create<(MonitorInfoViewModel, MonitorStepInfoViewModel)>(c => RemoveDebug(c.Item1, c.Item2));
 
-            RunCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Run);
-            StopCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(Stop);
-            SendEventCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SendEvent);
-            SaveConfigCommand = ReactiveCommand.CreateFromTask<MonitorInfoViewModel>(SaveConfig);
+            RunCommand = ReactiveCommand.CreateFromTask(Run);
+            StopCommand = ReactiveCommand.CreateFromTask(Stop);
+            SendEventCommand = ReactiveCommand.CreateFromTask(SendEvent);
+            SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
             RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
 
         }
@@ -357,9 +357,14 @@ namespace FlowMaker.ViewModels
             MessageBus.Current.SendMessage(this, "RemoveDebug");
         }
 
-        public ReactiveCommand<MonitorInfoViewModel, Unit> RunCommand { get; }
-        public async Task Run(MonitorInfoViewModel monitorInfoViewModel)
+        public ReactiveCommand<Unit, Unit> RunCommand { get; }
+        public async Task Run()
         {
+            var monitorInfoViewModel = Model;
+            if (monitorInfoViewModel is null)
+            {
+                return;
+            }
             var config = new ConfigDefinition
             {
                 Category = monitorInfoViewModel.Category,
@@ -407,20 +412,20 @@ namespace FlowMaker.ViewModels
                 Reset(item.Steps);
             }
         }
-        public ReactiveCommand<MonitorInfoViewModel, Unit> StopCommand { get; }
-        public async Task Stop(MonitorInfoViewModel monitorInfoViewModel)
+        public ReactiveCommand<Unit, Unit> StopCommand { get; }
+        public async Task Stop()
         {
-            if (monitorInfoViewModel.Id.HasValue)
+            if (Model is not null && Model.Id.HasValue)
             {
-                await _flowManager.Stop(monitorInfoViewModel.Id.Value);
+                await _flowManager.Stop(Model.Id.Value);
             }
         }
-        public ReactiveCommand<MonitorInfoViewModel, Unit> SendEventCommand { get; }
-        public async Task SendEvent(MonitorInfoViewModel monitorInfoViewModel)
+        public ReactiveCommand<Unit, Unit> SendEventCommand { get; }
+        public async Task SendEvent()
         {
-            if (monitorInfoViewModel.Id.HasValue && !string.IsNullOrEmpty(monitorInfoViewModel.EventName))
+            if (Model is not null && Model.Id.HasValue && !string.IsNullOrEmpty(Model.EventName))
             {
-                await _flowManager.SendEvent(monitorInfoViewModel.Id.Value, monitorInfoViewModel.EventName, monitorInfoViewModel.EventData);
+                await _flowManager.SendEvent(Model.Id.Value, Model.EventName, Model.EventData);
             }
         }
         public ReactiveCommand<(MonitorInfoViewModel, MonitorStepInfoViewModel), Unit> AddDebugCommand { get; }
@@ -451,9 +456,14 @@ namespace FlowMaker.ViewModels
                 debug.RemoveDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id.Value);
             }
         }
-        public ReactiveCommand<MonitorInfoViewModel, Unit> SaveConfigCommand { get; set; }
-        public async Task SaveConfig(MonitorInfoViewModel model)
+        public ReactiveCommand<Unit, Unit> SaveConfigCommand { get; set; }
+        public async Task SaveConfig()
         {
+            if (Model is null)
+            {
+                return;
+            }
+            var model = Model;
             if (string.IsNullOrEmpty(model.ConfigName))
             {
                 var configName = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入名称"));

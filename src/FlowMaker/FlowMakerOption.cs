@@ -9,7 +9,9 @@ public class FlowMakerOption
     /// 文件的目录
     /// </summary>
     public string CustomPageRootDir { get; set; } = string.Empty;
+    public string DebugPageRootDir { get; set; } = string.Empty;
     public string FlowRootDir { get; set; } = string.Empty;
+    public bool AutoRun { get; set; } = false;
     /// <summary>
     /// 是否可编辑
     /// </summary>
@@ -19,7 +21,7 @@ public class FlowMakerOption
     /// </summary>
     public string? Section { get; set; }
 
-  
+
     /// <summary>
     /// 包含所有的步骤及转换器
     /// </summary>

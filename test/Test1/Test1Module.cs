@@ -9,7 +9,7 @@ namespace Test1
         {
 
         }
-        public override void DepandOn()
+        public override void DependsOn()
         {
             AddDepand<FlowMakerModule>();
         }

@@ -48,7 +48,7 @@ namespace FlowMaker.ViewModels
             ChangeCustomViewCommand = ReactiveCommand.Create<string?>(ChangeCustomView);
             SaveCommand = ReactiveCommand.CreateFromTask(Save);
             ChangeEditCommand = ReactiveCommand.Create(ChangeEdit);
-            LoadTabsCommand = ReactiveCommand.CreateFromTask<string>(LoadTabs);
+            LoadTabsCommand = ReactiveCommand.CreateFromTask(LoadTabs);
             RunCommand = ReactiveCommand.CreateFromTask<SpikeActionViewModel>(Run);
 
             this.WhenAnyValue(c => c.CurrentTab).Subscribe(c =>
@@ -78,7 +78,7 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public bool CanEdit { get; set; }
         [Reactive]
-        public ReactiveCommand<(string, IList<MenuItemViewModel>), Unit>? ReloadMenuCommand { get; set; }
+        public ReactiveCommand<IList<MenuItemViewModel>, Unit>? ReloadMenuCommand { get; set; }
         #region 菜单
         public IList<MenuItemViewModel> InitMenu()
         {
@@ -154,10 +154,10 @@ namespace FlowMaker.ViewModels
         }
         public void Reload()
         {
-            if (ReloadMenuCommand is not null && Section is not null)
+            if (ReloadMenuCommand is not null)
             {
                 var list = InitMenu();
-                ReloadMenuCommand.Execute((Section, list)).Subscribe();
+                ReloadMenuCommand.Execute(list).Subscribe();
             }
         }
         public ReactiveCommand<bool, Unit> AddHeightCommand { get; }
@@ -272,26 +272,22 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public bool Edit { get; set; }
 
-        [Reactive]
-        public ObservableCollection<string> Sections { get; set; } = [];
 
-        [Reactive]
-        public string? Section { get; set; }
-        public ReactiveCommand<string, Unit> LoadTabsCommand { get; set; }
+        public ReactiveCommand<Unit, Unit> LoadTabsCommand { get; set; }
         /// <summary>
         /// 通过设备类型获取Tabs
         /// </summary>
         /// <param name="section"></param>
         /// <returns></returns>
-        public async Task LoadTabs(string section)
+        public async Task LoadTabs()
         {
             Tabs.Clear();
-            Section = section;
+
             if (!Directory.Exists(_flowMakerOption.CustomPageRootDir))
             {
                 Directory.CreateDirectory(_flowMakerOption.CustomPageRootDir);
             }
-            var path = Path.Combine(_flowMakerOption.CustomPageRootDir, section + ".json");
+            var path = Path.Combine(_flowMakerOption.CustomPageRootDir, _flowMakerOption.Section + ".json");
             if (!File.Exists(path))
             {
                 return;
@@ -334,7 +330,7 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<Unit, Unit> SaveCommand { get; set; }
         public async Task Save()
         {
-            if (Section is null)
+            if (_flowMakerOption.Section is null)
             {
                 return;
             }
@@ -342,7 +338,7 @@ namespace FlowMaker.ViewModels
             {
                 Directory.CreateDirectory(_flowMakerOption.CustomPageRootDir);
             }
-            var path = Path.Combine(_flowMakerOption.CustomPageRootDir, Section + ".json");
+            var path = Path.Combine(_flowMakerOption.CustomPageRootDir, _flowMakerOption.Section + ".json");
             List<SpikeTab> spikeTabs = [];
             foreach (var item in Tabs)
             {
@@ -362,7 +358,7 @@ namespace FlowMaker.ViewModels
             }
             CurrentAction = null;
             var list = InitMenu();
-            ReloadMenuCommand?.Execute((Section, list)).Subscribe();
+            ReloadMenuCommand?.Execute(list).Subscribe();
         }
 
         [Reactive]

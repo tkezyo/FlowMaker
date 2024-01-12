@@ -1,12 +1,15 @@
 ﻿using FlowMaker.Models;
 using FlowMaker.Persistence;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
+using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Text.Json;
 using System.Windows.Input;
 using Ty.Services;
 using Ty.ViewModels;
@@ -39,7 +42,7 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         _flowProvider = flowProvider;
         _flowMakerOption = options.Value;
 
-
+        SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
         foreach (var item in Enum.GetValues<ErrorHandling>())
         {
             ErrorHandlings.Add(item);
@@ -60,22 +63,29 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     }
 
     public CompositeDisposable? Disposables { get; set; }
-    private readonly AsyncLock locker = new();
 
+    public bool Loaded { get; set; }
     public override async Task Activate()
     {
         Disposables = [];
+        if (!Loaded)
+        {
+            await Load();
+            Loaded = true;
+        }
+        if (_flowMakerOption.AutoRun)
+        {
+            foreach (var item in Flows)
+            {
+                _ = item.Run();
+            }
+        }
 
         MessageBus.Current.Listen<FlowMakerDebugViewModel>("RemoveDebug").Subscribe(c =>
         {
             Flows.Remove(c);
         }).DisposeWith(Disposables);
-        MessageBus.Current.Listen<FlowMakerDebugViewModel>("AddDebug").Subscribe(c =>
-        {
-            Flows.Add(c);
-        }).DisposeWith(Disposables);
-
-        await Task.CompletedTask;
+        MessageBus.Current.Listen<FlowMakerDebugViewModel>("AddDebug").Subscribe(Flows.Add).DisposeWith(Disposables);
     }
     public override Task Deactivate()
     {
@@ -86,6 +96,82 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         }
         return base.Deactivate();
     }
+
+    public IList<MenuItemViewModel> InitMenu()
+    {
+        List<MenuItemViewModel> menus = [];
+
+        menus.Add(new MenuItemViewModel("保存") { Command = SaveCommand });
+
+        return menus;
+    }
+    public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+    public async Task SaveAsync()
+    {
+        if (_flowMakerOption.Section is null)
+        {
+            return;
+        }
+        if (!Directory.Exists(_flowMakerOption.CustomPageRootDir))
+        {
+            Directory.CreateDirectory(_flowMakerOption.CustomPageRootDir);
+        }
+        var path = Path.Combine(_flowMakerOption.CustomPageRootDir, _flowMakerOption.Section + ".json");
+        List<ConfigInfo> infos = [];
+        foreach (var item in Flows)
+        {
+            if (string.IsNullOrEmpty(item.FlowCategory) || string.IsNullOrEmpty(item.FlowName) || string.IsNullOrEmpty(item.ConfigName))
+            {
+                await _messageBoxManager.Alert.Handle(new AlertInfo("必须先保存配置") { OwnerTitle = WindowTitle });
+                return;
+            }
+            infos.Add(new ConfigInfo { Category = item.FlowCategory, ConfigName = item.ConfigName, Name = item.FlowName });
+        }
+        var r = JsonSerializer.Serialize(infos);
+        await File.WriteAllTextAsync(path, r);
+    }
+
+    public async Task Load()
+    {
+        if (!Directory.Exists(_flowMakerOption.CustomPageRootDir))
+        {
+            Directory.CreateDirectory(_flowMakerOption.CustomPageRootDir);
+        }
+        var path = Path.Combine(_flowMakerOption.CustomPageRootDir, _flowMakerOption.Section + ".json");
+        if (!File.Exists(path))
+        {
+            return;
+        }
+        var infos = new List<ConfigInfo>();
+        try
+        {
+            var r = await File.ReadAllTextAsync(path);
+            infos = JsonSerializer.Deserialize<List<ConfigInfo>>(r);
+        }
+        catch (Exception ex)
+        {
+            await _messageBoxManager.Alert.Handle(new AlertInfo(ex.Message) { OwnerTitle = WindowTitle });
+            return;
+        }
+        foreach (var item in infos)
+        {
+            var flow = _serviceProvider.GetRequiredService<FlowMakerDebugViewModel>();
+
+            flow.FlowCategory = item.Category;
+            flow.FlowName = item.Name;
+            flow.ConfigName = item.ConfigName;
+            await flow.Load();
+            Flows.Add(flow);
+        }
+    }
+}
+
+public class ConfigInfo
+{
+    public required string Category { get; set; }
+    public required string Name { get; set; }
+    public required string ConfigName { get; set; }
+
 }
 
 public class MonitorRunningViewModel : ReactiveObject

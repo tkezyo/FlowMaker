@@ -6,7 +6,7 @@ namespace FlowMaker
 {
     public class FlowMakerUIBaseModule : ModuleBase
     {
-        public override void DepandOn()
+        public override void DependsOn()
         {
             AddDepand<FlowMakerModule>();
         }

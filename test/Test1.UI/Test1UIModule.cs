@@ -17,7 +17,7 @@ namespace Test1
 {
     public class Test1UIModule : ModuleBase
     {
-        public override void DepandOn()
+        public override void DependsOn()
         {
             AddDepand<Test1Module>();
             AddDepand<FlowMakerWpfModule>();
@@ -40,8 +40,9 @@ namespace Test1
             });
             serviceDescriptors.Configure<FlowMakerOption>(options =>
             {
-                options.FlowRootDir = "D:\\FlowMaker";
-                options.CustomPageRootDir = "D:\\FlowMakerCustomPage";
+                options.FlowRootDir = "D:\\FlowMaker\\Flow";
+                options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
+                options.CustomPageRootDir = "D:\\FlowMaker\\CustomPage";
                 options.Section = "设备1";
                 options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
                 options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("监控", "monitor"));

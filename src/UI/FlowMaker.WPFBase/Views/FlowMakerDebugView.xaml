@@ -24,9 +24,9 @@
             <ToolBar>
                 <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="20" Width="20" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}"></hc:CircleProgressBar>
                 <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" Style="{StaticResource TextBlockDefault}"/>
-                <Button Content="运行" Command="{Binding RunCommand}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                <Button Content="运行" Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
 
-                <Button Content="停止" Command="{Binding StopCommand}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" />
+                <Button Content="停止" Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" />
                 <Button Content="删除" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
              
 
@@ -37,13 +37,13 @@
             
             </ToolBar>
             <ToolBar Visibility="{Binding IsChecked,ElementName=event,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
-                <Button Content="发送事件" Command="{Binding DataContext.SendEventCommand,ElementName=page}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonDefault.Small}"/>
+                <Button Content="发送事件" Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonDefault.Small}"/>
                 <TextBox Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
                 <TextBox Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
                 
             </ToolBar>
             <ToolBar Visibility="{Binding IsChecked,ElementName=edit,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
-                <Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" CommandParameter="{Binding Model}" Style="{StaticResource ButtonSuccess.Small}"/>
+                <Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}"/>
                 <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
