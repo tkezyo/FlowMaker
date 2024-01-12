@@ -112,11 +112,11 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         {
             return;
         }
-        if (!Directory.Exists(_flowMakerOption.CustomPageRootDir))
+        if (!Directory.Exists(_flowMakerOption.DebugPageRootDir))
         {
-            Directory.CreateDirectory(_flowMakerOption.CustomPageRootDir);
+            Directory.CreateDirectory(_flowMakerOption.DebugPageRootDir);
         }
-        var path = Path.Combine(_flowMakerOption.CustomPageRootDir, _flowMakerOption.Section + ".json");
+        var path = Path.Combine(_flowMakerOption.DebugPageRootDir, _flowMakerOption.Section + ".json");
         List<ConfigInfo> infos = [];
         foreach (var item in Flows)
         {
@@ -133,11 +133,11 @@ public class FlowMakerMonitorViewModel : ViewModelBase
 
     public async Task Load()
     {
-        if (!Directory.Exists(_flowMakerOption.CustomPageRootDir))
+        if (!Directory.Exists(_flowMakerOption.DebugPageRootDir))
         {
-            Directory.CreateDirectory(_flowMakerOption.CustomPageRootDir);
+            Directory.CreateDirectory(_flowMakerOption.DebugPageRootDir);
         }
-        var path = Path.Combine(_flowMakerOption.CustomPageRootDir, _flowMakerOption.Section + ".json");
+        var path = Path.Combine(_flowMakerOption.DebugPageRootDir, _flowMakerOption.Section + ".json");
         if (!File.Exists(path))
         {
             return;
@@ -151,6 +151,10 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         catch (Exception ex)
         {
             await _messageBoxManager.Alert.Handle(new AlertInfo(ex.Message) { OwnerTitle = WindowTitle });
+            return;
+        }
+        if (infos is null)
+        {
             return;
         }
         foreach (var item in infos)
