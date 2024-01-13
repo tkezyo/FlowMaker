@@ -21,7 +21,7 @@
     </UserControl.Resources>
 
     <TabControl ItemsSource="{Binding Tabs}" x:Name="tab" 
-            HorizontalContentAlignment="Center" TabStripPlacement="Left" SelectedItem="{Binding CurrentTab}">
+            HorizontalContentAlignment="Center" TabStripPlacement="Top" SelectedItem="{Binding CurrentTab}" >
         <TabControl.ItemTemplate>
             <DataTemplate>
                 <TextBlock Text="{Binding Name}" >
