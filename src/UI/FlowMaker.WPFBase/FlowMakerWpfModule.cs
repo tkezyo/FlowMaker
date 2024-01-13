@@ -14,7 +14,7 @@ namespace FlowMaker
     {
         public override void DependsOn()
         {
-            AddDepand<FlowMakerUIBaseModule>();
+            AddDepend<FlowMakerUIBaseModule>();
         }
 
         public override Task ConfigureServices(IServiceCollection serviceDescriptors)
@@ -25,7 +25,7 @@ namespace FlowMaker
             serviceDescriptors.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
             serviceDescriptors.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
             serviceDescriptors.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
-            serviceDescriptors.AddTransientView<FlowMakerDebugViewModel, FlowMakerDebugView>();
+            serviceDescriptors.AddTransientCustomPageView<FlowMakerDebugViewModel, FlowMakerDebugView>();
             serviceDescriptors.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
             serviceDescriptors.AddTransientView<FlowMakerLogViewModel, FlowMakerLogView>();
 

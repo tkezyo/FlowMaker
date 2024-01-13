@@ -95,6 +95,8 @@ namespace FlowMaker.ViewModels
 
             menus.Add(new MenuItemViewModel("保存") { Command = SaveCommand });
 
+
+            //TODO 改到菜单栏显示
             if (CurrentAction is not null)
             {
                 menus.Add(new MenuItemViewModel("删除按钮") { Command = DeleteActionCommand });
@@ -110,14 +112,19 @@ namespace FlowMaker.ViewModels
                 menus.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
 
                 menus.Add(new MenuItemViewModel("删除盒子") { Command = DeleteBoxCommand });
-                var customViews = new MenuItemViewModel("自定义视图");
-                menus.Add(customViews);
+                if (CurrentBox.ShowView)
+                {
+                    var customViews = new MenuItemViewModel("执行流程");
+                    menus.Add(customViews);
+                    CurrentBox.ShowView = false;
+                }
+                else
+                {
+                    var customViews = new MenuItemViewModel("自定义视图");
+                    menus.Add(customViews);
+                    CurrentBox.ShowView = true;
+                }
 
-                //foreach (var item in _flowMakerOption.cu)
-                //{
-                //    customViews.Children.Add(new MenuItemViewModel("指令") { Command = ChangeCustomViewCommand });
-                //    customViews.Children.Add(new MenuItemViewModel(item) { Command = ChangeCustomViewCommand, CommandParameter = item });
-                //}
             }
             else
             {
@@ -505,6 +512,8 @@ namespace FlowMaker.ViewModels
             CurrentTab.Boxes.Remove(CurrentBox);
         }
         [Reactive]
+        public ObservableCollection<string> CustomGroups { get; set; } = [];
+        [Reactive]
         public ObservableCollection<string> CustomViews { get; set; } = [];
         public ReactiveCommand<string?, Unit> ChangeCustomViewCommand { get; }
         public void ChangeCustomView(string? viewName)
@@ -708,7 +717,6 @@ namespace FlowMaker.ViewModels
 
         public SpikeMoveAndResizable Size { get; set; } = new SpikeMoveAndResizable();
 
-
         public List<SpikeAction> Actions { get; set; } = [];
 
     }
@@ -780,6 +788,8 @@ namespace FlowMaker.ViewModels
         public required string Name { get; set; }
         [Reactive]
         public string? ViewName { get; set; }
+        [Reactive]
+        public string? ViewGroup { get; set; }
         [Reactive]
         public ICustomPageViewModel? SpikeViewModel { get; set; }
         public bool ShowView

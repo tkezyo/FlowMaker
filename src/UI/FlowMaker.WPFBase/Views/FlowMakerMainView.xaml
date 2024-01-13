@@ -54,7 +54,8 @@
                 </ItemsControl>
             </ScrollViewer>
         </Expander>
-        <Expander ExpandDirection="Up"  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="1">
+        <Expander ExpandDirection="Up" 
+                  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="1">
             <Expander.Header>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="+"   Padding="5,0"  FontSize="14" FontWeight="ExtraBold" Command="{Binding CreateCommand}"  Style="{StaticResource ButtonCustom}" >

@@ -9,7 +9,7 @@ namespace FlowMaker
     {
         public override void DependsOn()
         {
-          
+
         }
         public override Task ConfigureServices(IServiceCollection serviceDescriptors)
         {
@@ -19,7 +19,7 @@ namespace FlowMaker
             return Task.CompletedTask;
         }
     }
- 
+
     public abstract class ModuleBase : IModule
     {
         public string Name => GetType().Name;
@@ -31,7 +31,7 @@ namespace FlowMaker
         {
         }
 
-        public void AddDepand<T>()
+        public void AddDepend<T>()
             where T : IModule, new()
         {
             var t = IModule.AllModules.FirstOrDefault(c => c.Name == typeof(T).Name);
@@ -42,7 +42,7 @@ namespace FlowMaker
             }
 
             Modules.Add(typeof(T).Name, t);
-            if (!IModule.Verification(t, this))
+            if (!IModule.SkipVerification && !IModule.Verification(t, this))
             {
                 throw new Exception($"模块 {t.Name} 依赖于 {this.Name}，但是 {this.Name} 已经依赖于 {t.Name}，这将导致循环依赖");
             }
@@ -56,6 +56,7 @@ namespace FlowMaker
         Dictionary<string, IModule> Modules { get; set; }
         void DependsOn();
         Task ConfigureServices(IServiceCollection serviceDescriptors);
+        public static bool SkipVerification { get; set; } = true;
         public static List<IModule> AllModules { get; set; } = [];
         public static bool Verification(IModule newPre, IModule source)
         {
@@ -77,9 +78,10 @@ namespace FlowMaker
 
             return true;
         }
-        public static async Task ConfigureServices<T>(IServiceCollection serviceDescriptors)
+        public static async Task ConfigureServices<T>(IServiceCollection serviceDescriptors, bool skipVerification = true)
             where T : IModule, new()
         {
+            SkipVerification = skipVerification;
             List<ModuleModel> modules = [];
 
             void SetModules(IModule module)
@@ -99,15 +101,15 @@ namespace FlowMaker
             t.DependsOn();
             SetModules(t);
 
-            List<ModuleModel> Order(IEnumerable<ModuleModel> ganttActions)
+            List<ModuleModel> Order(IEnumerable<ModuleModel> modules)
             {
                 List<ModuleModel> result = [];
 
-                List<string> total = ganttActions.Select(c => c.Module.Name).ToList();
+                List<string> total = modules.Select(c => c.Module.Name).ToList();
 
                 List<(string, string)> temp = [];
 
-                foreach (var action in ganttActions)
+                foreach (var action in modules)
                 {
                     foreach (var item in action.PreModules)
                     {
@@ -118,10 +120,10 @@ namespace FlowMaker
                 while (total.Count != 0)
                 {
                     var has = temp.Select(c => c.Item2).Distinct().ToList();
-                    var orderd = total.Except(has);
+                    var ordered = total.Except(has);
                     total = has;
-                    temp = temp.Where(c => !orderd.Contains(c.Item1)).ToList();
-                    result.AddRange(ganttActions.Where(c => orderd.Contains(c.Module.Name)).ToList());
+                    temp = temp.Where(c => !ordered.Contains(c.Item1)).ToList();
+                    result.AddRange(modules.Where(c => ordered.Contains(c.Module.Name)).ToList());
                 }
 
                 return result;

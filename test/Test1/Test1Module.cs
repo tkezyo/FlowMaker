@@ -11,7 +11,7 @@ namespace Test1
         }
         public override void DependsOn()
         {
-            AddDepand<FlowMakerModule>();
+            AddDepend<FlowMakerModule>();
         }
         public override Task ConfigureServices(IServiceCollection serviceDescriptors)
         {

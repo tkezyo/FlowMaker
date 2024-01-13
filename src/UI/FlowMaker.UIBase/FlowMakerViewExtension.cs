@@ -8,7 +8,7 @@ namespace System;
 
 public static class FlowMakerViewExtension
 {
-    public static void AddSingletonFlowView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
+    public static void AddSingletonCustomPageView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
         where TView : class, IViewFor<TViewModel>
         where TViewModel : class, ICustomPageViewModel
     {
@@ -18,10 +18,10 @@ public static class FlowMakerViewExtension
         {
             var group = c.GetOrAddGroup(TViewModel.Category);
 
-            group.CustomViewDefinitions.Add(TViewModel.GetDefinition());
+            group.CustomPageViewDefinitions.Add(TViewModel.GetDefinition());
         });
     }
-    public static void AddTransientFlowView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
+    public static void AddTransientCustomPageView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
         where TView : class, IViewFor<TViewModel>
         where TViewModel : class, ICustomPageViewModel
     {
@@ -33,7 +33,20 @@ public static class FlowMakerViewExtension
         {
             var group = c.GetOrAddGroup(TViewModel.Category);
 
-            group.CustomViewDefinitions.Add(TViewModel.GetDefinition());
+            group.CustomPageViewDefinitions.Add(TViewModel.GetDefinition());
+        });
+    }
+    public static void AddCustomLogView<TViewModel, TView>(this IServiceCollection serviceDescriptors)
+        where TView : class, IViewFor<TViewModel>
+        where TViewModel : class, ILogViewModel
+    {
+        serviceDescriptors.AddKeyedTransient<ILogInjectViewModel, TViewModel>(TViewModel.Name);
+        serviceDescriptors.AddKeyedTransient<IViewFor, TView>(typeof(TViewModel).FullName);
+        serviceDescriptors.AddTransientView<TViewModel, TView>();
+
+        serviceDescriptors.Configure<FlowMakerOption>(c =>
+        {
+            c.CustomLogViews.Add(TViewModel.Name);
         });
     }
 }

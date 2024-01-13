@@ -48,6 +48,7 @@
                 <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
                 <ComboBox ItemsSource="{Binding DataContext.ErrorHandlings,ElementName=page}" Style="{StaticResource ComboBoxExtend.Small}" SelectedItem="{Binding Model.ErrorHandling,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="错误处理:" hc:TitleElement.TitlePlacement="Left"/>
+                <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
                 <Separator Margin="10,0"/>
 
                 <ItemsControl ItemsSource="{Binding Model.Middlewares}" Grid.Row="5"  Grid.ColumnSpan="2" Margin="0,5">
@@ -75,7 +76,7 @@
 
         <rxui:RoutedViewHost DockPanel.Dock="Bottom" 
    Visibility="{Binding Model.ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
-   Router="{Binding Model.Router}"  >
+   Router="{Binding Model.Router}">
             <rxui:RoutedViewHost.DefaultContent>
                 <WrapPanel>
                 </WrapPanel>

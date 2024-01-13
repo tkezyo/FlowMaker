@@ -8,7 +8,7 @@ namespace FlowMaker
     {
         public override void DependsOn()
         {
-            AddDepand<FlowMakerModule>();
+            AddDepend<FlowMakerModule>();
         }
         public override Task ConfigureServices(IServiceCollection serviceDescriptors)
         {

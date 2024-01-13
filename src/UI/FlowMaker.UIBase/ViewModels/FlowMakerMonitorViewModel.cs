@@ -213,7 +213,24 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     [Reactive]
     public bool ShowView { get; set; } = true;
     [Reactive]
+    public string? LogView { get; set; }
+    [Reactive]
     public RoutingState Router { get; set; } = new RoutingState();
+    public void DisplayView(ILogViewModel logViewModel)
+    {
+        if (logViewModel is ViewModelBase modelBase)
+        {
+            ShowView = true;
+            modelBase.SetScreen(this);
+            logViewModel.Load(Id ?? Guid.Empty);
+            Router.Navigate.Execute(modelBase);
+        }
+        else
+        {
+            ShowView = false;
+        }
+    }
+
     public CompositeDisposable StepChange { get; set; } = [];
     [Reactive]
     public Guid? Id { get; set; }

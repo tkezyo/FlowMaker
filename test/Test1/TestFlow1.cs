@@ -29,10 +29,4 @@ namespace Test1
             return [new("oo", "22"), new("oo22", "2211")];
         }
     }
-    //public partial class PortProvider
-    //{
-    //    public static string Name => typeof(PortProvider).FullName ?? string.Empty;
-
-    //    public static string Type => "string";
-    //}
 }

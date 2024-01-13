@@ -19,17 +19,19 @@ namespace Test1
     {
         public override void DependsOn()
         {
-            AddDepand<Test1Module>();
-            AddDepand<FlowMakerWpfModule>();
+            AddDepend<Test1Module>();
+            AddDepend<FlowMakerWpfModule>();
         }
         public override Task ConfigureServices(IServiceCollection serviceDescriptors)
         {
+
             serviceDescriptors.AddSingleton<App>();
             serviceDescriptors.AddTransient<MainWindow>();
             serviceDescriptors.AddHostedService<WpfHostedService<App, MainWindow>>();
             serviceDescriptors.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
-            serviceDescriptors.AddTransientFlowView<ChatViewModel, ChatView>();
+            serviceDescriptors.AddTransientCustomPageView<ChatViewModel, ChatView>();
+            serviceDescriptors.AddCustomLogView<CustomLogViewModel, CustomLogView>();
 
             serviceDescriptors.AddAutoMapper(typeof(ConfigProfile).Assembly);
 

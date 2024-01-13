@@ -22,7 +22,11 @@ public interface ICustomPageInjectViewModel
 }
 
 
-public interface ILogViewModel
+public interface ILogViewModel : ILogInjectViewModel, ITyRoutableViewModel
 {
+    static abstract string Name { get; }
     Task Load(Guid id);
+}
+public interface ILogInjectViewModel
+{
 }

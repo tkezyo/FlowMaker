@@ -93,6 +93,7 @@ public class ConfigDefinition
     /// </summary>
     public int Repeat { get; set; }
     public int Timeout { get; set; }
+    public string? LogView { get; set; }
     /// <summary>
     /// 出现错误时处理方式
     /// </summary>

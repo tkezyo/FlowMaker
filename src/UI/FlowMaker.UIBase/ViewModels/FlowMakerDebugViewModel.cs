@@ -48,6 +48,8 @@ namespace FlowMaker.ViewModels
         private readonly AsyncLock locker = new();
 
         [Reactive]
+        public ObservableCollection<string> CustomLogs { get; set; } = [];
+        [Reactive]
         public MonitorInfoViewModel? Model { get; set; }
         public FlowMakerDebugViewModel(FlowManager flowManager, IFlowProvider flowProvider, IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IMessageBoxManager messageBoxManager)
         {
@@ -56,6 +58,11 @@ namespace FlowMaker.ViewModels
             this._serviceProvider = serviceProvider;
             this._messageBoxManager = messageBoxManager;
             this._flowMakerOption = options.Value;
+
+            foreach (var item in _flowMakerOption.CustomLogViews)
+            {
+                CustomLogs.Add(item);
+            }
 
             foreach (var item in Enum.GetValues<ErrorHandling>())
             {
@@ -214,7 +221,7 @@ namespace FlowMaker.ViewModels
             Model = new(FlowCategory, FlowName)
             {
                 Debug = true,
-                Id = FlowInstanceId
+                Id = FlowInstanceId,
             };
 
             async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, FlowDefinition flowDefinition)
@@ -290,6 +297,7 @@ namespace FlowMaker.ViewModels
                     Model.Retry = config.Retry;
                     Model.Repeat = config.Repeat;
                     Model.ErrorHandling = config.ErrorHandling;
+                    Model.LogView = config.LogView;
                     foreach (var item in Model.Data)
                     {
                         var data = config.Data.FirstOrDefault(c => c.Name == item.Name);
@@ -304,6 +312,14 @@ namespace FlowMaker.ViewModels
 
             if (FlowInstanceId.HasValue)
             {
+                if (!string.IsNullOrWhiteSpace(Model.LogView))
+                {
+                    var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(Model.LogView);
+                    if (vm is ILogViewModel viewModel)
+                    {
+                        Model.DisplayView(viewModel);
+                    }
+                }
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(FlowInstanceId.Value, "monitor");
 
                 if (mid is MonitorMiddleware monitor)
@@ -370,6 +386,7 @@ namespace FlowMaker.ViewModels
                 Category = monitorInfoViewModel.Category,
                 ConfigName = monitorInfoViewModel.ConfigName,
                 Name = monitorInfoViewModel.Name,
+                LogView = monitorInfoViewModel.LogView,
                 Timeout = monitorInfoViewModel.Timeout,
                 ErrorHandling = monitorInfoViewModel.ErrorHandling,
                 Repeat = monitorInfoViewModel.Repeat,
@@ -402,6 +419,14 @@ namespace FlowMaker.ViewModels
                     debug.AddDebugs(c, monitorInfoViewModel.Steps.Where(c => c.IsDebug && c.Id.HasValue).Select(c => c.Id!.Value).ToList());
                 }
                 monitorInfoViewModel.Id = c;
+                if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))
+                {
+                    var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(monitorInfoViewModel.LogView);
+                    if (vm is ILogViewModel viewModel)
+                    {
+                        monitorInfoViewModel.DisplayView(viewModel);
+                    }
+                }
             });
         }
         protected void Reset(IList<MonitorStepInfoViewModel> steps)
@@ -481,6 +506,7 @@ namespace FlowMaker.ViewModels
             {
                 Category = model.Category,
                 Name = model.Name,
+                LogView = model.LogView,
                 ConfigName = model.ConfigName,
                 ErrorHandling = model.ErrorHandling,
                 Repeat = model.Repeat,

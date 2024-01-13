@@ -39,6 +39,11 @@ public class FlowMakerOption
     /// </summary>
     public List<NameValue> DefaultMiddlewares { get; set; } = [];
 
+    /// <summary>
+    /// 自定义日志视图
+    /// </summary>
+    public List<string> CustomLogViews { get; set; } = [];
+
     public FlowMakerOptionGroup GetOrAddGroup(string category)
     {
         if (!Group.TryGetValue(category, out var group))
@@ -80,7 +85,7 @@ public class FlowMakerOptionGroup
 {
     public List<StepDefinition> StepDefinitions { get; set; } = [];
     public List<ConverterDefinition> ConverterDefinitions { get; set; } = [];
-    public List<CustomViewDefinition> CustomViewDefinitions { get; set; } = [];
+    public List<CustomViewDefinition> CustomPageViewDefinitions { get; set; } = [];
 }
 
 public static class FlowMakerExtension
