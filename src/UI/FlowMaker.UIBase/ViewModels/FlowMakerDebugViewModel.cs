@@ -30,17 +30,18 @@ namespace FlowMaker.ViewModels
 
         public static string Name => "Debug";
         [Input]
-        [Description("上的覅为")]
-        [Option("sdfwef", "werwer")]
+        [Description("流程类型")]
         [Reactive]
         public string? FlowCategory { get; set; }
 
         [Input]
         [Reactive]
+        [Description("流程名称")]
         public string? FlowName { get; set; }
 
         [Input]
         [Reactive]
+        [Description("配置名称")]
         public string? ConfigName { get; set; }
 
 

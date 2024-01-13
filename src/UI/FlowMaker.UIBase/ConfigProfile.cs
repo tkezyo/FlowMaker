@@ -14,6 +14,9 @@ namespace FlowMaker
             CreateMap<SpikeBox, SpikeBoxViewModel>();
             CreateMap<SpikeAction, SpikeActionViewModel>();
 
+            CreateMap<SpikeBoxCustomViewInput, SpikeBoxCustomViewInputViewModel>();
+            CreateMap<SpikeBoxCustomViewInputViewModel, SpikeBoxCustomViewInput>();
+
             //CreateMap<WorkflowOutput, SpikeActionOutputViewModel>();
             //CreateMap<SpikeActionOutputViewModel, WorkflowOutput>();
             //CreateMap<SpikeActionInputViewModel, WorkflowInput>();

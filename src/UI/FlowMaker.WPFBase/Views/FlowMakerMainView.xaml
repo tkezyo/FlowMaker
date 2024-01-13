@@ -21,7 +21,7 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <rxui:RoutedViewHost Router="{Binding Router}" Grid.ColumnSpan="5">
+        <rxui:RoutedViewHost Router="{Binding Router}" Grid.ColumnSpan="5" Margin="0,0,0,10">
             <rxui:RoutedViewHost.DefaultContent>
                 <TextBlock Text="载入中。。"
 		   HorizontalAlignment="Center"
@@ -33,9 +33,7 @@
         </rxui:RoutedViewHost>
         <Expander  ExpandDirection="Up"  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="0">
             <Expander.Header>
-                <TextBlock Text="{Binding Runnings.Count,StringFormat=记录 ({0})}">
-
-                </TextBlock>
+                <TextBlock Text="{Binding Runnings.Count,StringFormat=记录 ({0})}"/>
             </Expander.Header>
             <ScrollViewer  Padding="3,0" >
                 <ItemsControl  ItemsSource="{Binding Runnings}" VerticalAlignment="Bottom">

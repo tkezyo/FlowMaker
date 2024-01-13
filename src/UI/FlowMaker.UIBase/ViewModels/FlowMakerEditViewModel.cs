@@ -1522,16 +1522,16 @@ public class FlowStepViewModel : ReactiveObject
             }
             if (item.IsOutput)
             {
-                var outputinfo = flowStep?.Outputs.FirstOrDefault(c => c.Name == item.Name);
+                var outputInfo = flowStep?.Outputs.FirstOrDefault(c => c.Name == item.Name);
                 var output = new FlowStepOutputViewModel(item.Name, item.DisplayName, item.Type, _flowMakerEditViewModel);
-                if (outputinfo is not null)
+                if (outputInfo is not null)
                 {
-                    output.Mode = outputinfo.Mode;
-                    output.ConverterCategory = outputinfo.ConverterCategory;
-                    output.ConverterName = outputinfo.ConverterName;
-                    output.GlobeDataName = outputinfo.GlobeDataName;
-                    _flowMakerEditViewModel.InsertConverterInput(output, outputinfo);
-                    output.InputKey = outputinfo.InputKey;
+                    output.Mode = outputInfo.Mode;
+                    output.ConverterCategory = outputInfo.ConverterCategory;
+                    output.ConverterName = outputInfo.ConverterName;
+                    output.GlobeDataName = outputInfo.GlobeDataName;
+                    _flowMakerEditViewModel.InsertConverterInput(output, outputInfo);
+                    output.InputKey = outputInfo.InputKey;
                 }
                 Outputs.Add(output);
             }

@@ -1,11 +1,11 @@
 ﻿using AutoMapper;
+using DynamicData;
 using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -32,6 +32,9 @@ namespace FlowMaker.ViewModels
 
             AddBoxCommand = ReactiveCommand.CreateFromTask(AddBoxAsync);
             DeleteBoxCommand = ReactiveCommand.Create(DeleteBox);
+            ChangeBoxShowViewCommand = ReactiveCommand.Create(ChangeBoxShowView);
+            ChangeBoxCustomViewGroupCommand = ReactiveCommand.Create<string>(ChangeBoxCustomViewGroup);
+            ChangeBoxCustomViewNameCommand = ReactiveCommand.CreateFromTask<string>(ChangeBoxCustomViewNameAsync);
 
             AddActionCommand = ReactiveCommand.CreateFromTask(AddAction);
             DeleteActionCommand = ReactiveCommand.Create(DeleteAction);
@@ -80,7 +83,7 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public ReactiveCommand<IList<MenuItemViewModel>, Unit>? ReloadMenuCommand { get; set; }
         #region 菜单
-        public IList<MenuItemViewModel> InitMenu()
+        public IList<MenuItemViewModel> InitMenu(string? group = null)
         {
             List<MenuItemViewModel> menus = [];
             if (!Edit)
@@ -96,7 +99,6 @@ namespace FlowMaker.ViewModels
             menus.Add(new MenuItemViewModel("保存") { Command = SaveCommand });
 
 
-            //TODO 改到菜单栏显示
             if (CurrentAction is not null)
             {
                 menus.Add(new MenuItemViewModel("删除按钮") { Command = DeleteActionCommand });
@@ -109,22 +111,30 @@ namespace FlowMaker.ViewModels
             }
             else if (CurrentBox is not null)
             {
-                menus.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
-
                 menus.Add(new MenuItemViewModel("删除盒子") { Command = DeleteBoxCommand });
                 if (CurrentBox.ShowView)
                 {
-                    var customViews = new MenuItemViewModel("执行流程");
-                    menus.Add(customViews);
-                    CurrentBox.ShowView = false;
+                    menus.Add(new MenuItemViewModel("流程盒子") { Command = ChangeBoxShowViewCommand });
+                    if (string.IsNullOrEmpty(group))
+                    {
+                        foreach (var item in _flowMakerOption.Group.Where(v => v.Value.CustomPageViewDefinitions.Count != 0))
+                        {
+                            menus.Add(new MenuItemViewModel(item.Key) { Command = ChangeBoxCustomViewGroupCommand, CommandParameter = item.Key });
+                        }
+                    }
+                    else
+                    {
+                        foreach (var item in _flowMakerOption.Group[group].CustomPageViewDefinitions)
+                        {
+                            menus.Add(new MenuItemViewModel(group + ":" + item.Name) { Command = ChangeBoxCustomViewNameCommand, CommandParameter = item.Name });
+                        }
+                    }
                 }
                 else
                 {
-                    var customViews = new MenuItemViewModel("自定义视图");
-                    menus.Add(customViews);
-                    CurrentBox.ShowView = true;
+                    menus.Add(new MenuItemViewModel("自定义盒子") { Command = ChangeBoxShowViewCommand });
+                    menus.Add(new MenuItemViewModel("添加按钮") { Command = AddActionCommand });
                 }
-
             }
             else
             {
@@ -159,11 +169,83 @@ namespace FlowMaker.ViewModels
 
             Reload();
         }
-        public void Reload()
+
+        public ReactiveCommand<Unit, Unit> ChangeBoxShowViewCommand { get; }
+        public void ChangeBoxShowView()
+        {
+            if (CurrentBox is not null)
+            {
+                CurrentBox.ShowView = !CurrentBox.ShowView;
+                if (CurrentBox.ShowView)
+                {
+                    CurrentBox.Actions.Clear();
+                }
+                else
+                {
+                    CurrentBox.Inputs.Clear();
+                    CurrentBox.ViewGroup = null;
+                    CurrentBox.ViewName = null;
+                }
+            }
+            Reload();
+        }
+        public ReactiveCommand<string, Unit> ChangeBoxCustomViewGroupCommand { get; }
+        public void ChangeBoxCustomViewGroup(string group)
+        {
+            if (CurrentBox is not null)
+            {
+                CurrentBox.ViewGroup = group;
+            }
+            Reload(group);
+        }
+        public ReactiveCommand<string, Unit> ChangeBoxCustomViewNameCommand { get; }
+        public async Task ChangeBoxCustomViewNameAsync(string name)
+        {
+            if (CurrentBox is null || string.IsNullOrEmpty(CurrentBox.ViewGroup))
+            {
+                return;
+            }
+            CurrentBox.Router.NavigationStack.Clear();
+            CurrentBox.ViewName = name;
+            CurrentBox.Inputs.Clear();
+            foreach (var item in _flowMakerOption.Group[CurrentBox.ViewGroup].CustomPageViewDefinitions.First(c => c.Name == name).Data)
+            {
+                var input = new SpikeBoxCustomViewInputViewModel() { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = item.DefaultValue };
+                if (!string.IsNullOrEmpty(item.OptionProviderName))
+                {
+                    var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.OptionProviderName);
+                    if (pp is null)
+                    {
+                        return;
+                    }
+                    var options = await pp.GetOptions();
+
+                    input.Options.Clear();
+                    foreach (var option in options)
+                    {
+                        input.Options.Add(new OptionDefinition(option.Name, option.Value));
+                    }
+                }
+                else
+                {
+                    foreach (var option in item.Options)
+                    {
+                        input.Options.Add(new OptionDefinition(option.DisplayName, option.Name));
+                    }
+                }
+                input.HasOption = input.Options.Count > 0;
+                CurrentBox.Inputs.Add(input);
+            }
+
+            Reload();
+        }
+
+
+        public void Reload(string? group = null)
         {
             if (ReloadMenuCommand is not null)
             {
-                var list = InitMenu();
+                var list = InitMenu(group);
                 ReloadMenuCommand.Execute(list).Subscribe();
             }
         }
@@ -316,12 +398,13 @@ namespace FlowMaker.ViewModels
             {
                 foreach (var box in tab.Boxes)
                 {
-                    if (!string.IsNullOrEmpty(box.ViewName))
+                    if (!string.IsNullOrEmpty(box.ViewName) && !string.IsNullOrEmpty(box.ViewGroup))
                     {
-                        var vm = _serviceProvider.GetKeyedService<ICustomPageInjectViewModel>(box.ViewName);
+                        var vm = _serviceProvider.GetKeyedService<ICustomPageInjectViewModel>(box.ViewGroup + ":" + box.ViewName);
                         if (vm is ICustomPageViewModel sVm)
                         {
-                            box.DisplayView(box.ViewName, sVm);
+                            await sVm.WrapAsync(box.Inputs.Select(c => new FlowInput() { Id = Guid.NewGuid(), Name = c.Name, Mode = InputMode.Normal, Value = c.Value }).ToList(), _serviceProvider, CancellationToken.None);
+                            box.DisplayView(sVm);
                         }
                     }
                     foreach (var action in box.Actions)
@@ -524,14 +607,14 @@ namespace FlowMaker.ViewModels
             }
             if (string.IsNullOrEmpty(viewName))
             {
-                CurrentBox.DisplayView(viewName, null);
+                CurrentBox.DisplayView(null);
             }
             else
             {
                 var vm = _serviceProvider.GetKeyedService<ICustomPageInjectViewModel>(viewName);
                 if (vm is ICustomPageViewModel sVm)
                 {
-                    CurrentBox.DisplayView(viewName, sVm);
+                    CurrentBox.DisplayView(sVm);
                 }
             }
         }
@@ -665,7 +748,7 @@ namespace FlowMaker.ViewModels
         {
             if (action.Type == DefinitionType.Flow)
             {
-                var config = new ConfigDefinition() { Category = action.Category, Name = action.Name, ConfigName = action.ConfigName ?? "", ErrorHandling = ErrorHandling.Terminate, Repeat = 0, Retry = 0, Timeout = 0 };
+                var config = new ConfigDefinition() { Category = action.Category, Name = action.Name, ConfigName = action.ConfigName ?? "", ErrorHandling = ErrorHandling.Terminate, Repeat = 1, Retry = 0, Timeout = 0 };
                 //TODO 这里要给Config赋值
                 foreach (var item in action.Inputs)
                 {
@@ -713,12 +796,23 @@ namespace FlowMaker.ViewModels
     {
         public required string Name { get; set; }
 
+        public string? ViewGroup { get; set; }
         public string? ViewName { get; set; }
+        public List<SpikeBoxCustomViewInput> Inputs { get; set; } = [];
 
         public SpikeMoveAndResizable Size { get; set; } = new SpikeMoveAndResizable();
 
         public List<SpikeAction> Actions { get; set; } = [];
 
+    }
+    public class SpikeBoxCustomViewInput
+    {
+        public required string DisplayName { get; set; }
+        public required string Name { get; set; }
+        public required string Type { get; set; }
+        public string? Value { get; set; }
+        public bool HasOption { get; set; }
+        public List<OptionDefinition> Options { get; set; } = [];
     }
     public class SpikeAction
     {
@@ -790,6 +884,7 @@ namespace FlowMaker.ViewModels
         public string? ViewName { get; set; }
         [Reactive]
         public string? ViewGroup { get; set; }
+
         [Reactive]
         public ICustomPageViewModel? SpikeViewModel { get; set; }
         public bool ShowView
@@ -809,14 +904,16 @@ namespace FlowMaker.ViewModels
         public SpikeBoxResizableViewModel Size { get; set; } = new();
 
         [Reactive]
+        public ObservableCollection<SpikeBoxCustomViewInputViewModel> Inputs { get; set; } = [];
+
+        [Reactive]
         public ObservableCollection<SpikeActionViewModel> Actions { get; set; } = [];
 
         [Reactive]
         public RoutingState Router { get; set; } = new RoutingState();
 
-        public void DisplayView(string? viewName, ICustomPageViewModel? spikeViewModel)
+        public void DisplayView(ICustomPageViewModel? spikeViewModel)
         {
-            ViewName = viewName;
             SpikeViewModel = spikeViewModel;
             if (SpikeViewModel is ViewModelBase modelBase)
             {
@@ -829,6 +926,20 @@ namespace FlowMaker.ViewModels
                 ShowView = false;
             }
         }
+    }
+    public class SpikeBoxCustomViewInputViewModel : ReactiveObject
+    {
+        [Reactive]
+        public required string DisplayName { get; set; }
+        [Reactive]
+        public required string Name { get; set; }
+        [Reactive]
+        public required string Type { get; set; }
+        [Reactive]
+        public string? Value { get; set; }
+        [Reactive]
+        public bool HasOption { get; set; }
+        public List<OptionDefinition> Options { get; set; } = [];
     }
     public class SpikeActionViewModel : ReactiveObject
     {

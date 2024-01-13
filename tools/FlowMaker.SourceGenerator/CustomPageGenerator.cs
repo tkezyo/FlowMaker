@@ -202,14 +202,23 @@ namespace FlowMaker.SourceGenerator
                             }
                             else
                             {
-                                inputStringBuilder.AppendLine($$"""
+                                if (property.Type.SpecialType == SpecialType.System_String)
+                                {
+                                    inputStringBuilder.AppendLine($$"""
+        {{memberName}} = await IDataConverter.GetValue<{{property.Type.ToDisplayString()}}>(inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, null, s => s?.ToString(), cancellationToken);
+""");
+                                }
+                                else
+                                {
+                                    inputStringBuilder.AppendLine($$"""
         {{memberName}} = await IDataConverter.GetValue<{{property.Type.ToDisplayString()}}>(inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, null, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
 """);
+                                }
                             }
                         }
 
 
-                
+
                     }
                 }
 

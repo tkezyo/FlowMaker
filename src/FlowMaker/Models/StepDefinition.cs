@@ -63,6 +63,9 @@ public class DataDefinition(string name, string displayName, string type, string
     public bool IsOutput { get; set; }
     public bool IsArray { get; set; }
     public int Rank { get; set; }
+    /// <summary>
+    /// 数组的类型
+    /// </summary>
     public string? SubType { get; set; }
 
     public Guid? FromStepId { get; set; }
