@@ -10,6 +10,7 @@ using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Text.Json;
+using System.Xml.Linq;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -409,9 +410,45 @@ namespace FlowMaker.ViewModels
                     }
                     foreach (var action in box.Actions)
                     {
-                        foreach (var item in action.Inputs)
+                        if (string.IsNullOrEmpty(action.ConfigName))
                         {
-                            item.Value = item.Value;
+                            var def = await _flowProvider.LoadFlowDefinitionAsync(action.Category, action.Name);
+                            foreach (var item in def.Data)
+                            {
+                                if (item.IsInput)
+                                {
+                                    var data = new SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                                    if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
+                                    {
+                                        var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
+                                        if (pp is not null)
+                                        {
+                                            var options = await pp.GetOptions();
+                                            foreach (var option in options)
+                                            {
+                                                data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        foreach (var option in item.Options)
+                                        {
+                                            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                                        }
+                                    }
+
+                                    if (data.Options.Count != 0)
+                                    {
+                                        data.HasOption = true;
+                                    }
+                                    action.Inputs.Add(data);
+                                }
+                                if (item.IsOutput)
+                                {
+                                    action.Outputs.Add(new SpikeOutputViewModel { DisplayName = item.DisplayName });
+                                }
+                            }
                         }
                     }
                 }
@@ -678,14 +715,55 @@ namespace FlowMaker.ViewModels
                         name = names[0];
                         configName = names[1];
                     }
-                    CurrentBox.Actions.Add(new SpikeActionViewModel()
+                    var model = new SpikeActionViewModel()
                     {
                         DisplayName = vm.DisplayName ?? "BTN",
                         Name = name,
                         ConfigName = configName,
                         Category = vm.Definition.Category,
                         Type = vm.Definition.Type,
-                    });
+                    };
+                    if (string.IsNullOrEmpty(configName))
+                    {
+                        var def = await _flowProvider.LoadFlowDefinitionAsync(vm.Definition.Category, name);
+                        foreach (var item in def.Data)
+                        {
+                            if (item.IsInput)
+                            {
+                                var data = new SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                                if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
+                                {
+                                    var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
+                                    if (pp is not null)
+                                    {
+                                        var options = await pp.GetOptions();
+                                        foreach (var option in options)
+                                        {
+                                            data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    foreach (var option in item.Options)
+                                    {
+                                        data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                                    }
+                                }
+
+                                if (data.Options.Count != 0)
+                                {
+                                    data.HasOption = true;
+                                }
+                                model.Inputs.Add(data);
+                            }
+                            if (item.IsOutput)
+                            {
+                                model.Outputs.Add(new SpikeOutputViewModel { DisplayName = item.DisplayName });
+                            }
+                        }
+                    }
+                    CurrentBox.Actions.Add(model);
                 }
             }
 
@@ -819,6 +897,7 @@ namespace FlowMaker.ViewModels
         public required string DisplayName { get; set; }
         public required string Category { get; set; }
         public required string Name { get; set; }
+        public DefinitionType Type { get; set; }
 
         public SpikeResizable ActionSize { get; set; } = new SpikeResizable();
 
@@ -831,17 +910,6 @@ namespace FlowMaker.ViewModels
 
         public SpikeMoveAndResizable OutputSize { get; set; } = new SpikeMoveAndResizable();
 
-
-        public required string DeviceType { get; set; }
-
-        public required string GroupName { get; set; }
-
-        public string? WorkflowName { get; set; }
-
-        public List<FlowInput> Inputs { get; set; } = [];
-
-
-        public List<FlowOutput> Outputs { get; set; } = [];
 
     }
     public class SpikeMoveable : IMoveable, IChangeable
@@ -1003,15 +1071,23 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public string? Value { get; set; }
     }
-    public class SpikeInputViewModel : ReactiveObject
+    
+    public class SpikeInputViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
     {
         [Reactive]
-        public required string DisplayName { get; set; }
+        public string Type { get; set; } = type;
         [Reactive]
-        public required string Type { get; set; }
+        public string Name { get; set; } = name;
+        /// <summary>
+        /// 显示名称，描述
+        /// </summary>
         [Reactive]
-        public string? Value { get; set; }
+        public string DisplayName { get; set; } = displayName;
+
         [Reactive]
+        public string? Value { get; set; } = value;
+        [Reactive]
+        public bool HasOption { get; set; }
         public ObservableCollection<FlowStepOptionViewModel> Options { get; set; } = [];
     }
 

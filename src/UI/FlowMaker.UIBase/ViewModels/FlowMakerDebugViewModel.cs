@@ -254,7 +254,7 @@ namespace FlowMaker.ViewModels
             {
                 if (item.IsInput)
                 {
-                    var data = new InputDataViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                    var data = new  SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
                     if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
                     {
                         var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);

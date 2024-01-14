@@ -292,7 +292,7 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     [Reactive]
     public ErrorHandling ErrorHandling { get; set; } = ErrorHandling.Skip;
     [Reactive]
-    public ObservableCollection<InputDataViewModel> Data { get; set; } = [];
+    public ObservableCollection<SpikeInputViewModel> Data { get; set; } = [];
     [Reactive]
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];
     [Reactive]
@@ -446,27 +446,27 @@ public class ConfigDefinitionViewModel : ReactiveObject
     [Reactive]
     public ErrorHandling ErrorHandling { get; set; }
     [Reactive]
-    public ObservableCollection<InputDataViewModel> Data { get; set; } = [];
+    public ObservableCollection<SpikeInputViewModel> Data { get; set; } = [];
 }
 
-public class InputDataViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
-{
-    [Reactive]
-    public string Type { get; set; } = type;
-    [Reactive]
-    public string Name { get; set; } = name;
-    /// <summary>
-    /// 显示名称，描述
-    /// </summary>
-    [Reactive]
-    public string DisplayName { get; set; } = displayName;
+//public class InputDataViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
+//{
+//    [Reactive]
+//    public string Type { get; set; } = type;
+//    [Reactive]
+//    public string Name { get; set; } = name;
+//    /// <summary>
+//    /// 显示名称，描述
+//    /// </summary>
+//    [Reactive]
+//    public string DisplayName { get; set; } = displayName;
 
-    [Reactive]
-    public string? Value { get; set; } = value;
-    [Reactive]
-    public bool HasOption { get; set; }
-    public ObservableCollection<FlowStepOptionViewModel> Options { get; set; } = [];
-}
+//    [Reactive]
+//    public string? Value { get; set; } = value;
+//    [Reactive]
+//    public bool HasOption { get; set; }
+//    public ObservableCollection<FlowStepOptionViewModel> Options { get; set; } = [];
+//}
 
 
 public class FlowStepRuntimeViewModel(Guid id, string displayName, Guid? subFlowId = null)
