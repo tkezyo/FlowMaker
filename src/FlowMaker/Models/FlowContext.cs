@@ -175,6 +175,16 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// </summary>
     public List<NameValue> Outputs { get; set; } = [];
     public StepOnceState State { get; set; }
+    /// <summary>
+    /// 日志
+    /// </summary>
+    public List<string> Logs { get; set; } = [];
+
+    /// <summary>
+    /// 附加属性
+    /// </summary>
+    public Dictionary<string, object> ExtraData { get; set; } = [];
+
 }
 
 public class StepStatus
