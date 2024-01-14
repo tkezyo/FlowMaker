@@ -72,6 +72,30 @@ namespace FlowMaker.Views
                             case Key.D:
                                 ViewModel.LeftCommand.Execute(true).Subscribe();
                                 break;
+                            case Key.Z:
+                                if (ViewModel.CurrentAction is not null)
+                                {
+                                    ViewModel.SelectResizableCommand.Execute(ViewModel.CurrentAction.ActionSize).Subscribe();
+                                }
+                                break;
+                            case Key.X:
+                                if (ViewModel.CurrentAction is not null)
+                                {
+                                    ViewModel.SelectResizableCommand.Execute(ViewModel.CurrentAction.ButtonSize).Subscribe();
+                                }
+                                break;
+                            case Key.C:
+                                if (ViewModel.CurrentAction is not null)
+                                {
+                                    ViewModel.SelectResizableCommand.Execute(ViewModel.CurrentAction.InputSize).Subscribe();
+                                }
+                                break;
+                            case Key.V:
+                                if (ViewModel.CurrentAction is not null)
+                                {
+                                    ViewModel.SelectResizableCommand.Execute(ViewModel.CurrentAction.OutputSize).Subscribe();
+                                }
+                                break;
                             default:
                                 break;
                         }

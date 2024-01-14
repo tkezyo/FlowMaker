@@ -105,10 +105,10 @@ namespace FlowMaker.ViewModels
                 menus.Add(new MenuItemViewModel("删除按钮") { Command = DeleteActionCommand });
                 menus.Add(new MenuItemViewModel("前移按钮") { Command = MoveActionCommand, CommandParameter = true });
                 menus.Add(new MenuItemViewModel("后移按钮") { Command = MoveActionCommand, CommandParameter = false });
-                menus.Add(new MenuItemViewModel("按钮变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ButtonSize });
-                menus.Add(new MenuItemViewModel("输入变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.InputSize });
-                menus.Add(new MenuItemViewModel("输出变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.OutputSize });
-                menus.Add(new MenuItemViewModel("边框变化") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ActionSize });
+                menus.Add(new MenuItemViewModel("边框变化(z)") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ActionSize });
+                menus.Add(new MenuItemViewModel("按钮变化(x)") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.ButtonSize });
+                menus.Add(new MenuItemViewModel("输入变化(c)") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.InputSize });
+                menus.Add(new MenuItemViewModel("输出变化(v)") { Command = SelectResizableCommand, CommandParameter = CurrentAction?.OutputSize });
             }
             else if (CurrentBox is not null)
             {
@@ -446,7 +446,7 @@ namespace FlowMaker.ViewModels
                                 }
                                 if (item.IsOutput)
                                 {
-                                    action.Outputs.Add(new SpikeOutputViewModel { DisplayName = item.DisplayName });
+                                    action.Outputs.Add(new SpikeOutputViewModel { DisplayName = item.DisplayName, Name = item.Name });
                                 }
                             }
                         }
@@ -759,7 +759,7 @@ namespace FlowMaker.ViewModels
                             }
                             if (item.IsOutput)
                             {
-                                model.Outputs.Add(new SpikeOutputViewModel { DisplayName = item.DisplayName });
+                                model.Outputs.Add(new SpikeOutputViewModel { DisplayName = item.DisplayName, Name = item.Name });
                             }
                         }
                     }
@@ -824,10 +824,10 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<SpikeActionViewModel, Unit> RunCommand { get; }
         public async Task Run(SpikeActionViewModel action)
         {
+            ConfigDefinition? config = null;
             if (action.Type == DefinitionType.Flow)
             {
-                var config = new ConfigDefinition() { Category = action.Category, Name = action.Name, ConfigName = action.ConfigName ?? "", ErrorHandling = ErrorHandling.Terminate, Repeat = 1, Retry = 0, Timeout = 0 };
-                //TODO 这里要给Config赋值
+                config = new ConfigDefinition() { Category = action.Category, Name = action.Name, ConfigName = action.ConfigName ?? "", ErrorHandling = ErrorHandling.Terminate, Repeat = 1, Retry = 0, Timeout = 0 };
                 foreach (var item in action.Inputs)
                 {
                     if (string.IsNullOrEmpty(item.Value))
@@ -836,11 +836,10 @@ namespace FlowMaker.ViewModels
                     }
                     config.Data.Add(new NameValue(item.DisplayName, item.Value));
                 }
-                await _flowManager.Run(config);
             }
             else if (action.Type == DefinitionType.Config && !string.IsNullOrWhiteSpace(action.ConfigName))
             {
-                var config = await _flowProvider.LoadConfigDefinitionAsync(action.Category, action.Name, action.ConfigName);
+                config = await _flowProvider.LoadConfigDefinitionAsync(action.Category, action.Name, action.ConfigName);
 
                 if (config is null)
                 {
@@ -854,9 +853,17 @@ namespace FlowMaker.ViewModels
                     }
                     config.Data.Add(new NameValue(item.DisplayName, item.Value));
                 }
-                await _flowManager.Run(config);
             }
-
+            else
+            {
+                return;
+            }
+            var result = await _flowManager.Run(config);
+            foreach (var item in action.Outputs)
+            {
+                var data = result[0].Data.FirstOrDefault(c => c.Name == item.Name);
+                item.Value = data?.Value;
+            }
         }
         #endregion
         #endregion
@@ -1069,9 +1076,11 @@ namespace FlowMaker.ViewModels
         [Reactive]
         public required string DisplayName { get; set; }
         [Reactive]
+        public required string Name { get; set; }
+        [Reactive]
         public string? Value { get; set; }
     }
-    
+
     public class SpikeInputViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
     {
         [Reactive]

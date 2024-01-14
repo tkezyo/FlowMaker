@@ -142,9 +142,8 @@
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <StackPanel>
-                                                                            <TextBox  hc:TitleElement.Title="{Binding Description}"  Text="{Binding Value}"></TextBox>
+                                                                            <TextBox  hc:TitleElement.Title="{Binding DisplayName}" Style="{StaticResource TextBoxExtend.Small}" Text="{Binding Value}"></TextBox>
                                                                         </StackPanel>
-
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
                                                             </ItemsControl>
@@ -158,8 +157,7 @@
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <StackPanel HorizontalAlignment="Left" >
-                                                                            <TextBlock Text="{Binding Description}"></TextBlock>
-                                                                            <TextBlock Text="{Binding Value}"></TextBlock>
+                                                                            <TextBox  hc:TitleElement.Title="{Binding DisplayName}" IsReadOnly="True" Style="{StaticResource TextBoxExtend.Small}" Text="{Binding Value}"></TextBox>
                                                                         </StackPanel>
                                                                     </DataTemplate>
                                                                 </ItemsControl.ItemTemplate>
