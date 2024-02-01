@@ -1,0 +1,322 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                    xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase"
+			   xmlns:models="clr-namespace:FlowMaker.Models;assembly=FlowMaker"
+             xmlns:controls="clr-namespace:FlowMaker.Controls"
+                          x:Name="page"
+                           xmlns:converters="clr-namespace:FlowMaker.Converters"
+             x:Class="FlowMaker.FlowMakerEditView">
+	<UserControl.Resources>
+		<converters:LeftToMarginConverter x:Key="marginConverter" />
+		<converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
+		<converters:LeftToWidthConverter x:Key="widthConverter"/>
+		<converters:EqualToBoolConverter x:Key="EqualConverter" />
+		<converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
+		<converters:HeightToPointConverter x:Key="heightToPointConverter"/>
+	</UserControl.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+		</Grid.RowDefinitions>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="*"/>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="Auto"/>
+		</Grid.ColumnDefinitions>
+		<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
+			<Button Content="保存" Command="{Binding SaveCommand}"/>
+			<Separator Margin="10,0"/>
+			<TextBlock Text="类别:"/>
+			<TextBox Text="{Binding Category}"  MinWidth="80"/>
+			<TextBlock Text="名称:"/>
+			<TextBox Text="{Binding Name}" MinWidth="80"/>
+			<Separator Margin="10,0"/>
+			<Button Margin="4,0" Command="{Binding CreateCommand}">创建牛马</Button>
+			<Button Margin="4,0" IsVisible="{Binding ShowEdit}"  Content="删除牛马" Command="{Binding DeleteActionCommand}"  ></Button>
+			<Button  Margin="4,0" IsVisible="{Binding ShowEdit}"  Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}"  ></Button>
+			<Button Margin="4,0"  IsVisible="{Binding ShowEdit}"  Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}"  ></Button>
+			<Separator Margin="10,0"/>
+			<CheckBox Content="检查项"  Name="showChecker"/>
+			<Button Command="{Binding AddFlowCheckerCommand}" IsVisible="{Binding IsChecked,ElementName=showChecker}">创建检查项</Button>
+			<Separator Margin="10,0"/>
+			<CheckBox Content="变量"  Name="showData"/>
+			<Button Command="{Binding CreateGlobeDataCommand}" IsVisible="{Binding IsChecked,ElementName=showData}">创建变量</Button>
+			<Separator Margin="10,0"/>
+			<CheckBox Content="简单模式" IsChecked="{Binding SimpleMode}"/>
+			<Separator Margin="10,0"/>
+			<Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100"/>
+		</StackPanel>
+		<ScrollViewer x:Name="viewer"
+                      Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
+			<Grid  Margin="2" >
+				<ItemsControl ItemsSource="{Binding Steps}"
+                              x:Name="gantee"  VerticalAlignment="Top">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<StackPanel>
+							</StackPanel>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="{Binding Path=(ItemsControl.AlternationIndex), 
+                RelativeSource={RelativeSource Mode=TemplatedParent}}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" Width="30">
+								</TextBlock>
+								<Button x:Name="btn"
+                                        Content="{Binding DisplayName}" Command="{Binding DataContext.ChangePreCommand,ElementName=page}"   CommandParameter="{Binding .}"   HorizontalAlignment="Left" BorderBrush="#534fbc" BorderThickness="2">
+									
+									<Button.Width>
+										<MultiBinding Converter="{StaticResource widthConverter}">
+											<Binding Path="Time"/>
+											<Binding Path="DataContext.Scale" ElementName="page"/>
+										</MultiBinding>
+									</Button.Width>
+									<Button.Margin>
+										<MultiBinding Converter="{StaticResource marginConverter}">
+											<Binding Path="PreTime"/>
+											<Binding Path="DataContext.Scale" ElementName="page"/>
+										</MultiBinding>
+									</Button.Margin>
+								</Button>
+								<TextBlock Margin="8,0" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>
+								<ItemsControl ItemsSource="{Binding Ifs}" VerticalAlignment="Center">
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsTrue}" IsVisible="{Binding Enable}" />
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</StackPanel>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+				<ItemsControl ItemsSource="{Binding DateAxis}"
+                    Margin="30,0,0,0"  VerticalAlignment="Stretch" >
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<Grid></Grid>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<StackPanel  HorizontalAlignment="Left">
+								<StackPanel.Margin>
+									<MultiBinding Converter="{StaticResource marginConverter}">
+										<Binding Path="."/>
+										<Binding Path="DataContext.Scale" ElementName="page"/>
+									</MultiBinding>
+								</StackPanel.Margin>
+								<Line StartPoint="0,0" EndPoint="{Binding Path=Bounds,ElementName=gantee,Converter={StaticResource heightToPointConverter}}" HorizontalAlignment="Left" Stroke="#aa635fe2"  StrokeThickness="1">
+
+								</Line>
+								
+								<TextBlock Text="{Binding .,StringFormat={}{0:mm\\:ss}}"></TextBlock>
+							</StackPanel>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</Grid>
+		</ScrollViewer>
+		<ScrollViewer  Grid.Column="2" Grid.Row="1" Margin="10,5"
+                       IsVisible="{Binding IsChecked,ElementName=showChecker}" >
+			<ItemsControl ItemsSource="{Binding Checkers}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<HeaderedContentControl Header="{Binding DisplayName}">
+							<StackPanel Margin="5">
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Text="显示名称"/>
+									<TextBox  Text="{Binding DisplayName}" />
+									<Button  Command="{Binding DataContext.RemoveFlowCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom">删除</Button>
+								</StackPanel>
+								<controls:FlowInputView EditMode="True"></controls:FlowInputView>
+							</StackPanel>
+						</HeaderedContentControl>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+		<ScrollViewer Grid.Row="1" Grid.Column="3" Margin="10,5"
+IsVisible="{Binding IsChecked,ElementName=showData}">
+			<ItemsControl ItemsSource="{Binding GlobeDatas}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate>
+						<HeaderedContentControl Header="{Binding DisplayName}">
+
+							<StackPanel Margin="5">
+								<StackPanel Orientation="Horizontal">
+									<TextBlock Text="名称"/>
+									<TextBox Text="{Binding Name}" IsReadOnly="{Binding IsStepOutput}" />
+									<TextBlock Text="类型"/>
+									<TextBox Text="{Binding Type}" IsReadOnly="{Binding IsStepOutput}" />
+
+									<Button VerticalAlignment="Bottom" Content="删除" Command="{Binding DataContext.RemoveGlobeDataCommand,RelativeSource={RelativeSource AncestorType=ItemsControl,Mode=FindAncestor}}" IsVisible="{Binding !IsStepOutput}"  CommandParameter="{Binding .}"/>
+								</StackPanel>
+								<TextBlock Text="显示名称"/>
+								<TextBox Text="{Binding DisplayName}" />
+								<StackPanel Orientation="Horizontal">
+									<CheckBox Content="输入" IsChecked="{Binding IsInput}"/>
+									<CheckBox Content="输出" IsChecked="{Binding IsOutput}"/>
+								</StackPanel>
+								<StackPanel  IsVisible="{Binding IsInput}">
+									<TextBlock Text="默认值"/>
+									<TextBox Text="{Binding DefaultValue}"  />
+									<TextBlock Text="选项集"/>
+									<ComboBox   ItemsSource="{Binding OptionProviders}" SelectedValueBinding="{Binding Value}" SelectedValue="{Binding OptionProviderName}" DisplayMemberBinding="{Binding Name}" />
+									<Button HorizontalAlignment="Left" Command="{Binding AddOptionCommand}" Content="添加选项"   IsVisible="{Binding !OptionProviderName}"/>
+									<ItemsControl ItemsSource="{Binding Options}"  IsVisible="{Binding !OptionProviderName}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<StackPanel Orientation="Horizontal">
+													<TextBlock Text="显示名称"/>
+													<TextBox Text="{Binding DisplayName}" />
+													<TextBlock Text="名称"/>
+													<TextBox Text="{Binding Name}" />
+													<Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}"  CommandParameter="{Binding .}"/>
+												</StackPanel>
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+
+								<Separator  Margin="0,10"/>
+							</StackPanel>
+						</HeaderedContentControl>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+		<ScrollViewer Grid.Row="1" Grid.Column="1"  Margin="10,5"
+IsVisible="{Binding ShowEdit}">
+			<StackPanel>
+				<HeaderedContentControl Header="基本信息">
+					<StackPanel>
+						<TextBlock Text="显示名称"/>
+						<TextBox Text="{Binding FlowStep.DisplayName}"  />
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+							<TextBlock Text="分组"/>
+							<ComboBox  ItemsSource="{Binding StepGroups}"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
+							<TextBlock Text="名称"/>
+							<ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}"  SelectedItem="{Binding FlowStep.Name}"></ComboBox>
+							<Button IsVisible="{Binding FlowStep.IsSubFlow}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
+						</StackPanel>
+
+						<controls:FlowInputView DataContext="{Binding FlowStep.TimeOut}"></controls:FlowInputView>
+						<controls:FlowInputView DataContext="{Binding FlowStep.Repeat}"></controls:FlowInputView>
+						<controls:FlowInputView DataContext="{Binding FlowStep.Retry}"></controls:FlowInputView>
+						<controls:FlowInputView DataContext="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
+
+						<TextBlock Text="显示时间"/>
+						<TextBox Text="{Binding FlowStep.Time}" />
+						<!--<TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
+                        <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />-->
+
+						<!--<ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->
+					</StackPanel>
+				</HeaderedContentControl>
+				<HeaderedContentControl Header="输入">
+					<ItemsControl ItemsSource="{Binding FlowStep.Inputs}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<controls:FlowInputView ></controls:FlowInputView>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</HeaderedContentControl>
+				<HeaderedContentControl Header="输出">
+					<ItemsControl ItemsSource="{Binding FlowStep.Outputs}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<StackPanel>
+									<StackPanel Orientation="Horizontal">
+										<TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+										<TextBlock Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+										<RadioButton Content="丢弃" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.Drop}}" GroupName="{Binding Name}"></RadioButton>
+										<RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.Globe}}" GroupName="{Binding Name}" ></RadioButton>
+										<RadioButton Content="全局变量转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}" GroupName="{Binding Name}" IsVisible="{Binding HasConverter}"></RadioButton>
+									</StackPanel>
+
+									<TextBox  IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.Globe}}"  Text="{Binding GlobeDataName}" />
+
+									<TextBox  IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}"  Text="{Binding GlobeDataName}" />
+
+									<StackPanel IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+
+										<TextBlock Text="转换器分组"/>
+										<ComboBox   ItemsSource="{Binding ConverterCategorys}"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
+										<TextBlock Text="转换器"/>
+
+										<ComboBox   HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}"  SelectedValue="{Binding ConverterName}" SelectedValueBinding="{Binding Name}" DisplayMemberBinding="{Binding Name}"></ComboBox>
+										<TextBlock Text="属性"/>
+										<ComboBox   HorizontalContentAlignment="Stretch" ItemsSource="{Binding InputKeys}" SelectedValue="{Binding InputKey}" SelectedValueBinding="{Binding Value}" DisplayMemberBinding="{Binding Name}"></ComboBox>
+
+									</StackPanel>
+									<ItemsControl ItemsSource="{Binding Inputs}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate>
+												<controls:FlowInputView />
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+								</StackPanel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</HeaderedContentControl>
+				<HeaderedContentControl Header="检查项">
+					<StackPanel>
+						<Button Command="{Binding AddCheckerCommand}"  HorizontalAlignment="Left">添加</Button>
+						<ItemsControl ItemsSource="{Binding FlowStep.Checkers}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<StackPanel Margin="5">
+										<Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" >删除</Button>
+										<controls:FlowInputView  EditMode="True"></controls:FlowInputView>
+									</StackPanel>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</HeaderedContentControl>
+				<HeaderedContentControl Header="执行条件">
+					<StackPanel>
+						<Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}"  HorizontalAlignment="Left">载入</Button>
+						<ItemsControl ItemsSource="{Binding FlowStep.Ifs}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<StackPanel Orientation="Horizontal">
+										<CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}" Margin="5,10"></CheckBox>
+										<CheckBox IsVisible="{Binding Enable}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
+									</StackPanel>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</HeaderedContentControl>
+				<HeaderedContentControl Header="等待事件">
+					<StackPanel>
+						<Button Command="{Binding AddWaitEventCommand}"  HorizontalAlignment="Left">添加</Button>
+						<ItemsControl ItemsSource="{Binding FlowStep.WaitEvents}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate>
+									<StackPanel Orientation="Horizontal">
+										<Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" >删除</Button>
+										<TextBlock Text="名称"/>
+										<TextBox Text="{Binding .}" />
+									</StackPanel>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</StackPanel>
+				</HeaderedContentControl>
+			</StackPanel>
+		</ScrollViewer>
+
+	</Grid>
+</UserControl>

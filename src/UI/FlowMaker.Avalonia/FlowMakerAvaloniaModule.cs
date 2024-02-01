@@ -1,21 +1,15 @@
 ﻿using FlowMaker.ViewModels;
-using FlowMaker.Views;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Ty;
 
 namespace FlowMaker
 {
-    public class FlowMakerWpfModule : ModuleBase
+    public class FlowMakerAvaloniaModule : ModuleBase
     {
         public override void DependsOn()
         {
             AddDepend<FlowMakerUIBaseModule>();
-            AddDepend<TyWPFBaseModule>();
+            AddDepend<TyAvaloniaBaseModule>();
         }
 
         public override Task ConfigureServices(IServiceCollection serviceDescriptors)

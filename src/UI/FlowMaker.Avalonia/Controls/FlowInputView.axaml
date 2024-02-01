@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                    xmlns:converters="clr-namespace:FlowMaker.Converters"
+             xmlns:local="clr-namespace:FlowMaker.Controls"
+			    xmlns:models="clr-namespace:FlowMaker.Models;assembly=FlowMaker"
+			 x:Name="page"
+             x:Class="FlowMaker.Controls.FlowInputView">
+	<UserControl.Resources>
+		<converters:EqualToBoolConverter x:Key="EqualConverter" />
+		<converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
+		<converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
+	</UserControl.Resources>
+
+	<StackPanel Margin="0,0,10,0"
+                IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
+		<StackPanel Orientation="Horizontal">
+			<TextBlock  IsVisible="{Binding EditMode,ElementName=page}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+			<TextBlock Text="名称"/>
+			<TextBox IsVisible="{Binding EditMode,ElementName=page}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" ></TextBox>
+			<TextBlock VerticalAlignment="Bottom" Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" ></TextBlock>
+			<RadioButton Content="普通" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
+			<RadioButton Content="选项" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Option}}" GroupName="{Binding Id}" IsVisible="{Binding HasOption}"></RadioButton>
+			<RadioButton Content="数组" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Array}}" GroupName="{Binding Id}" IsVisible="{Binding IsArray}"></RadioButton>
+			<RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Globe}}" GroupName="{Binding Id}" IsVisible="{Binding HasGlobe}"></RadioButton>
+			<RadioButton Content="转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Converter}}" GroupName="{Binding Id}" IsVisible="{Binding HasConverter}"></RadioButton>
+			<RadioButton Content="事件" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Event}}" GroupName="{Binding Id}"></RadioButton>
+		</StackPanel>
+		<TextBox  IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Normal}}" Text="{Binding Value}" />
+		<TextBox  IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Event}}" Text="{Binding Value}" />
+
+		<ItemsControl ItemsSource="{Binding Dims}" IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Array}}">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<StackPanel>
+						<TextBlock Text="{Binding Name}"/>
+						<TextBox Text="{Binding Count}"    />
+					</StackPanel>
+
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+
+		<ComboBox  IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Option}}" ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValueBinding="{Binding Name}"  DisplayMemberBinding="{Binding DisplayName}" />
+
+		<ComboBox  IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValueBinding="{Binding Name}" DisplayMemberBinding="{Binding DisplayName}" />
+
+		<StackPanel IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+			<TextBlock Text="转换器分组"/>
+
+			<ComboBox  ItemsSource="{Binding ConverterCategorys}"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
+			<TextBlock Text="转换器"/>
+			<ComboBox  HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" SelectedValue="{Binding ConverterName}" SelectedValueBinding="{Binding Name}" DisplayMemberBinding="{Binding Name}"></ComboBox>
+		</StackPanel>
+
+		<ItemsControl ItemsSource="{Binding SubInputs}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<local:FlowInputView/>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+	</StackPanel>
+</UserControl>

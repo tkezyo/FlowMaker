@@ -21,7 +21,7 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <rxui:RoutedViewHost Router="{Binding Router}" Grid.ColumnSpan="5" Margin="0,0,0,10">
+        <rxui:RoutedViewHost Router="{Binding Router}" Grid.ColumnSpan="5" Margin="0,0,0,0">
             <rxui:RoutedViewHost.DefaultContent>
                 <TextBlock Text="载入中。。"
 		   HorizontalAlignment="Center"

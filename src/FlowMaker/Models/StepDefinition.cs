@@ -104,11 +104,3 @@ public class ConfigDefinition
     public List<NameValue> Data { get; set; } = [];
     public List<string> Middlewares { get; set; } = [];
 }
-
-public enum InputDisplayType
-{
-    Text,
-    ComboBox,
-    CheckBox,
-}
-

@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FlowMaker.FlowMakerSelectView">
+	<Grid Margin="10">
+		<Grid VerticalAlignment="Center">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="*"/>
+			</Grid.ColumnDefinitions>
+			<Grid.RowDefinitions>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+				<RowDefinition Height="Auto"/>
+			</Grid.RowDefinitions>
+			<StackPanel Grid.Row="0"  Grid.ColumnSpan="2">
+				<TextBlock Text="显示名称"/>
+				<TextBox  Text="{Binding DisplayName}" />
+			</StackPanel>
+			<StackPanel Grid.Row="1" Grid.Column="0">
+				<TextBlock Text="类别"/>
+				<ComboBox  ItemsSource="{Binding Categories}" SelectedItem="{Binding Category}"/>
+			</StackPanel>
+			<StackPanel Grid.Row="1" Grid.Column="1">
+				<TextBlock Text="名称"/>
+				<ComboBox  ItemsSource="{Binding Definitions}" DisplayMemberBinding="{Binding DisplayName}" SelectedItem="{Binding Definition}"  />
+			</StackPanel>
+			<Button  Grid.Row="2"  Grid.ColumnSpan="2" Command="{Binding SaveCommand}" Content="保存"/>
+		</Grid>
+	</Grid>
+</UserControl>

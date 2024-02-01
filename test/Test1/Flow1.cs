@@ -6,21 +6,14 @@ using System.Text.Json;
 namespace Test1;
 public partial class MyClass : IStep
 {
-    public static string Category => "123";
+    public static string Category => "类别";
 
-    public static string Name => "123";
-
-    [Input]
-    [Description("错误处理")]
-    public ErrorHandling ErrorHandling { get; set; }
-
+    public static string Name => "名称";
 
     public Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
-
-
 }
 
 public partial class Flow1 : IStep
@@ -35,9 +28,9 @@ public partial class Flow1 : IStep
 
     [Input]
     [DefaultValue("3")]
-    [Description("123sdfasef")]
-    [Option("3", "3")]
-    [Option("34", "34")]
+    [Description("属性2")]
+    [Option("三", "3")]
+    [Option("四", "4")]
     public int Prop2 { get; set; }
 
     [Output]
@@ -75,10 +68,9 @@ public partial class ValueConverter : IDataConverter<int>
     [Input]
     public int Prop2 { get; set; }
 
-    public async Task<int> Convert(FlowContext? context, CancellationToken cancellationToken)
+    public Task<int> Convert(FlowContext? context, CancellationToken cancellationToken)
     {
-        await Task.CompletedTask;
-        return Prop1 + Prop2;
+        return Task.FromResult(Prop1 + Prop2);
     }
 
 

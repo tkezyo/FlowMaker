@@ -78,7 +78,22 @@ public class FlowMakerEditViewModel : ViewModelBase
                 }
             });
         }).Subscribe();
-
+        this.WhenAnyValue(c => c.SimpleMode).Subscribe(async c =>
+        {
+            if (c)
+            {
+                var result = await _messageBoxManager.Conform.Handle(new ConformInfo("简单模式下，不支持并行执行，是否继续？") { OwnerTitle = WindowTitle });
+                if (result)
+                {
+                    Render();
+                }
+                else
+                {
+                    SimpleMode = false;
+                }
+            }
+        });
+        this.WhenAnyValue(c => c.Scale).Subscribe(c => Render());
     }
     [Reactive]
     public string? Category { get; set; }
@@ -116,9 +131,9 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             var f = new FlowStep()
             {
-                Category = item.Category,
-                DisplayName = item.DisplayName,
-                Name = item.Name,
+                Category = item.Category ?? "",
+                DisplayName = item.DisplayName ?? "",
+                Name = item.Name ?? "",
                 Id = item.Id,
                 IsSubFlow = item.IsSubFlow,
             };
@@ -189,7 +204,7 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         foreach (var item in GlobeDatas)
         {
-            var data = new DataDefinition(item.Name, item.DisplayName, item.Type, item.DefaultValue)
+            var data = new DataDefinition(item.Name ?? "", item.DisplayName ?? "", item.Type ?? "", item.DefaultValue)
             {
                 IsInput = item.IsInput,
                 IsOutput = item.IsOutput,
@@ -221,21 +236,19 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             StepGroups.Add(item);
         }
-        FlowDefinition flowDefinition;
-        try
-        {
-            flowDefinition = await _flowProvider.LoadFlowDefinitionAsync(category, name);
-        }
-        catch (Exception e)
-        {
-            return;
-        }
 
-        Category = flowDefinition.Category;
-        Name = flowDefinition.Name;
         Steps.Clear();
         Checkers.Clear();
         GlobeDatas.Clear();
+
+        if (string.IsNullOrEmpty(category) || string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+        var flowDefinition = await _flowProvider.LoadFlowDefinitionAsync(category, name);
+
+        Category = flowDefinition.Category;
+        Name = flowDefinition.Name;
 
         foreach (var item in flowDefinition.Data)
         {
@@ -454,6 +467,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         FlowStep.Checkers.Remove(input);
     }
     #endregion
+
     [Reactive]
     public bool ShowEdit { get; set; }
     public ReactiveCommand<Unit, Unit> CreateCommand { get; }
@@ -524,6 +538,10 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
             else
             {
+                if (SimpleMode)
+                {
+                    return;
+                }
                 if (!FlowStep.PreSteps.Contains(c.Id))
                 {
                     if (!Verification(c, FlowStep))
@@ -658,6 +676,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     /// </summary>
     public void Render()
     {
+        RenderSimpleMode();
         var newList = Order(Steps);
         newList.Reverse();
         TimeSpan max = TimeSpan.FromSeconds(0);
@@ -696,6 +715,10 @@ public class FlowMakerEditViewModel : ViewModelBase
                 {
                     max = item.Time;
                 }
+            }
+            if (SimpleMode)
+            {
+                item.PreTime = TimeSpan.FromSeconds(0);
             }
         }
         DateAxis.Clear();
@@ -980,12 +1003,12 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 for (int i = 0; i < flowInput.Dims.Length; i++)
                 {
-                    if (flowStepInputViewModel.Dims.Count>i)
+                    if (flowStepInputViewModel.Dims.Count > i)
                     {
                         flowStepInputViewModel.Dims[i].Count = flowInput.Dims[i];
                     }
                 }
-              
+
             }
             int count = flowStepInputViewModel.Dims.Select(c => c.Count).Aggregate((a, b) => a * b);
             List<string> newDisplayNames = [];
@@ -1138,6 +1161,34 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     #endregion
 
+
+    #region SimpleMode
+    [Reactive]
+    public bool SimpleMode { get; set; }
+
+    public void RenderSimpleMode()
+    {
+        if (!SimpleMode)
+        {
+            return;
+        }
+        //遍历Steps，第0项没有prestep,其他项的prestep都是自己的前一项
+        for (int i = 0; i < Steps.Count; i++)
+        {
+            var item = Steps[i];
+            if (i == 0)
+            {
+                item.PreSteps.Clear();
+            }
+            else
+            {
+                item.PreSteps.Clear();
+                item.PreSteps.Add(Steps[i - 1].Id);
+            }
+        }
+    }
+
+    #endregion
 }
 
 
@@ -1422,27 +1473,29 @@ public class FlowStepViewModel : ReactiveObject
     {
         Id = Guid.NewGuid();
         _flowMakerEditViewModel = flowMakerEditViewModel;
-        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "ErrorHandling", 0, _flowMakerEditViewModel)
+        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "FlowMaker.Models.ErrorHandling", 0, _flowMakerEditViewModel)
         {
-            Value = "",
-            Mode = InputMode.Normal,
+            Value = "Skip",
+            Mode = InputMode.Option,
             Id = Guid.NewGuid(),
+            Options = [new FlowStepOptionViewModel("Skip", "Skip"), new FlowStepOptionViewModel("Terminate", "Terminate")],
+            HasOption = true,
         };
         Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", 0, _flowMakerEditViewModel)
         {
-            Value = "",
+            Value = "1",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
         Retry = new FlowStepInputViewModel("Retry", "重试", "int", 0, _flowMakerEditViewModel)
         {
-            Value = "",
+            Value = "0",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };
         TimeOut = new FlowStepInputViewModel("TimeOut", "超时", "double", 0, _flowMakerEditViewModel)
         {
-            Value = "",
+            Value = "0",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
         };

@@ -84,12 +84,16 @@
             <Separator Margin="10,0"/>
             <CheckBox Content="变量"  Name="showData"/>
             <Button Command="{Binding CreateGlobeDataCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showData}">创建变量</Button>
-
+            <Separator Margin="10,0"/>
+            <CheckBox Content="简单模式" IsChecked="{Binding SimpleMode}"/>
+            <Separator Margin="10,0"/>
+            <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100"/>
         </ToolBar>
         <ScrollViewer x:Name="viewer"
                       Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
             <Grid  Margin="2" >
-                <ItemsControl ItemsSource="{Binding Steps}" x:Name="gantee"  VerticalAlignment="Top" AlternationCount="{Binding Steps.Count}">
+                <ItemsControl ItemsSource="{Binding Steps}"
+                              x:Name="gantee"  VerticalAlignment="Top" AlternationCount="{Binding Steps.Count}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <StackPanel>
@@ -129,7 +133,8 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <ItemsControl Margin="72,0,0,0"  VerticalAlignment="Stretch" ItemsSource="{Binding DateAxis}">
+                <ItemsControl ItemsSource="{Binding DateAxis}"
+                    Margin="30,0,0,0"  VerticalAlignment="Stretch" >
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <Grid></Grid>
@@ -229,8 +234,9 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                         <controls:FlowInputView DataContext="{Binding FlowStep.Repeat}"></controls:FlowInputView>
                         <controls:FlowInputView DataContext="{Binding FlowStep.Retry}"></controls:FlowInputView>
                         <controls:FlowInputView DataContext="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
-                        <!--<TextBox Text="{Binding FlowStep.TimeOut}" hc:InfoElement.Title="超时时间" />
-                        <TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
+
+                        <TextBox Text="{Binding FlowStep.Time}" hc:InfoElement.Title="显示时间" />
+                        <!--<TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
                         <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />-->
 
                         <!--<ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->

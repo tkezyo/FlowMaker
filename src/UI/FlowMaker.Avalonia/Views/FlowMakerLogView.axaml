@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="FlowMaker.FlowMakerLogView">
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
+		<StackPanel Orientation="Horizontal" Grid.Row="0">
+			<TextBlock Text="{Binding FlowCategory,StringFormat=流程类别：{0}}" Margin="10,0"/>
+			<TextBlock Text="{Binding FlowName,StringFormat=流程名称：{0}}"/>
+		</StackPanel>
+		<DataGrid Grid.Row="1" ItemsSource="{Binding StepLogs}" AutoGenerateColumns="False" SelectedItem="{Binding CurrentLog}" IsReadOnly="True">
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="名称" Binding="{Binding  Name}"/>
+				<DataGridTextColumn Header="状态" Binding="{Binding  State}"/>
+				<DataGridTextColumn Header="流程执行次数" Binding="{Binding  FlowCurrentIndex}"/>
+				<DataGridTextColumn Header="步骤执行次数" Binding="{Binding  StepCurrentIndex}"/>
+				<DataGridTextColumn Header="流程错误次数" Binding="{Binding  FlowErrorIndex}"/>
+				<DataGridTextColumn Header="步骤错误次数" Binding="{Binding  StepErrorIndex}"/>
+				<DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+				<DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+			</DataGrid.Columns>
+		</DataGrid>
+		<TextBlock Text="{Binding Detail}" Grid.Row="2">
+
+		</TextBlock>
+	</Grid>
+</UserControl>

@@ -20,11 +20,22 @@ public class FlowRunner : IDisposable
     /// 全局上下文
     /// </summary>
     public FlowContext Context { get; set; } = null!;
-
+    /// <summary>
+    /// 执行步骤的事件
+    /// </summary>
     private Subject<ExecuteStepEvent> ExecuteStepSubject { get; } = new();
+    /// <summary>
+    /// 锁,防止多线程执行步骤分发
+    /// </summary>
     private readonly Subject<Unit> _locker = new();
     private CancellationToken _cancellationToken;
+    /// <summary>
+    /// 流程Id
+    /// </summary>
     public Guid Id { get; set; } = Guid.NewGuid();
+    /// <summary>
+    /// 释放资源
+    /// </summary>
     private CompositeDisposable Disposables { get; set; } = [];
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
@@ -90,10 +101,22 @@ public class FlowRunner : IDisposable
 
 
     protected TaskCompletionSource<FlowResult>? TaskCompletionSource { get; set; }
+    /// <summary>
+    /// 流程状态
+    /// </summary>
     public FlowState State { get; protected set; } = FlowState.None;
 
-
-    private Dictionary<Guid, FlowRunner> SubFlowRunners { get; set; } = [];
+    /// <summary>
+    /// 子流程执行器
+    /// </summary>
+    protected Dictionary<Guid, FlowRunner> SubFlowRunners { get; set; } = [];
+    /// <summary>
+    /// 执行步骤
+    /// </summary>
+    /// <param name="step"></param>
+    /// <param name="stepContext"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     protected async Task RunStep(FlowStep step, StepContext stepContext, CancellationToken cancellationToken)
     {
         var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name);
@@ -130,11 +153,30 @@ public class FlowRunner : IDisposable
             }
         }
     }
+    /// <summary>
+    /// 检查步骤是否需要执行
+    /// </summary>
+    /// <param name="flowStep"></param>
+    /// <param name="convertId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     protected async Task<bool> CheckStep(FlowStep flowStep, Guid convertId, CancellationToken cancellationToken)
     {
         var converter = Context.FlowDefinition.Checkers.FirstOrDefault(c => c.Id == convertId) ?? flowStep.Checkers.FirstOrDefault(c => c.Id == convertId) ?? throw new Exception();
         return await IDataConverterInject.GetValue(converter, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
     }
+    /// <summary>
+    /// 开始执行流程
+    /// </summary>
+    /// <param name="flowInfo"></param>
+    /// <param name="config"></param>
+    /// <param name="parentIds"></param>
+    /// <param name="currentIndex"></param>
+    /// <param name="errorIndex"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    /// <exception cref="Exception"></exception>
     public async Task<FlowResult> Start(FlowDefinition flowInfo, ConfigDefinition config, Guid[] parentIds, int currentIndex, int errorIndex, CancellationToken? cancellationToken = null)
     {
         if (cancellationToken is null)
@@ -231,8 +273,16 @@ public class FlowRunner : IDisposable
         }
     }
 
-    private readonly List<IEventMiddleware> _eventMiddlewares = [];
-
+    /// <summary>
+    /// 发送事件中间件
+    /// </summary>
+    protected readonly List<IEventMiddleware> _eventMiddlewares = [];
+    /// <summary>
+    /// 发送事件
+    /// </summary>
+    /// <param name="eventName"></param>
+    /// <param name="eventData"></param>
+    /// <returns></returns>
     public async Task SendEventAsync(string eventName, string? eventData)
     {
         foreach (var item in _eventMiddlewares)
@@ -253,7 +303,12 @@ public class FlowRunner : IDisposable
             await item.Value.SendEventAsync(eventName, eventData);
         }
     }
-
+    /// <summary>
+    /// 执行步骤
+    /// </summary>
+    /// <param name="step"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     protected async Task Run(FlowStep step, CancellationToken cancellationToken)
     {
         List<IStepMiddleware> stepMiddlewares = [];
@@ -414,7 +469,10 @@ public class FlowRunner : IDisposable
             TaskCompletionSource?.SetException(e);
         }
     }
-
+    /// <summary>
+    /// 停止流程
+    /// </summary>
+    /// <returns></returns>
     public async Task StopAsync()
     {
         if (!CancellationTokenSource.IsCancellationRequested)
@@ -435,7 +493,7 @@ public class FlowRunner : IDisposable
         }
         foreach (var item in SubFlowRunners)
         {
-            item.Value.StopAsync();
+            await item.Value.StopAsync();
         }
         TaskCompletionSource?.SetCanceled();
     }
@@ -468,6 +526,7 @@ public enum StepState
     Complete,
     ReceivedEvent,
 }
+
 public enum StepOnceState
 {
     Start,

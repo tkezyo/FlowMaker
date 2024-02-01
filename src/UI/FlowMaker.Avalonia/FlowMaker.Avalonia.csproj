@@ -1,25 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0-windows10.0.17763</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<UseWPF>true</UseWPF>
 		<RootNamespace>FlowMaker</RootNamespace>
-		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
+
 
 	<ItemGroup>
 		<None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
 		<None Include="..\..\..\LICENSE" Pack="true" PackagePath="" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <PackageReference Include="HandyControl" Version="3.4.0" />
-	  <PackageReference Include="Ty.WPFBase" Version="0.6.0" />
-	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\FlowMaker.UIBase\FlowMaker.UIBase.csproj" />
+		<PackageReference Include="Ty.AvaloniaBase" Version="0.6.0" />
 	</ItemGroup>
 
+
+	<ItemGroup>
+		<ProjectReference Include="..\FlowMaker.UIBase\FlowMaker.UIBase.csproj" />
+	</ItemGroup>
 </Project>

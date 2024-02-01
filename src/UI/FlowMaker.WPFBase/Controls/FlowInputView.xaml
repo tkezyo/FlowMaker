@@ -26,7 +26,8 @@
         <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
         <converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
     </UserControl.Resources>
-    <StackPanel Margin="0,0,10,0" IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
+    <StackPanel Margin="0,0,10,0"
+                IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
         <StackPanel Orientation="Horizontal">
             <TextBlock Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityReConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
             <TextBox Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称"></TextBox>

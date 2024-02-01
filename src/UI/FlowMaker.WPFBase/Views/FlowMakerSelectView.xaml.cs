@@ -20,7 +20,7 @@ namespace FlowMaker.Views
     /// <summary>
     /// FlowMakerSelectView.xaml 的交互逻辑
     /// </summary>
-    public partial class FlowMakerSelectView :ReactiveUserControl<FlowMakerSelectViewModel>
+    public partial class FlowMakerSelectView : ReactiveUserControl<FlowMakerSelectViewModel>
     {
         public FlowMakerSelectView()
         {
