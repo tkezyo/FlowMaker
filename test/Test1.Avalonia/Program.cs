@@ -28,7 +28,6 @@ namespace Test1.Avalonia
 
             Log.Logger = configuration.CreateLogger();
 
-            RxApp.DefaultExceptionHandler = new MyCoolObservableExceptionHandler();
             var hostBuilder = Host.CreateDefaultBuilder();
 
             hostBuilder.ConfigureServices(async services =>
@@ -37,7 +36,6 @@ namespace Test1.Avalonia
             });
 
             var host = hostBuilder.Build();
-            TyApp.ServiceProvider = host.Services;
             using (host)
             {
                 host.Start();

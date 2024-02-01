@@ -15,7 +15,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="HandyControl" Version="3.4.0" />
-	  <PackageReference Include="Ty.WPFBase" Version="0.6.0" />
+	  <PackageReference Include="Ty.WPFBase" Version="0.8.0" />
 	</ItemGroup>
 
 	<ItemGroup>

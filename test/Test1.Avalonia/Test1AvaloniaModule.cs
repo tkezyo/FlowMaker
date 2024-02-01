@@ -23,7 +23,7 @@ namespace Test1.Avalonia
         {
             serviceDescriptors.AddSingleton<App>();
             serviceDescriptors.AddTransient<MainWindow>();
-            serviceDescriptors.AddHostedService<AvaloniaHostedService2<App, MainWindow>>();
+            serviceDescriptors.AddHostedService<AvaloniaHostedService<App, MainWindow>>();
             serviceDescriptors.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
             //serviceDescriptors.AddTransientCustomPageView<ChatViewModel, ChatView>();

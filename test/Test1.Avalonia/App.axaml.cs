@@ -15,10 +15,6 @@ namespace Test1.Avalonia
 {
     public partial class App : Application
     {
-        public App()
-        {
-            
-        }
         public override void Initialize()
         {
             AvaloniaXamlLoader.Load(this);
@@ -26,11 +22,6 @@ namespace Test1.Avalonia
 
         public override void OnFrameworkInitializationCompleted()
         {
-            if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                desktop.MainWindow = TyApp.ServiceProvider.GetRequiredService<MainWindow>();
-              
-            }
             base.OnFrameworkInitializationCompleted();
         }
     }

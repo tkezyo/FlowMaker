@@ -32,7 +32,7 @@
 			<ScrollViewer  Padding="3,0" >
 				<ItemsControl  ItemsSource="{Binding Runnings}" VerticalAlignment="Bottom">
 					<ItemsControl.Background>
-						<SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+						<SolidColorBrush Color="#CCCCCCCC"/>
 					</ItemsControl.Background>
 					<ItemsControl.ItemTemplate>
 						<DataTemplate>
@@ -52,7 +52,7 @@
 				<StackPanel Orientation="Horizontal">
 					<Button Content="+"   Padding="5,0"  FontSize="14" FontWeight="ExtraBold" Command="{Binding CreateCommand}"   >
 						<Button.Foreground>
-							<SolidColorBrush Color="{StaticResource PrimaryColor}"/>
+							<SolidColorBrush Color="Blue"/>
 						</Button.Foreground>
 					</Button>
 					<TextBlock Text="流程" VerticalAlignment="Center"/>
@@ -65,7 +65,7 @@
 							<Expander Header="{Binding Category}">
 								<ItemsControl Padding="4" ItemsSource="{Binding Flows}">
 									<ItemsControl.Background>
-										<SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+										<SolidColorBrush Color="#CCCCCCCC"/>
 									</ItemsControl.Background>
 									<ItemsControl.ItemTemplate>
 										<DataTemplate>
@@ -75,12 +75,12 @@
 													<Button Padding="4,0"  
 															Content="搜索" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
 														<Button.Foreground>
-															<SolidColorBrush Color="{StaticResource PrimaryColor}"/>
+															<SolidColorBrush Color="Blue"/>
 														</Button.Foreground>
 													</Button>
 													<Button  Padding="4,0"   Content="删除" BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
 														<Button.Foreground>
-															<SolidColorBrush Color="{StaticResource DangerColor}"/>
+															<SolidColorBrush Color="Red"/>
 														</Button.Foreground>
 													</Button>
 												</StackPanel>
@@ -92,7 +92,7 @@
 																<Button Content="{Binding ConfigName,StringFormat={}-{0}}"  Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
 																<Button  Padding="4,0"  Content="删除" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
 																	<Button.Foreground>
-																		<SolidColorBrush Color="{StaticResource DangerColor}"/>
+																		<SolidColorBrush Color="Red"/>
 																	</Button.Foreground>
 																</Button>
 															</StackPanel>

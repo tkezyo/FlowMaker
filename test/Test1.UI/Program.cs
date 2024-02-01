@@ -25,7 +25,6 @@ namespace Test1
 
             Log.Logger = configuration.CreateLogger();
 
-            RxApp.DefaultExceptionHandler = new MyCoolObservableExceptionHandler();
             var hostBuilder = Host.CreateDefaultBuilder(args);
 
             hostBuilder.ConfigureServices(async services =>
@@ -34,7 +33,6 @@ namespace Test1
             });
 
             var host = hostBuilder.Build();
-            TyApp.ServiceProvider = host.Services;
             using (host)
             {
                 host.Start();
