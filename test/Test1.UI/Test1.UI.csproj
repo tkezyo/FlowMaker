@@ -29,7 +29,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\src\UI\FlowMaker.WPFBase\FlowMaker.WPFBase.csproj" />
+	  <ProjectReference Include="..\..\src\UI\FlowMaker.WPF\FlowMaker.WPF.csproj" />
 	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj" />
 	  <ProjectReference Include="..\Test1\Test1.csproj" />
 	</ItemGroup>

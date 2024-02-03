@@ -73,7 +73,7 @@
 												<StackPanel Orientation="Horizontal">
 													<Button Content="{Binding Name}"  Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}"/>
 													<Button Padding="4,0"  
-															Content="搜索" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
+															Content="编辑" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
 														<Button.Foreground>
 															<SolidColorBrush Color="Blue"/>
 														</Button.Foreground>

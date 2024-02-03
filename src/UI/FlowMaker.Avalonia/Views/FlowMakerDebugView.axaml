@@ -76,7 +76,7 @@
 						  VerticalAlignment="Center">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
-						<StackPanel>
+						<StackPanel Orientation="Horizontal">
 							<TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" Margin="4,0"/>
 							<TextBox  MinWidth="50"  Text="{Binding Value}"  IsVisible="{Binding !HasOption}"/>
 							<ComboBox   ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" IsVisible="{Binding HasOption}" SelectedValueBinding="{Binding Name}" DisplayMemberBinding="{Binding DisplayName}"/>
