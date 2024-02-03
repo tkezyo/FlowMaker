@@ -17,7 +17,7 @@
 		<converters:MonitorDebugConverter x:Key="MonitorDebugConverter" />
 	</UserControl.Resources>
 	<DockPanel>
-		<StackPanel DockPanel.Dock="Top">
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
 			<ProgressBar
 		 Height="20" Width="20"
 		 Maximum="100"
@@ -38,7 +38,7 @@
 			<CheckBox Content="编辑"  x:Name="edit"/>
 
 		</StackPanel>
-		<StackPanel DockPanel.Dock="Top"
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal"
 			IsVisible="{Binding IsChecked,ElementName=eventCB}" >
 			<Button Content="发送事件" Command="{Binding DataContext.SendEventCommand,ElementName=page}"  />
 			<TextBlock Text="名称:" VerticalAlignment="Center" Margin="4,0"/>
@@ -47,8 +47,8 @@
 			<TextBox Text="{Binding Model.EventData}"   MinWidth="80"/>
 
 		</StackPanel>
-	<StackPanel DockPanel.Dock="Top"
-			IsVisible="{Binding IsChecked,ElementName=edit}" >
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal"
+				IsVisible="{Binding IsChecked,ElementName=edit}" >
 			<Button Content="保存" Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" />
 			<TextBlock Text="重复:" VerticalAlignment="Center" Margin="4,0"/>
 			<TextBox Text="{Binding Model.Repeat}"  />
@@ -62,7 +62,8 @@
 			<ComboBox ItemsSource="{Binding CustomLogs}"  SelectedItem="{Binding Model.LogView}"></ComboBox>
 			<Separator Margin="10,0"/>
 
-			<ItemsControl ItemsSource="{Binding Model.Middlewares}" Grid.Row="5"  Grid.ColumnSpan="2" Margin="0,5">
+			<ItemsControl ItemsSource="{Binding Model.Middlewares}"
+						  Grid.Row="5"  Grid.ColumnSpan="2" Margin="0,5">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
 						<CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
@@ -71,7 +72,8 @@
 			</ItemsControl>
 			<Separator Margin="10,0"/>
 
-			<ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center">
+			<ItemsControl ItemsSource="{Binding Model.Data}"
+						  VerticalAlignment="Center">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
 						<StackPanel>

@@ -15,7 +15,7 @@
 	</UserControl.Resources>
 
 	<StackPanel Margin="0,0,10,0"
-                IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
+                IsEnabled="{Binding !Disable}">
 		<StackPanel Orientation="Horizontal">
 			<TextBlock  IsVisible="{Binding EditMode,ElementName=page}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
 			<TextBlock Text="名称"/>

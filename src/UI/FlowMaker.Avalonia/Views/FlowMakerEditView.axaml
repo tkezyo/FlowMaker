@@ -28,9 +28,9 @@
 			<ColumnDefinition Width="Auto"/>
 			<ColumnDefinition Width="Auto"/>
 		</Grid.ColumnDefinitions>
-		<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
+		<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal">
 			<Button Content="保存" Command="{Binding SaveCommand}"/>
-			<Separator Margin="10,0"/>
+			<Separator Margin="10,0" />
 			<TextBlock Text="类别:"/>
 			<TextBox Text="{Binding Category}"  MinWidth="80"/>
 			<TextBlock Text="名称:"/>
@@ -65,9 +65,9 @@
 					<ItemsControl.ItemTemplate>
 						<DataTemplate>
 							<StackPanel Orientation="Horizontal">
-								<TextBlock Text="{Binding Path=(ItemsControl.AlternationIndex), 
+								<!--<TextBlock Text="{Binding Path=(ItemsControl.AlternationIndex), 
                 RelativeSource={RelativeSource Mode=TemplatedParent}}" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" Width="30">
-								</TextBlock>
+								</TextBlock>-->
 								<Button x:Name="btn"
                                         Content="{Binding DisplayName}" Command="{Binding DataContext.ChangePreCommand,ElementName=page}"   CommandParameter="{Binding .}"   HorizontalAlignment="Left" BorderBrush="#534fbc" BorderThickness="2">
 									
