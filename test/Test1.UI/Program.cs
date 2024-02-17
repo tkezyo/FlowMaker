@@ -5,6 +5,8 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Ty;
 
 namespace Test1
@@ -12,7 +14,7 @@ namespace Test1
     class Program
     {
         [STAThread]
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var configuration = new LoggerConfiguration()
 #if DEBUG
@@ -25,19 +27,17 @@ namespace Test1
 
             Log.Logger = configuration.CreateLogger();
 
-            var hostBuilder = Host.CreateDefaultBuilder(args);
 
-            hostBuilder.ConfigureServices(async services =>
+            var host = await IModule.CreateHost<Test1UIModule>(args) ?? throw new Exception();
+
+            Thread thread = new(async () =>
             {
-                await IModule.ConfigureServices<Test1UIModule>(services);
+                await host.RunAsync();
             });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.Start();
 
-            var host = hostBuilder.Build();
-            using (host)
-            {
-                host.Start();
-                host.WaitForShutdown();
-            }
+
         }
     }
 }

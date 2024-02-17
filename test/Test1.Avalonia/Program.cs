@@ -5,6 +5,7 @@ using ReactiveUI;
 using Serilog;
 using Serilog.Events;
 using System;
+using System.Threading.Tasks;
 using Ty;
 
 namespace Test1.Avalonia
@@ -15,7 +16,7 @@ namespace Test1.Avalonia
         // SynchronizationContext-reliant code before AppMain is called: things aren't initialized
         // yet and stuff might break.
         [STAThread]
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var configuration = new LoggerConfiguration()
 #if DEBUG
@@ -28,19 +29,9 @@ namespace Test1.Avalonia
 
             Log.Logger = configuration.CreateLogger();
 
-            var hostBuilder = Host.CreateDefaultBuilder();
+            var host = await IModule.CreateHost<Test1AvaloniaModule>(args) ?? throw new Exception();
 
-            hostBuilder.ConfigureServices(async services =>
-            {
-                await IModule.ConfigureServices<Test1AvaloniaModule>(services);
-            });
-
-            var host = hostBuilder.Build();
-            using (host)
-            {
-                host.Start();
-                host.WaitForShutdown();
-            }
+            await host.RunAsync();
         }
     }
 }
