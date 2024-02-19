@@ -1,5 +1,6 @@
 ﻿using FlowMaker.Middlewares;
 using FlowMaker.Persistence;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ty;
 
@@ -11,7 +12,7 @@ namespace FlowMaker
         {
             AddDepend<FlowMakerModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors)
+        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
         {
             serviceDescriptors.AddSingleton<MemoryFlowLogProvider>();
             serviceDescriptors.AddSingleton<IFlowLogReader>(c => c.GetRequiredService<MemoryFlowLogProvider>());

@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ty;
 
@@ -14,7 +15,7 @@ namespace Test1
         {
             AddDepend<FlowMakerModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors)
+        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
         {
             serviceDescriptors.AddFlowStep<Flow1>();
             serviceDescriptors.AddFlowStep<Flow2>();

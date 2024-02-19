@@ -12,6 +12,7 @@ using Test1.Views;
 using Ty.Views;
 using Ty;
 using Serilog;
+using Microsoft.Extensions.Configuration;
 
 namespace Test1
 {
@@ -22,7 +23,7 @@ namespace Test1
             AddDepend<Test1Module>();
             AddDepend<FlowMakerWpfModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors)
+        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
         {
 
             serviceDescriptors.AddSingleton<App>();

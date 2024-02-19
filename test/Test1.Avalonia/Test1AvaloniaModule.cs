@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Ty;
 using Ty.AvaloniaBase.Views;
+using Microsoft.Extensions.Configuration;
 
 namespace Test1.Avalonia
 {
@@ -19,7 +20,7 @@ namespace Test1.Avalonia
             AddDepend<Test1Module>();
             AddDepend<FlowMakerAvaloniaModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors)
+        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
         {
             serviceDescriptors.AddSingleton<App>();
             serviceDescriptors.AddTransient<MainWindow>();

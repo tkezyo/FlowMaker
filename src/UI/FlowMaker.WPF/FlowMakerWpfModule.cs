@@ -1,5 +1,6 @@
 ﻿using FlowMaker.ViewModels;
 using FlowMaker.Views;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace FlowMaker
             AddDepend<TyWPFBaseModule>();
         }
 
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors)
+        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
         {
             serviceDescriptors.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
             serviceDescriptors.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();

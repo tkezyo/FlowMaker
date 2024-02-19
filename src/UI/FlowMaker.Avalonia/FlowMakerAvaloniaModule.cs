@@ -1,4 +1,5 @@
 ﻿using FlowMaker.ViewModels;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Ty;
 
@@ -12,7 +13,7 @@ namespace FlowMaker
             AddDepend<TyAvaloniaBaseModule>();
         }
 
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors)
+        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
         {
             serviceDescriptors.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
             serviceDescriptors.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
