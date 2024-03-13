@@ -1,6 +1,5 @@
 ﻿using FlowMaker;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Ty;
 
 namespace Test1
@@ -15,15 +14,15 @@ namespace Test1
         {
             AddDepend<FlowMakerModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
+        public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            serviceDescriptors.AddFlowStep<Flow1>();
-            serviceDescriptors.AddFlowStep<Flow2>();
-            serviceDescriptors.AddFlowStep<Flow3>();
-            serviceDescriptors.AddFlowStep<MyClass>();
-            serviceDescriptors.AddFlowStep<TestFlow1>();
-            serviceDescriptors.AddFlowConverter<ValueConverter>();
-            serviceDescriptors.AddFlowOption<PortProvider>();
+            hostApplicationBuilder.Services.AddFlowStep<Flow1>();
+            hostApplicationBuilder.Services.AddFlowStep<Flow2>();
+            hostApplicationBuilder.Services.AddFlowStep<Flow3>();
+            hostApplicationBuilder.Services.AddFlowStep<MyClass>();
+            hostApplicationBuilder.Services.AddFlowStep<TestFlow1>();
+            hostApplicationBuilder.Services.AddFlowConverter<ValueConverter>();
+            hostApplicationBuilder.Services.AddFlowOption<PortProvider>();
             return Task.CompletedTask;
         }
     }

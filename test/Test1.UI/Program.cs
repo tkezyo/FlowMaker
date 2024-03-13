@@ -28,7 +28,7 @@ namespace Test1
             Log.Logger = configuration.CreateLogger();
 
 
-            var host = await IModule.CreateHost<Test1UIModule>(args) ?? throw new Exception();
+            var host = await IModule.CreateApplicationHost<Test1UIModule>(args) ?? throw new Exception();
 
             Thread thread = new(async () =>
             {

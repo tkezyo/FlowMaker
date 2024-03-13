@@ -1,6 +1,7 @@
 ﻿using FlowMaker.ViewModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Ty;
 
 namespace FlowMaker
@@ -13,15 +14,15 @@ namespace FlowMaker
             AddDepend<TyAvaloniaBaseModule>();
         }
 
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
+        public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            serviceDescriptors.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
-            serviceDescriptors.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
-            serviceDescriptors.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
-            serviceDescriptors.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
-            serviceDescriptors.AddTransientCustomPageView<FlowMakerDebugViewModel, FlowMakerDebugView>();
-            serviceDescriptors.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
-            serviceDescriptors.AddTransientView<FlowMakerLogViewModel, FlowMakerLogView>();
+            hostApplicationBuilder.Services.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
+            hostApplicationBuilder.Services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
+            hostApplicationBuilder.Services.AddTransientView<FlowMakerCustomPageViewModel, FlowMakerCustomPageView>();
+            hostApplicationBuilder.Services.AddSingletonView<FlowMakerMonitorViewModel, FlowMakerMonitorView>();
+            hostApplicationBuilder.Services.AddTransientCustomPageView<FlowMakerDebugViewModel, FlowMakerDebugView>();
+            hostApplicationBuilder.Services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
+            hostApplicationBuilder.Services.AddTransientView<FlowMakerLogViewModel, FlowMakerLogView>();
 
 
             return Task.CompletedTask;

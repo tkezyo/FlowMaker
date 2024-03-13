@@ -1,16 +1,17 @@
 ﻿using FlowMaker.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace FlowMaker;
 
 public class FlowMakerModule : Ty.ModuleBase
 {
-    public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
+    public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
     {
-        serviceDescriptors.AddTransient<FlowRunner>();
-        serviceDescriptors.AddSingleton<FlowManager>();
-        serviceDescriptors.AddTransient<IFlowProvider, FileFlowProvider>();
+        hostApplicationBuilder.Services.AddTransient<FlowRunner>();
+        hostApplicationBuilder.Services.AddSingleton<FlowManager>();
+        hostApplicationBuilder.Services.AddTransient<IFlowProvider, FileFlowProvider>();
         return Task.CompletedTask;
     }
 }

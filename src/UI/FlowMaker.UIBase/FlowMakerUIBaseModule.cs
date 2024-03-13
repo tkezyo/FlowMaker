@@ -2,6 +2,7 @@
 using FlowMaker.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Ty;
 
 namespace FlowMaker
@@ -12,24 +13,24 @@ namespace FlowMaker
         {
             AddDepend<FlowMakerModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
+        public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            serviceDescriptors.AddSingleton<MemoryFlowLogProvider>();
-            serviceDescriptors.AddSingleton<IFlowLogReader>(c => c.GetRequiredService<MemoryFlowLogProvider>());
-            serviceDescriptors.AddSingleton<IFlowLogWriter>(c => c.GetRequiredService<MemoryFlowLogProvider>());
+            hostApplicationBuilder.Services.AddSingleton<MemoryFlowLogProvider>();
+            hostApplicationBuilder.Services.AddSingleton<IFlowLogReader>(c => c.GetRequiredService<MemoryFlowLogProvider>());
+            hostApplicationBuilder.Services.AddSingleton<IFlowLogWriter>(c => c.GetRequiredService<MemoryFlowLogProvider>());
 
 
-            serviceDescriptors.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
-            serviceDescriptors.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
+            hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
+            hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
 
-            serviceDescriptors.AddScoped<MonitorMiddleware>();
-            serviceDescriptors.AddKeyedScoped<IStepOnceMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
-            serviceDescriptors.AddKeyedScoped<IFlowMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
+            hostApplicationBuilder.Services.AddScoped<MonitorMiddleware>();
+            hostApplicationBuilder.Services.AddKeyedScoped<IStepOnceMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
+            hostApplicationBuilder.Services.AddKeyedScoped<IFlowMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
 
-            serviceDescriptors.AddKeyedScoped<IFlowMiddleware, LogFlowMiddleware>("log");
-            serviceDescriptors.AddKeyedScoped<IStepMiddleware, LogStepMiddleware>("log");
-            serviceDescriptors.AddKeyedScoped<IStepOnceMiddleware, LogStepOnceMiddleware>("log");
-            serviceDescriptors.AddKeyedScoped<IEventMiddleware, LogEventMiddleware>("log");
+            hostApplicationBuilder.Services.AddKeyedScoped<IFlowMiddleware, LogFlowMiddleware>("log");
+            hostApplicationBuilder.Services.AddKeyedScoped<IStepMiddleware, LogStepMiddleware>("log");
+            hostApplicationBuilder.Services.AddKeyedScoped<IStepOnceMiddleware, LogStepOnceMiddleware>("log");
+            hostApplicationBuilder.Services.AddKeyedScoped<IEventMiddleware, LogEventMiddleware>("log");
             return Task.CompletedTask;
         }
     }

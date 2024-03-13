@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Ty;
 using Ty.AvaloniaBase.Views;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace Test1.Avalonia
 {
@@ -20,24 +21,24 @@ namespace Test1.Avalonia
             AddDepend<Test1Module>();
             AddDepend<FlowMakerAvaloniaModule>();
         }
-        public override Task ConfigureServices(IServiceCollection serviceDescriptors, IConfigurationRoot configurationRoot)
+        public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            serviceDescriptors.AddSingleton<App>();
-            serviceDescriptors.AddTransient<MainWindow>();
-            serviceDescriptors.AddHostedService<AvaloniaHostedService<App, MainWindow>>();
-            serviceDescriptors.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
+            hostApplicationBuilder.Services.AddSingleton<App>();
+            hostApplicationBuilder.Services.AddTransient<MainWindow>();
+            hostApplicationBuilder.Services.AddHostedService<AvaloniaHostedService<App, MainWindow>>();
+            hostApplicationBuilder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
             //serviceDescriptors.AddTransientCustomPageView<ChatViewModel, ChatView>();
             //serviceDescriptors.AddCustomLogView<CustomLogViewModel, CustomLogView>();
 
-            serviceDescriptors.AddAutoMapper(typeof(ConfigProfile).Assembly);
+            hostApplicationBuilder.Services.AddAutoMapper(typeof(ConfigProfile).Assembly);
 
-            serviceDescriptors.Configure<PageOptions>(options =>
+            hostApplicationBuilder.Services.Configure<PageOptions>(options =>
             {
                 options.FirstLoadPage = typeof(FlowMakerMainViewModel);
                 options.Title = "牛马指挥官";
             });
-            serviceDescriptors.Configure<FlowMakerOption>(options =>
+            hostApplicationBuilder.Services.Configure<FlowMakerOption>(options =>
             {
                 options.FlowRootDir = "D:\\FlowMaker\\Flow";
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
