@@ -15,7 +15,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Ty.AvaloniaBase" Version="0.16.0" />
+		<PackageReference Include="Ty.AvaloniaBase" Version="0.17.0" />
 	</ItemGroup>
 
 
