@@ -55,7 +55,7 @@
 			<ComboBox  HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" SelectedValue="{Binding ConverterName}" SelectedValueBinding="{Binding Name}" DisplayMemberBinding="{Binding Name}"></ComboBox>
 		</StackPanel>
 
-		<ItemsControl ItemsSource="{Binding SubInputs}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
+		<ItemsControl ItemsSource="{Binding SubInputs}" IsVisible="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
 			<ItemsControl.ItemTemplate>
 				<DataTemplate>
 					<local:FlowInputView/>
