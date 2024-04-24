@@ -24,7 +24,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     public FlowMakerEditViewModel(IOptions<FlowMakerOption> options, FlowManager flowManager, IMessageBoxManager messageBoxManager, IServiceProvider serviceProvider, IFlowProvider flowProvider)
     {
         _flowMakerOption = options.Value;
-        CreateCommand = ReactiveCommand.CreateFromTask(Create);
+        CreateCommand = ReactiveCommand.CreateFromTask<bool>(Create);
         CreateGlobeDataCommand = ReactiveCommand.Create(CreateGlobeData);
         ChangeScaleCommand = ReactiveCommand.Create<int>(ChangeScale);
         ChangePreCommand = ReactiveCommand.Create<FlowStepViewModel>(ChangePre);
@@ -103,8 +103,11 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 StepGroups.Remove(item);
             }
+        });
 
-
+        this.WhenAnyValue(c => c.FlowStep).Subscribe(c =>
+        {
+            ShowEdit = c is not null;
         });
     }
     [Reactive]
@@ -139,16 +142,42 @@ public class FlowMakerEditViewModel : ViewModelBase
         }
 
         FlowDefinition flowDefinition = new() { Category = Category, Name = Name };
-        foreach (var item in Steps)
+
+        flowDefinition.SimpleMode = SimpleMode;
+
+        FlowStep CreateFlowStep(FlowStepViewModel item)
         {
             var f = new FlowStep()
             {
-                Category = item.Category ?? "",
-                DisplayName = item.DisplayName ?? "",
-                Name = item.Name ?? "",
+                Category = item.Category ?? string.Empty,
+                DisplayName = item.DisplayName ?? string.Empty,
+                Name = item.Name ?? string.Empty,
                 Id = item.Id,
                 Type = item.Type,
+                Parallel = item.Parallel,
+                Time = item.Time,
+                Finally = item.Finally,
             };
+            if (item.Type == StepType.Embedded)
+            {
+                item.Category = Category;
+                item.Name = Name;
+
+                var embeddedFlow = new EmbeddedFlowDefinition
+                {
+                    Category = Category,
+                    Name = Name,
+                    StepId = item.Id,
+                };
+
+                foreach (var step in item.Steps)
+                {
+                    embeddedFlow.Steps.Add(CreateFlowStep(step));
+                }
+
+                flowDefinition.EmbeddedFlows.Add(embeddedFlow);
+            }
+
             f.ErrorHandling = CreateInput(item.ErrorHandling);
             f.Repeat = CreateInput(item.Repeat);
             f.Retry = CreateInput(item.Retry);
@@ -210,6 +239,12 @@ public class FlowMakerEditViewModel : ViewModelBase
                 }
                 f.Outputs.Add(nOutput);
             }
+            return f;
+        }
+
+        foreach (var item in Steps)
+        {
+            var f = CreateFlowStep(item);
 
             flowDefinition.Steps.Add(f);
         }
@@ -254,6 +289,13 @@ public class FlowMakerEditViewModel : ViewModelBase
         }
         var flowDefinition = await _flowProvider.LoadFlowDefinitionAsync(category, name);
 
+        if (flowDefinition is null)
+        {
+            return;
+        }
+
+        SimpleMode = flowDefinition.SimpleMode;
+
         Category = flowDefinition.Category;
         Name = flowDefinition.Name;
 
@@ -291,24 +333,38 @@ public class FlowMakerEditViewModel : ViewModelBase
             });
         }
 
-        foreach (var item in flowDefinition.Steps)
+        async Task<FlowStepViewModel> CreateStepViewModelAsync(FlowStep flowStepItem)
         {
-            FlowStepViewModel flowStepViewModel = new(this)
+            FlowStepViewModel flowStepViewModel = new(this, flowStepItem.Type)
             {
-                DisplayName = item.DisplayName,
-                Id = item.Id,
+                DisplayName = flowStepItem.DisplayName,
+                Id = flowStepItem.Id,
                 Status = StepStatus.Normal,
-                Time = TimeSpan.FromSeconds(1),
+                Time = flowStepItem.Time,
+                Parallel = flowStepItem.Parallel,
+                Finally = flowStepItem.Finally,
             };
-            flowStepViewModel.Category = item.Category;
-            flowStepViewModel.Name = item.Name;
-            await flowStepViewModel.SetInputOutputs(item);
 
+            flowStepViewModel.Category = flowStepItem.Category;
+            flowStepViewModel.Name = flowStepItem.Name;
+
+            if (flowStepItem.Type == StepType.Embedded)
+            {
+                var embeddedFlow = flowDefinition.EmbeddedFlows.First(c => c.StepId == flowStepItem.Id);
+                foreach (var item2 in embeddedFlow.Steps)
+                {
+                    flowStepViewModel.Steps.Add(await CreateStepViewModelAsync(item2));
+                }
+            }
+            else
+            {
+                await flowStepViewModel.SetInputOutputs(flowStepItem);
+            }
 
             flowStepViewModel.Init();
 
 
-            foreach (var wait in item.WaitEvents)
+            foreach (var wait in flowStepItem.WaitEvents)
             {
                 switch (wait.Type)
                 {
@@ -325,7 +381,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 }
             }
             //checker
-            foreach (var checker in item.Checkers)
+            foreach (var checker in flowStepItem.Checkers)
             {
                 flowStepViewModel.Checkers.Add(new FlowStepInputViewModel("", checker.Name, "bool", 0, this)
                 {
@@ -339,7 +395,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             LoadIf(flowStepViewModel);
 
             //if
-            foreach (var ifItem in item.Ifs)
+            foreach (var ifItem in flowStepItem.Ifs)
             {
                 var entity = flowStepViewModel.Ifs.FirstOrDefault(c => c.Id == ifItem.Key);
                 if (entity is not null)
@@ -350,8 +406,14 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
 
 
-            Steps.Add(flowStepViewModel);
+            return flowStepViewModel;
+        }
 
+        foreach (var item in flowDefinition.Steps)
+        {
+            var flowStepViewModel = await CreateStepViewModelAsync(item);
+
+            Steps.Add(flowStepViewModel);
         }
 
 
@@ -447,11 +509,13 @@ public class FlowMakerEditViewModel : ViewModelBase
 
     [Reactive]
     public bool ShowEdit { get; set; }
-    public ReactiveCommand<Unit, Unit> CreateCommand { get; }
+    public ReactiveCommand<bool, Unit> CreateCommand { get; }
+    public ReactiveCommand<bool, Unit> CreateEmbeddedCommand { get; }
     public ObservableCollection<FlowStepViewModel> Steps { get; set; } = [];
-    public async Task Create()
+    public async Task Create(bool embedded)
     {
-        var model = new FlowStepViewModel(this);
+        var model = new FlowStepViewModel(this, embedded ? StepType.Embedded : StepType.Normal);
+
         model.Init();
         if (FlowStep is not null)
         {
@@ -466,6 +530,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             ChangePre(model);
         }
         Render();
+
         await Task.CompletedTask;
     }
 
@@ -1469,9 +1534,10 @@ public class FlowStepViewModel : ReactiveObject
     private readonly FlowMakerEditViewModel _flowMakerEditViewModel;
 
 
-    public FlowStepViewModel(FlowMakerEditViewModel flowMakerEditViewModel)
+    public FlowStepViewModel(FlowMakerEditViewModel flowMakerEditViewModel, StepType stepType)
     {
         Id = Guid.NewGuid();
+        Type = stepType;
         _flowMakerEditViewModel = flowMakerEditViewModel;
         ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "FlowMaker.ErrorHandling", 0, _flowMakerEditViewModel)
         {
@@ -1503,15 +1569,22 @@ public class FlowStepViewModel : ReactiveObject
 
     public void Init()
     {
+        if (Type != StepType.Embedded)
+        {
+            this.WhenAnyValue(c => c.Category).WhereNotNull().DistinctUntilChanged().Subscribe(c =>
+            {
+                _flowMakerEditViewModel.SetStepDefinitions(this);
+            });
+            this.WhenAnyValue(c => c.Name).Skip(1).WhereNotNull().DistinctUntilChanged().Subscribe(async c =>
+            {
+                await SetInputOutputs();
+            });
+        }
+        else
+        {
 
-        this.WhenAnyValue(c => c.Category).WhereNotNull().DistinctUntilChanged().Subscribe(c =>
-        {
-            _flowMakerEditViewModel.SetStepDefinitions(this);
-        });
-        this.WhenAnyValue(c => c.Name).Skip(1).WhereNotNull().DistinctUntilChanged().Subscribe(async c =>
-        {
-            await SetInputOutputs();
-        });
+        }
+
     }
     /// <summary>
     /// 任务类型
@@ -1536,13 +1609,17 @@ public class FlowStepViewModel : ReactiveObject
             return;
         }
 
+        if (stepDef is IFlowDefinition)
+        {
+            Type = StepType.SubFlow;
+        }
+
+
         Outputs.Clear();
         Inputs.Clear();
 
         if (flowStep is not null)
         {
-            Type = flowStep.Type;
-
             _flowMakerEditViewModel.InsertConverterInput(ErrorHandling, flowStep.ErrorHandling);
             _flowMakerEditViewModel.InsertConverterInput(Repeat, flowStep.Repeat);
             _flowMakerEditViewModel.InsertConverterInput(Retry, flowStep.Retry);
@@ -1628,7 +1705,16 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public string? Name { get; set; }
-
+    /// <summary>
+    /// 结束步骤
+    /// </summary>
+    [Reactive]
+    public bool Finally { get; set; }
+    /// <summary>
+    /// 并行执行-仅在简单模式下有效
+    /// </summary>
+    [Reactive]
+    public bool Parallel { get; set; }
     /// <summary>
     /// 超时,秒
     /// </summary>

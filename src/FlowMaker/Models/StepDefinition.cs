@@ -12,7 +12,7 @@ public interface IFlowDefinition : IStepDefinition
 }
 public class FlowDefinition : StepDefinition, IFlowDefinition
 {
-    public bool EasyMode { get; set; }
+    public bool SimpleMode { get; set; }
     public List<FlowStep> Steps { get; set; } = [];
     public List<FlowInput> Checkers { get; set; } = [];
 

@@ -80,6 +80,7 @@ public class FlowStep
     /// 等待事件
     /// </summary>
     public List<FlowEvent> WaitEvents { get; set; } = [];
+    public TimeSpan Time { get; set; }
 }
 
 public class FlowEvent

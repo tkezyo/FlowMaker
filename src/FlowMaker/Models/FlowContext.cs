@@ -38,6 +38,27 @@ public class FlowContext
     public void InitExecuteStepIds()
     {
         ExecuteStepIds.Clear();
+        if (FlowDefinition is EmbeddedFlowDefinition embeddedFlowDefinition)
+        {
+            //遍历子流程，如果是串行执行，则在他的WaitEvents中添加依赖的流程Id，如果是并行执行，则在他的WaitEvents中添加上一个串行流程Id
+            FlowStep? last = null;
+            foreach (var item in FlowDefinition.Steps)
+            {
+                if (last is not null)
+                {
+                    item.WaitEvents.Add(new FlowEvent
+                    {
+                        Type = EventType.PreStep,
+                        StepId = last?.Id
+                    });
+                }
+                if (!item.Parallel)
+                {
+                    last = item;
+                }
+            }
+        }
+
         foreach (var item in FlowDefinition.Steps)
         {
             List<string> waitEvent = [];
@@ -73,6 +94,9 @@ public class FlowContext
             {
                 Register(input);
             }
+
+
+
             foreach (var wait in item.WaitEvents)
             {
                 var key = wait.Type + wait.Type switch

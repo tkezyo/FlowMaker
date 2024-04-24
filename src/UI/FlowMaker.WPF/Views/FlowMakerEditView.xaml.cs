@@ -3,6 +3,7 @@ using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,6 +26,12 @@ namespace FlowMaker.Views
         public FlowMakerEditView()
         {
             InitializeComponent();
+            this.WhenActivated(d =>
+            {
+                //绑定treeview的selectedItem
+                this.Bind(ViewModel, vm => vm.FlowStep, v => v.tree.SelectedItem).DisposeWith(d);
+            });
+            
         }
     }
 }

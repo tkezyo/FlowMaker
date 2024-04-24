@@ -93,8 +93,9 @@
         </ToolBar>
         <ScrollViewer x:Name="viewer"
                       Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
-            <Grid  Margin="2" >
+            <Grid  Margin="2">
                 <ItemsControl ItemsSource="{Binding Steps}"
+                               Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
                               x:Name="gantee"  VerticalAlignment="Top" AlternationCount="{Binding Steps.Count}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -136,7 +137,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 <ItemsControl ItemsSource="{Binding DateAxis}"
-                              Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                               Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
                     Margin="30,0,0,0"  VerticalAlignment="Stretch" >
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -158,6 +159,33 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <TreeView ItemsSource="{Binding Steps}" x:Name="tree"  Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate
+                              ItemsSource="{Binding Steps}"
+                              DataType="vms:FlowStepViewModel">
+                            <StackPanel Orientation="Horizontal">
+                                <ToggleButton IsChecked="{Binding Parallel}" FontWeight="Bold" FontSize="20" Width="30">
+                                    <ToggleButton.Style>
+                                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonCustom}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter Property="Content" Value="⇒" />
+                                                    <Setter Property="Foreground" Value="Green" />
+                                                </Trigger>
+                                                <Trigger Property="IsChecked" Value="False">
+                                                    <Setter Property="Content" Value="⇓" />
+                                                    <Setter Property="Foreground" Value="LightBlue" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ToggleButton.Style>
+                                </ToggleButton>
+                                <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
             </Grid>
         </ScrollViewer>
         <ScrollViewer  Grid.Column="2" Grid.Row="1" Margin="10,5" 
