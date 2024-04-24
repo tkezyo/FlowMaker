@@ -1,16 +1,15 @@
 ﻿using DynamicData;
 using FlowMaker.Middlewares;
-using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
-using System;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Xml.Linq;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -160,7 +159,8 @@ namespace FlowMaker.ViewModels
         {
             var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
             await vm.Load(flowDefinitionInfoViewModel?.Category, flowDefinitionInfoViewModel?.Name);
-            _messageBoxManager.Window.Handle(new ModalInfo("牛马编辑器", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
+            var title = "牛马编辑器" + " " + flowDefinitionInfoViewModel?.Category + " " + flowDefinitionInfoViewModel?.Name;
+            _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
             {
                 LoadFlows();
             });

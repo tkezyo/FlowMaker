@@ -1,4 +1,4 @@
-﻿namespace FlowMaker.Models;
+﻿namespace FlowMaker;
 
 public interface IStepDefinition
 {

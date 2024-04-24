@@ -1,5 +1,4 @@
-﻿using FlowMaker.Models;
-using FlowMaker.Persistence;
+﻿using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -400,33 +399,32 @@ public class FlowRunner : IDisposable
                     }
                     catch (Exception e)
                     {
-                        errorIndex++;
-
-
                         var retry = await IDataConverterInject.GetValue(step.Retry, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
                         if (retry < errorIndex)
                         {
                             break;
                         }
+                        errorIndex++;
+                        once.EndTime = DateTime.Now;
+                        once.State = StepOnceState.Error;
 
+                        foreach (var item in stepOnceMiddlewares)
+                        {
+                            await item.OnError(Context, step, Context.StepState[step.Id], once, e,CancellationTokenSource.Token);
+                        }
                         var errorHandling = await IDataConverterInject.GetValue(step.ErrorHandling, _serviceProvider, Context, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
 
                         switch (errorHandling)
                         {
                             case ErrorHandling.Skip:
-                                once.EndTime = DateTime.Now;
-                                once.State = StepOnceState.Complete;
-                                foreach (var item in stepOnceMiddlewares)
-                                {
-                                    await item.OnExecuted(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
-                                }
+                              
                                 break;
                             case ErrorHandling.Terminate:
-                                once.EndTime = DateTime.Now;
-                                once.State = StepOnceState.Error;
-                                foreach (var item in stepOnceMiddlewares)
+                                Context.StepState[step.Id].Complete = false;
+                                Context.StepState[step.Id].EndTime = DateTime.Now;
+                                foreach (var item in stepMiddlewares)
                                 {
-                                    await item.OnError(Context, step, Context.StepState[step.Id], once, e, CancellationTokenSource.Token);
+                                    await item.OnError(Context, step, Context.StepState[step.Id], e, CancellationTokenSource.Token);
                                 }
                                 TaskCompletionSource?.SetException(e);
                                 return;

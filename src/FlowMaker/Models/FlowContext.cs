@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace FlowMaker.Models;
+namespace FlowMaker;
 
 public class FlowContext
 {

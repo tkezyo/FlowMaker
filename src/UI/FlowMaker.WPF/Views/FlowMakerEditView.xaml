@@ -8,7 +8,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                            xmlns:hc="https://handyorg.github.io/handycontrol"
              xmlns:local="clr-namespace:FlowMaker.Views" d:DataContext="{d:DesignInstance Type=vms:FlowMakerEditViewModel}"
-                    xmlns:models="clr-namespace:FlowMaker.Models;assembly=FlowMaker"
+                    xmlns:models="clr-namespace:FlowMaker;assembly=FlowMaker"
              xmlns:controls="clr-namespace:FlowMaker.Controls"
                           mc:Ignorable="d" 
                           x:Name="page"
@@ -29,7 +29,8 @@
         <Style TargetType="hc:NumericUpDown" BasedOn="{StaticResource NumericUpDownExtend}"></Style>
         <converters:EqualToBoolConverter x:Key="EqualConverter" />
         <converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
-        <Style TargetType="Button" x:Key="actionBtn"  BasedOn="{StaticResource ButtonCustom}">
+        <Style TargetType="Button" x:Key="actionBtn" 
+               BasedOn="{StaticResource ButtonCustom}">
             <Setter Property="hc:BackgroundSwitchElement.MouseHoverBackground" Value="Gray"/>
             <Setter Property="hc:BackgroundSwitchElement.MouseDownBackground" Value="Gray"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
@@ -71,13 +72,14 @@
         <ToolBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
             <Button Content="保存" Style="{StaticResource ButtonSuccess}" Command="{Binding SaveCommand}"/>
             <Separator Margin="10,0"/>
-            <TextBox Text="{Binding Category}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="类别:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
+            <TextBox Text="{Binding Category}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="分组:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <TextBox Text="{Binding Name}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="名称:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <Separator Margin="10,0"/>
             <Button Margin="4,0" Command="{Binding CreateCommand}">创建牛马</Button>
             <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除牛马" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
             <Button  Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}"  ></Button>
             <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}"  ></Button>
+            <CheckBox Content="编辑前置步骤"   Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}" IsChecked="{Binding EditPreStep}"/>
             <Separator Margin="10,0"/>
             <CheckBox Content="检查项"  Name="showChecker"/>
             <Button Command="{Binding AddFlowCheckerCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showChecker}">创建检查项</Button>
@@ -87,7 +89,7 @@
             <Separator Margin="10,0"/>
             <CheckBox Content="简单模式" IsChecked="{Binding SimpleMode}"/>
             <Separator Margin="10,0"/>
-            <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100"/>
+            <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100" Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
         </ToolBar>
         <ScrollViewer x:Name="viewer"
                       Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
@@ -134,6 +136,7 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 <ItemsControl ItemsSource="{Binding DateAxis}"
+                              Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
                     Margin="30,0,0,0"  VerticalAlignment="Stretch" >
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -219,16 +222,21 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
             </ItemsControl>
         </ScrollViewer>
         <ScrollViewer Grid.Row="1" Grid.Column="1"  Margin="10,5" 
-Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+            Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
             <StackPanel>
                 <GroupBox Header="基本信息">
                     <StackPanel>
                         <TextBox Text="{Binding FlowStep.DisplayName,UpdateSourceTrigger=PropertyChanged}" hc:InfoElement.Title="显示名称" />
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                            <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="分组"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
-                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}" hc:InfoElement.Title="名称" SelectedItem="{Binding FlowStep.Name}"></ComboBox>
-                            <Button Visibility="{Binding FlowStep.IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
-                        </StackPanel>
+                        <Grid HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox  ItemsSource="{Binding StepGroups}" hc:InfoElement.Title="分组"  SelectedItem="{Binding FlowStep.Category}" Grid.Column="0"></ComboBox>
+                            <ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}" hc:InfoElement.Title="名称" SelectedItem="{Binding FlowStep.Name}"  Grid.Column="1"></ComboBox>
+                            <Button Visibility="{Binding FlowStep.IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"  Grid.Column="2"/>
+                        </Grid>
 
                         <controls:FlowInputView DataContext="{Binding FlowStep.TimeOut}"></controls:FlowInputView>
                         <controls:FlowInputView DataContext="{Binding FlowStep.Repeat}"></controls:FlowInputView>
@@ -236,13 +244,9 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                         <controls:FlowInputView DataContext="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
 
                         <TextBox Text="{Binding FlowStep.Time}" hc:InfoElement.Title="显示时间" />
-                        <!--<TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
-                        <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />-->
-
-                        <!--<ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Header="输入">
+                <GroupBox Header="输入" Visibility="{Binding FlowStep.ShowInput,Converter={StaticResource Boolean2VisibilityConverter}}">
                     <ItemsControl ItemsSource="{Binding FlowStep.Inputs}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -251,13 +255,13 @@ Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConver
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </GroupBox>
-                <GroupBox Header="输出">
+                <GroupBox Header="输出" Visibility="{Binding FlowStep.ShowOutput,Converter={StaticResource Boolean2VisibilityConverter}}">
                     <ItemsControl ItemsSource="{Binding FlowStep.Outputs}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
+                                        <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" FontWeight="Bold"></TextBlock>
                                         <TextBlock Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
                                         <RadioButton Content="丢弃" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.Drop}}" GroupName="{Binding Name}"></RadioButton>
                                         <RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.Globe}}" GroupName="{Binding Name}" ></RadioButton>

@@ -1,5 +1,4 @@
-﻿using FlowMaker.Models;
-using FlowMaker.Persistence;
+﻿using FlowMaker.Persistence;
 using ReactiveUI;
 using System.Reactive.Subjects;
 

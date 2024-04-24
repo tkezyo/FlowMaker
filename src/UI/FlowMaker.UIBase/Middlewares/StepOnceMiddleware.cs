@@ -1,6 +1,4 @@
-﻿using FlowMaker.Models;
-
-namespace FlowMaker.Middlewares;
+﻿namespace FlowMaker.Middlewares;
 
 public class StepOnceMiddleware : IStepOnceMiddleware
 {

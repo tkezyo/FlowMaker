@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                     xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase"
-			   xmlns:models="clr-namespace:FlowMaker.Models;assembly=FlowMaker"
+			   xmlns:models="clr-namespace:FlowMaker;assembly=FlowMaker"
              xmlns:controls="clr-namespace:FlowMaker.Controls"
                           x:Name="page"
                            xmlns:converters="clr-namespace:FlowMaker.Converters"

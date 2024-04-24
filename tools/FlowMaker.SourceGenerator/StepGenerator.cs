@@ -251,7 +251,6 @@ namespace FlowMaker.SourceGenerator
                     }
 
                     string baseStr = $@"using FlowMaker;
-using FlowMaker.Models;
 using System.Text.Json;
 
 namespace {item.Option.ContainingNamespace};
@@ -372,7 +371,6 @@ public partial class {item.Option.MetadataName}
 
 
                     string baseStr = $@"using FlowMaker;
-using FlowMaker.Models;
 using System.Text.Json;
 
 namespace {item.Option.ContainingNamespace};

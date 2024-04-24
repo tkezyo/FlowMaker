@@ -1,5 +1,4 @@
 ﻿using FlowMaker.Middlewares;
-using FlowMaker.Models;
 using FlowMaker.Persistence;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;

@@ -1,5 +1,4 @@
 ﻿using FlowMaker.Middlewares;
-using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -11,8 +10,6 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Text;
-using System.Xml.Linq;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -495,6 +492,7 @@ namespace FlowMaker.ViewModels
                 var configName = await _messageBoxManager.Prompt.Handle(new PromptInfo("请输入名称"));
                 if (configName.Ok)
                 {
+                    ConfigName = configName.Value;
                     model.ConfigName = configName.Value;
                     model.DisplayName = $"{FlowCategory}:{FlowName}:{model.ConfigName}";
                 }

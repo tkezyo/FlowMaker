@@ -1,6 +1,5 @@
 ﻿using DynamicData;
 using DynamicData.Binding;
-using FlowMaker.Models;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -45,14 +44,6 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         ShowSubFlowCommand = ReactiveCommand.CreateFromTask<FlowStepViewModel>(ShowSubFlowAsync);
 
-        foreach (var item in _flowMakerOption.Group)
-        {
-            StepGroups.Add(item.Key);
-        }
-        foreach (var item in Enum.GetValues<ErrorHandling>())
-        {
-            ErrorHandlings.Add(item);
-        }
 
         _flowManager = flowManager;
         _messageBoxManager = messageBoxManager;
@@ -94,6 +85,27 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
         });
         this.WhenAnyValue(c => c.Scale).Subscribe(c => Render());
+        this.WhenAnyValue(c => c.ShowEdit).Where(c => c).Subscribe(c =>
+        {
+            var keys = _flowMakerOption.Group.Keys.Union(_flowProvider.LoadCategories());
+            foreach (var item in keys)
+            {
+                if (!StepGroups.Contains(item))
+                {
+                    StepGroups.Add(item);
+                }
+            }
+
+            //删除多余的
+            var deletes = StepGroups.Where(c => !keys.Contains(c)).ToList();
+
+            foreach (var item in deletes)
+            {
+                StepGroups.Remove(item);
+            }
+
+
+        });
     }
     [Reactive]
     public string? Category { get; set; }
@@ -232,11 +244,6 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     public async Task Load(string? category = null, string? name = null)
     {
-        foreach (var item in _flowProvider.LoadCategories())
-        {
-            StepGroups.Add(item);
-        }
-
         Steps.Clear();
         Checkers.Clear();
         GlobeDatas.Clear();
@@ -296,40 +303,11 @@ public class FlowMakerEditViewModel : ViewModelBase
             flowStepViewModel.Category = item.Category;
             flowStepViewModel.Name = item.Name;
             await flowStepViewModel.SetInputOutputs(item);
+
+
             flowStepViewModel.Init();
 
-            flowStepViewModel.ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "ErrorHandling", "ErrorHandling", 0, this)
-            {
-                Value = item.ErrorHandling.Value,
-                Mode = item.ErrorHandling.Mode,
-                Id = item.ErrorHandling.Id,
-                ConverterCategory = item.ErrorHandling.ConverterCategory,
-                ConverterName = item.ErrorHandling.ConverterName,
-            };
-            flowStepViewModel.Repeat = new FlowStepInputViewModel("Repeat", "Repeat", "int", 0, this)
-            {
-                Value = item.Repeat.Value,
-                Mode = item.Repeat.Mode,
-                Id = item.Repeat.Id,
-                ConverterCategory = item.Repeat.ConverterCategory,
-                ConverterName = item.Repeat.ConverterName,
-            };
-            flowStepViewModel.Retry = new FlowStepInputViewModel("Retry", "Retry", "int", 0, this)
-            {
-                Value = item.Retry.Value,
-                Mode = item.Retry.Mode,
-                Id = item.Retry.Id,
-                ConverterCategory = item.Retry.ConverterCategory,
-                ConverterName = item.Retry.ConverterName,
-            };
-            flowStepViewModel.TimeOut = new FlowStepInputViewModel("TimeOut", "TimeOut", "double", 0, this)
-            {
-                Value = item.TimeOut.Value,
-                Mode = item.TimeOut.Mode,
-                Id = item.TimeOut.Id,
-                ConverterCategory = item.TimeOut.ConverterCategory,
-                ConverterName = item.TimeOut.ConverterName,
-            };
+
             foreach (var wait in item.WaitEvents)
             {
                 switch (wait.Type)
@@ -388,8 +366,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     [Reactive]
     public ObservableCollection<string> StepGroups { get; set; } = [];
 
-    [Reactive]
-    public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = [];
+
     public ReactiveCommand<FlowStepViewModel, Unit> LoadIfCommand { get; }
     public void LoadIf(FlowStepViewModel flowStepViewModel)
     {
@@ -512,6 +489,11 @@ public class FlowMakerEditViewModel : ViewModelBase
     [Reactive]
     public FlowStepViewModel? FlowStep { get; set; }
     /// <summary>
+    /// 编辑依赖
+    /// </summary>
+    [Reactive]
+    public bool EditPreStep { get; set; }
+    /// <summary>
     /// 修改依赖
     /// </summary>
     public ReactiveCommand<FlowStepViewModel, Unit> ChangePreCommand { get; }
@@ -535,13 +517,22 @@ public class FlowMakerEditViewModel : ViewModelBase
                     item.Status = StepStatus.Normal;
                 }
                 ShowEdit = false;
+                EditPreStep = false;
             }
             else
             {
-                if (SimpleMode)
+                if (SimpleMode || !EditPreStep)
                 {
+                    foreach (var item in Steps)
+                    {
+                        item.Status = StepStatus.Normal;
+                    }
+                    FlowStep = c;
+                    FlowStep.Status = StepStatus.Selected;
+                    RenderPreStep(c);
                     return;
                 }
+
                 if (!FlowStep.PreSteps.Contains(c.Id))
                 {
                     if (!Verification(c, FlowStep))
@@ -944,6 +935,15 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             return;
         }
+        if (flowInput is not null)
+        {
+            flowStepInputViewModel.Mode = flowInput.Mode;
+            flowStepInputViewModel.ConverterCategory = flowInput.ConverterCategory;
+            flowStepInputViewModel.ConverterName = flowInput.ConverterName;
+            flowStepInputViewModel.Id = flowInput.Id;
+            flowStepInputViewModel.Value = flowInput.Value;
+        }
+
         if (flowStepInputViewModel.Mode == InputMode.Converter && !string.IsNullOrWhiteSpace(flowStepInputViewModel.ConverterCategory) && !string.IsNullOrWhiteSpace(flowStepInputViewModel.ConverterName))
         {
             flowStepInputViewModel.SubInputs.Clear();
@@ -1473,12 +1473,12 @@ public class FlowStepViewModel : ReactiveObject
     {
         Id = Guid.NewGuid();
         _flowMakerEditViewModel = flowMakerEditViewModel;
-        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "FlowMaker.Models.ErrorHandling", 0, _flowMakerEditViewModel)
+        ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "FlowMaker.ErrorHandling", 0, _flowMakerEditViewModel)
         {
             Value = "Skip",
-            Mode = InputMode.Option,
             Id = Guid.NewGuid(),
-            Options = [new FlowStepOptionViewModel("Skip", "Skip"), new FlowStepOptionViewModel("Terminate", "Terminate")],
+            Mode = InputMode.Option,
+            Options = [new FlowStepOptionViewModel("Skip", "跳过"), new FlowStepOptionViewModel("Terminate", "终止")],
             HasOption = true,
         };
         Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", 0, _flowMakerEditViewModel)
@@ -1536,6 +1536,15 @@ public class FlowStepViewModel : ReactiveObject
         Outputs.Clear();
         Inputs.Clear();
 
+        if (flowStep is not null)
+        {
+            _flowMakerEditViewModel.InsertConverterInput(ErrorHandling, flowStep.ErrorHandling);
+            _flowMakerEditViewModel.InsertConverterInput(Repeat, flowStep.Repeat);
+            _flowMakerEditViewModel.InsertConverterInput(Retry, flowStep.Retry);
+            _flowMakerEditViewModel.InsertConverterInput(TimeOut, flowStep.TimeOut);
+        }
+
+
         foreach (var item in stepDef.Data)
         {
             if (item.IsInput)
@@ -1557,11 +1566,6 @@ public class FlowStepViewModel : ReactiveObject
                 }
                 if (flowInput is not null)
                 {
-                    input.Mode = flowInput.Mode;
-                    input.ConverterCategory = flowInput.ConverterCategory;
-                    input.ConverterName = flowInput.ConverterName;
-                    input.Id = flowInput.Id;
-                    input.Value = flowInput.Value;
                     _flowMakerEditViewModel.InsertConverterInput(input, flowInput);
                 }
                 else
@@ -1589,6 +1593,9 @@ public class FlowStepViewModel : ReactiveObject
                 Outputs.Add(output);
             }
         }
+
+        ShowInput = Inputs.Count > 0;
+        ShowOutput = Outputs.Count > 0;
     }
     [Reactive]
     public ObservableCollection<string> StepDefinitions { get; set; } = [];
@@ -1596,6 +1603,11 @@ public class FlowStepViewModel : ReactiveObject
     public ObservableCollection<FlowStepOutputViewModel> Outputs { get; set; } = [];
     [Reactive]
     public ObservableCollection<FlowStepInputViewModel> Inputs { get; set; } = [];
+
+    [Reactive]
+    public bool ShowInput { get; set; }
+    [Reactive]
+    public bool ShowOutput { get; set; }
 
     /// <summary>
     /// 步骤唯一Id

@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
                            xmlns:hc="https://handyorg.github.io/handycontrol"
-                    xmlns:models="clr-namespace:FlowMaker.Models;assembly=FlowMaker"
+                    xmlns:models="clr-namespace:FlowMaker;assembly=FlowMaker"
                     xmlns:converters="clr-namespace:FlowMaker.Converters"
              xmlns:local="clr-namespace:FlowMaker.Controls"
                     xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase" d:DataContext="{d:DesignInstance Type=vms:FlowStepInputViewModel}"
@@ -26,12 +26,11 @@
         <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
         <converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
     </UserControl.Resources>
-    <StackPanel Margin="0,0,10,0"
+    <StackPanel 
                 IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
         <StackPanel Orientation="Horizontal">
-            <TextBlock Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityReConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
-            <TextBox Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称"></TextBox>
-            <TextBlock VerticalAlignment="Bottom" Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" ></TextBlock>
+            <TextBlock Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityReConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" ToolTip="{Binding Type}" FontWeight="Bold"></TextBlock>
+            <TextBox Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称" ToolTip="{Binding Type}"></TextBox>
             <RadioButton Content="普通" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
             <RadioButton Content="选项" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Option}}" GroupName="{Binding Id}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
             <RadioButton Content="数组" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Array}}" GroupName="{Binding Id}" Visibility="{Binding IsArray,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
@@ -39,8 +38,8 @@
             <RadioButton Content="转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Converter}}" GroupName="{Binding Id}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
             <RadioButton Content="事件" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Event}}" GroupName="{Binding Id}"></RadioButton>
         </StackPanel>
-        <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Normal}}" Text="{Binding Value}" />
-        <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Event}}" Text="{Binding Value}" />
+        <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Normal}}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" />
+        <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Event}}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" />
 
         <ItemsControl ItemsSource="{Binding Dims}" Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Array}}">
             <ItemsControl.ItemTemplate>
@@ -54,10 +53,10 @@
 
         <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
 
-        <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
+        <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="5,0,0,0">
 
-            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="转换器分组"  SelectedItem="{Binding ConverterCategory}"></ComboBox>
-            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="转换器" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="Name"></ComboBox>
+            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="分组" hc:TitleElement.TitlePlacement="Left" SelectedItem="{Binding ConverterCategory}"></ComboBox>
+            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="名称"  hc:TitleElement.TitlePlacement="Left" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="Name"></ComboBox>
         </StackPanel>
 
         <ItemsControl ItemsSource="{Binding SubInputs}" Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">

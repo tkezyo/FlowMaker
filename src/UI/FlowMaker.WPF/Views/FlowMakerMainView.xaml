@@ -31,7 +31,8 @@
                 <app:AppViewLocator />
             </rxui:RoutedViewHost.ViewLocator>
         </rxui:RoutedViewHost>
-        <Expander  ExpandDirection="Up"  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="0">
+        <Expander  ExpandDirection="Up" 
+                   MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="0">
             <Expander.Header>
                 <TextBlock Text="{Binding Runnings.Count,StringFormat=记录 ({0})}"/>
             </Expander.Header>

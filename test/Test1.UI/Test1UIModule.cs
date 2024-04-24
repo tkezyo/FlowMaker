@@ -48,10 +48,10 @@ namespace Test1
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
                 options.CustomPageRootDir = "D:\\FlowMaker\\CustomPage";
                 options.Section = "设备1";
-                options.Middlewares.Add(new FlowMaker.Models.NameValue("测试中间件", "iio"));
-                options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("监控", "monitor"));
-                options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("调试", "debug"));
-                options.DefaultMiddlewares.Add(new FlowMaker.Models.NameValue("日志", "log"));
+                options.Middlewares.Add(new FlowMaker.NameValue("测试中间件", "iio"));
+                options.DefaultMiddlewares.Add(new FlowMaker.NameValue("监控", "monitor"));
+                options.DefaultMiddlewares.Add(new FlowMaker.NameValue("调试", "debug"));
+                options.DefaultMiddlewares.Add(new FlowMaker.NameValue("日志", "log"));
             });
 
             return Task.CompletedTask;

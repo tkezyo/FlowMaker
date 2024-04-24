@@ -1,5 +1,4 @@
-﻿using FlowMaker.Models;
-using FlowMaker.Persistence;
+﻿using FlowMaker.Persistence;
 
 namespace FlowMaker.Middlewares;
 

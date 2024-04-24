@@ -1,6 +1,4 @@
-﻿using FlowMaker.Models;
-
-namespace FlowMaker.Persistence;
+﻿namespace FlowMaker.Persistence;
 
 public interface IFlowProvider
 {

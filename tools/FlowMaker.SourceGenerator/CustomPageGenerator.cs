@@ -223,7 +223,6 @@ namespace FlowMaker.SourceGenerator
                 }
 
                 string baseStr = $@"using FlowMaker;
-using FlowMaker.Models;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Linq;

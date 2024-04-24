@@ -1,12 +1,10 @@
-﻿using FlowMaker.Models;
-using FlowMaker.Persistence;
+﻿using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
 using System.Reactive;
-using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.Json;
@@ -129,6 +127,7 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         }
         var r = JsonSerializer.Serialize(infos);
         await File.WriteAllTextAsync(path, r);
+        await _messageBoxManager.Alert.Handle(new AlertInfo("保存成功"));
     }
 
     public async Task Load()

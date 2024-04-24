@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
-namespace FlowMaker.Models;
+namespace FlowMaker;
 
 public class FlowStep
 {
@@ -61,9 +61,12 @@ public class FlowStep
     public FlowInput ErrorHandling { get; set; }
 
     /// <summary>
-    /// 是否可执行，同时可作为Break的条件
+    /// 是否可执行，同时可作为Break的条件, 可能来自于全局的checker或自己的checker
     /// </summary>
     public Dictionary<Guid, bool> Ifs { get; set; } = [];
+    /// <summary>
+    /// 用于Ifs的判断
+    /// </summary>
     public List<FlowInput> Checkers { get; set; } = [];
     /// <summary>
     /// 等待事件
@@ -146,7 +149,7 @@ public class FlowResult
     /// <summary>
     /// 执行错误下标
     /// </summary>
-    public int ErrorIndex { get; set; } 
+    public int ErrorIndex { get; set; }
     public bool Success { get; set; }
     public Exception? Exception { get; set; }
     public List<FlowResultData> Data { get; set; } = [];
