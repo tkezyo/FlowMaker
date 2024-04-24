@@ -118,11 +118,31 @@ public class FlowRunner : IDisposable
     /// <returns></returns>
     protected async Task RunStep(FlowStep step, StepContext stepContext, CancellationToken cancellationToken)
     {
-        var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name);
-        if (stepDefinition is not null)
+        if (step.Type == StepType.Normal)
         {
+            var stepDefinition = _flowMakerOption.GetStep(step.Category, step.Name)
+                ?? throw new Exception($"未找到{step.Category}，{step.Name}定义");
+
             var stepObj = _serviceProvider.GetRequiredKeyedService<IStepInject>(stepDefinition.Category + ":" + stepDefinition.Name);
             await stepObj.WrapAsync(Context, stepContext, _serviceProvider, cancellationToken);
+        }
+        else if (step.Type == StepType.Embedded)
+        {
+            var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.Category, step.Name);
+            var embeddedFlow = subFlowDefinition.EmbeddedFlows.First(c => c.StepId == step.Id);
+            var flowRunner = _serviceProvider.GetRequiredService<FlowRunner>();
+
+            var config = new ConfigDefinition { ConfigName = null, Category = step.Category, Name = step.Name };
+            flowRunner.Id = step.Id;
+            SubFlowRunners.Add(step.Id, flowRunner);
+            config.Middlewares = Context.Middlewares;
+
+            var results = await flowRunner.Start(embeddedFlow, subFlowDefinition.Checkers, config, Context.FlowIds, stepContext.StepOnceStatus.CurrentIndex, stepContext.StepOnceStatus.ErrorIndex, cancellationToken);
+
+            foreach (var item in results.Data)
+            {
+                await IDataConverterInject.SetValue(step.Outputs.First(v => v.Name == item.Name), item.Value, _serviceProvider, Context, cancellationToken);
+            }
         }
         else
         {
@@ -144,7 +164,7 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            var results = await flowRunner.Start(subFlowDefinition, config, Context.FlowIds, stepContext.StepOnceStatus.CurrentIndex, stepContext.StepOnceStatus.ErrorIndex, cancellationToken);
+            var results = await flowRunner.Start(subFlowDefinition, subFlowDefinition.Checkers, config, Context.FlowIds, stepContext.StepOnceStatus.CurrentIndex, stepContext.StepOnceStatus.ErrorIndex, cancellationToken);
 
             foreach (var item in results.Data)
             {
@@ -162,7 +182,7 @@ public class FlowRunner : IDisposable
     /// <exception cref="Exception"></exception>
     protected async Task<bool> CheckStep(FlowStep flowStep, Guid convertId, CancellationToken cancellationToken)
     {
-        var converter = Context.FlowDefinition.Checkers.FirstOrDefault(c => c.Id == convertId) ?? flowStep.Checkers.FirstOrDefault(c => c.Id == convertId) ?? throw new Exception();
+        var converter = Context.Checkers.FirstOrDefault(c => c.Id == convertId) ?? flowStep.Checkers.FirstOrDefault(c => c.Id == convertId) ?? throw new Exception();
         return await IDataConverterInject.GetValue(converter, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
     }
     /// <summary>
@@ -176,7 +196,7 @@ public class FlowRunner : IDisposable
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<FlowResult> Start(FlowDefinition flowInfo, ConfigDefinition config, Guid[] parentIds, int currentIndex, int errorIndex, CancellationToken? cancellationToken = null)
+    public async Task<FlowResult> Start(IFlowDefinition flowInfo, List<FlowInput> checkers, ConfigDefinition config, Guid[] parentIds, int currentIndex, int errorIndex, CancellationToken? cancellationToken = null)
     {
         if (cancellationToken is null)
         {
@@ -197,7 +217,7 @@ public class FlowRunner : IDisposable
         {
             TaskCompletionSource = new TaskCompletionSource<FlowResult>();
 
-            Context = new(flowInfo, config, [.. parentIds, Id], currentIndex, errorIndex);
+            Context = new(flowInfo, checkers, config, [.. parentIds, Id], currentIndex, errorIndex);
 
             Context.InitState();
 
@@ -410,14 +430,14 @@ public class FlowRunner : IDisposable
 
                         foreach (var item in stepOnceMiddlewares)
                         {
-                            await item.OnError(Context, step, Context.StepState[step.Id], once, e,CancellationTokenSource.Token);
+                            await item.OnError(Context, step, Context.StepState[step.Id], once, e, CancellationTokenSource.Token);
                         }
                         var errorHandling = await IDataConverterInject.GetValue(step.ErrorHandling, _serviceProvider, Context, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
 
                         switch (errorHandling)
                         {
                             case ErrorHandling.Skip:
-                              
+
                                 break;
                             case ErrorHandling.Terminate:
                                 Context.StepState[step.Id].Complete = false;

@@ -64,13 +64,19 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
             TotalCount = 0;
 
-            async Task SetFlowStepAsync(FlowDefinition flowDefinition)
+            async Task SetFlowStepAsync(IFlowDefinition flowDefinition)
             {
                 foreach (var item in flowDefinition.Steps)
                 {
-                    if (!item.IsSubFlow)
+                    if (item.Type == StepType.Normal)
                     {
                         TotalCount++;
+                    }
+                    else if (item.Type == StepType.Embedded)
+                    {
+                        var stepDefinition = definition.EmbeddedFlows.First(c => c.StepId == item.Id);
+
+                        await SetFlowStepAsync(stepDefinition);
                     }
                     else
                     {

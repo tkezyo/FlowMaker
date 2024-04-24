@@ -222,19 +222,26 @@ namespace FlowMaker.ViewModels
                 Id = FlowInstanceId,
             };
 
-            async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, FlowDefinition flowDefinition)
+            async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, IFlowDefinition flowDefinition)
             {
                 foreach (var item in flowDefinition.Steps)
                 {
-                    if (!item.IsSubFlow)
+                    if (item.Type == StepType.Normal)
                     {
                         Model.TotalCount++;
                         models.Add(new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id });
                     }
+                    else if (item.Type == StepType.Embedded)
+                    {
+                        var embedded = definition.EmbeddedFlows.First(c => c.StepId == item.Id);
+                        var sub = new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id };
+                        models.Add(sub);
+                        await SetFlowStepAsync(sub.Steps, embedded);
+                    }
                     else
                     {
                         var stepDefinition = await _flowProvider.GetStepDefinitionAsync(item.Category, item.Name);
-                        if (stepDefinition is FlowDefinition fd)
+                        if (stepDefinition is IFlowDefinition fd)
                         {
                             var sub = new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id };
                             models.Add(sub);
@@ -251,7 +258,7 @@ namespace FlowMaker.ViewModels
             {
                 if (item.IsInput)
                 {
-                    var data = new  SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                    var data = new SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
                     if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
                     {
                         var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);

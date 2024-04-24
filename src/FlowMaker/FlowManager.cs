@@ -95,11 +95,11 @@ public class FlowManager
                     if (configDefinition.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(configDefinition.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        result.Add(await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token)));
+                        result.Add(await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token)));
                     }
                     else
                     {
-                        result.Add(await runner.Start(flow, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token));
+                        result.Add(await runner.Start(flow, flow.Checkers, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token));
                     }
                     break;
                 }

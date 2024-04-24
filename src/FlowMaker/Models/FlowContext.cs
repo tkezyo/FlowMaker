@@ -19,13 +19,16 @@ public class FlowContext
     /// <summary>
     /// 流程配置
     /// </summary>
-    public FlowDefinition FlowDefinition { get; }
+    public IFlowDefinition FlowDefinition { get; }
+    public List<FlowInput> Checkers { get; set; }
+
     public ConfigDefinition ConfigDefinition { get; set; }
     public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
     public List<string> Middlewares { get; set; } = [];
-    public FlowContext(FlowDefinition flowDefinition, ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex)
+    public FlowContext(IFlowDefinition flowDefinition, List<FlowInput> checkers, ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex)
     {
         FlowDefinition = flowDefinition;
+        Checkers = checkers;
         ConfigDefinition = configDefinition;
         FlowIds = flowIds;
         CurrentIndex = currentIndex;
@@ -39,7 +42,7 @@ public class FlowContext
         {
             List<string> waitEvent = [];
 
-            void register(FlowInput flowInput)
+            void Register(FlowInput flowInput)
             {
                 if (flowInput.Mode == InputMode.Event)
                 {
@@ -53,22 +56,22 @@ public class FlowContext
                     list.Add(item.Id);
                     foreach (var subInput in flowInput.Inputs)
                     {
-                        register(subInput);
+                        Register(subInput);
                     }
                 }
             }
             foreach (var wait in item.Ifs)
             {
-                var checker = FlowDefinition.Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
+                var checker = Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
                 if (checker is null)
                 {
                     continue;
                 }
-                register(checker);
+                Register(checker);
             }
             foreach (var input in item.Inputs)
             {
-                register(input);
+                Register(input);
             }
             foreach (var wait in item.WaitEvents)
             {

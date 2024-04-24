@@ -6,11 +6,25 @@ public interface IStepDefinition
     string Name { get; set; }
     List<DataDefinition> Data { get; set; }
 }
-public class FlowDefinition : StepDefinition, IStepDefinition
+public interface IFlowDefinition : IStepDefinition
 {
+    List<FlowStep> Steps { get; set; }
+}
+public class FlowDefinition : StepDefinition, IFlowDefinition
+{
+    public bool EasyMode { get; set; }
     public List<FlowStep> Steps { get; set; } = [];
     public List<FlowInput> Checkers { get; set; } = [];
+
+    public List<EmbeddedFlowDefinition> EmbeddedFlows { get; set; } = [];
 }
+
+public class EmbeddedFlowDefinition : StepDefinition, IFlowDefinition
+{
+    public Guid StepId { get; set; }
+    public List<FlowStep> Steps { get; set; } = [];
+}
+
 /// <summary>
 /// 流程文件信息
 /// </summary>

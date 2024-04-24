@@ -30,9 +30,17 @@ public class FlowStep
     public required string Name { get; set; }
 
     /// <summary>
+    /// 结束步骤
+    /// </summary>
+    public bool Finally { get; set; }
+    /// <summary>
+    /// 并行执行-仅在简单模式下有效
+    /// </summary>
+    public bool Parallel { get; set; }
+    /// <summary>
     /// 子流程
     /// </summary>
-    public bool IsSubFlow { get; set; }
+    public StepType Type { get; set; }
     /// <summary>
     /// 输入
     /// </summary>
@@ -61,7 +69,7 @@ public class FlowStep
     public FlowInput ErrorHandling { get; set; }
 
     /// <summary>
-    /// 是否可执行，同时可作为Break的条件, 可能来自于全局的checker或自己的checker
+    /// 是否可执行，同时可作为Break的条件, 可能来自于全局的 checker或自己的 checker
     /// </summary>
     public Dictionary<Guid, bool> Ifs { get; set; } = [];
     /// <summary>
@@ -71,17 +79,38 @@ public class FlowStep
     /// <summary>
     /// 等待事件
     /// </summary>
-    public List<FlowWait> WaitEvents { get; set; } = [];
+    public List<FlowEvent> WaitEvents { get; set; } = [];
 }
 
-public class FlowWait
+public class FlowEvent
 {
+    /// <summary>
+    /// 等待的事件类型
+    /// </summary>
     public EventType Type { get; set; }
     public Guid? StepId { get; set; }
     public string? EventName { get; set; }
     public string? EventDataType { get; set; }
 }
 
+/// <summary>
+/// 步骤类型
+/// </summary>
+public enum StepType
+{
+    /// <summary>
+    /// 普通步骤
+    /// </summary>
+    Normal,
+    /// <summary>
+    /// 子流程
+    /// </summary>
+    SubFlow,
+    /// <summary>
+    /// 嵌入的子流程
+    /// </summary>
+    Embedded,
+}
 
 public class FlowInput
 {
@@ -103,7 +132,7 @@ public class FlowInput
     public InputMode Mode { get; set; }
     public int[] Dims { get; set; } = [];
     /// <summary>
-    /// Globe模式下为全局变量, 普通或选项为具体的值,Wait为事件名称
+    /// Globe模式下为全局变量, 普通或选项为具体的值,Event为事件名称
     /// </summary>
     public string? Value { get; set; }
     public List<FlowInput> Inputs { get; set; } = [];
@@ -171,9 +200,14 @@ public enum ErrorHandling
     [Description("跳过")]
     Skip,
     /// <summary>
+    /// 跳到Finally或停止
+    /// </summary>
+    [Description("终止")]
+    Finally = 1,
+    /// <summary>
     /// 停止
     /// </summary>
-    [Description("停止")]
+    [Description("立即停止")]
     Terminate
 }
 
