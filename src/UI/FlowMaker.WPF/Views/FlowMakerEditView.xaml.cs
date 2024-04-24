@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -28,8 +29,14 @@ namespace FlowMaker.Views
             InitializeComponent();
             this.WhenActivated(d =>
             {
-                //绑定treeview的selectedItem
-                this.Bind(ViewModel, vm => vm.FlowStep, v => v.tree.SelectedItem).DisposeWith(d);
+                this.WhenAnyValue(c => c.tree.SelectedItem)
+                    .Subscribe(x =>
+                    {
+                        //绑定 treeView 的 selectedItem, 只实现OneWayToSource, view到 viewModel
+                        ViewModel!.FlowStep = x as FlowStepViewModel;
+                    }).DisposeWith(d);
+
+               
             });
             
         }

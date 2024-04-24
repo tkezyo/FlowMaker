@@ -11,6 +11,7 @@
                     xmlns:models="clr-namespace:FlowMaker;assembly=FlowMaker"
              xmlns:controls="clr-namespace:FlowMaker.Controls"
                           mc:Ignorable="d" 
+                            xmlns:s="clr-namespace:System;assembly=mscorlib"
                           x:Name="page"
                            xmlns:converters="clr-namespace:FlowMaker.Converters"
              d:DesignHeight="450" d:DesignWidth="800">
@@ -75,8 +76,17 @@
             <TextBox Text="{Binding Category}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="分组:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <TextBox Text="{Binding Name}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="名称:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <Separator Margin="10,0"/>
-            <Button Margin="4,0" Command="{Binding CreateCommand}">创建牛马</Button>
-            <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除牛马" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
+            <Button Margin="4,0" Command="{Binding CreateCommand}" Content="新牛马">
+                <Button.CommandParameter>
+                    <s:Boolean>False</s:Boolean>
+                </Button.CommandParameter>
+            </Button>
+            <Button Margin="4,0" Command="{Binding CreateCommand}" Content="新牛马群">
+                <Button.CommandParameter>
+                    <s:Boolean>True</s:Boolean>
+                </Button.CommandParameter>
+            </Button>
+            <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
             <Button  Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}"  ></Button>
             <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}"  ></Button>
             <CheckBox Content="编辑前置步骤"   Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}" IsChecked="{Binding EditPreStep}"/>
@@ -183,6 +193,17 @@
                                 </ToggleButton>
                                 <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
                             </StackPanel>
+                            <HierarchicalDataTemplate.ItemContainerStyle>
+                                <Style TargetType="TreeViewItem">
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu>
+                                                <MenuItem Header="删除" />
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </HierarchicalDataTemplate.ItemContainerStyle>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>
@@ -255,7 +276,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 <GroupBox Header="基本信息">
                     <StackPanel>
                         <TextBox Text="{Binding FlowStep.DisplayName,UpdateSourceTrigger=PropertyChanged}" hc:InfoElement.Title="显示名称" />
-                        <Grid HorizontalAlignment="Stretch">
+                        <Grid HorizontalAlignment="Stretch" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityReConverter}}" >
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>

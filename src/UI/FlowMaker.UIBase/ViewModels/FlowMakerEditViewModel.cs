@@ -1538,6 +1538,8 @@ public class FlowStepViewModel : ReactiveObject
     {
         Id = Guid.NewGuid();
         Type = stepType;
+        IsSubFlow = stepType == StepType.SubFlow;
+        IsEmbeddedFlow = stepType == StepType.Embedded;
         _flowMakerEditViewModel = flowMakerEditViewModel;
         ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", "FlowMaker.ErrorHandling", 0, _flowMakerEditViewModel)
         {
@@ -1591,7 +1593,10 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public StepType Type { get; set; }
-
+    [Reactive]
+    public bool IsSubFlow { get; set; }
+    [Reactive]
+    public bool IsEmbeddedFlow { get; set; }
     [Reactive]
     public ObservableCollection<FlowStepViewModel> Steps { get; set; } = [];
 
@@ -1612,6 +1617,7 @@ public class FlowStepViewModel : ReactiveObject
         if (stepDef is IFlowDefinition)
         {
             Type = StepType.SubFlow;
+            IsSubFlow = true;
         }
 
 
