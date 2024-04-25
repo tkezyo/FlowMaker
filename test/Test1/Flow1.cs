@@ -2,6 +2,7 @@
 using System.ComponentModel;
 
 namespace Test1;
+
 public partial class MyClass : IStep
 {
     public static string Category => "类别";

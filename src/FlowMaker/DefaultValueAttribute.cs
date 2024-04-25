@@ -1,5 +1,15 @@
 ﻿namespace FlowMaker;
 
+[System.AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+public sealed class StepsAttribute(string? category = null) : Attribute
+{
+    readonly string? category = category;
+
+    public string? Category
+    {
+        get { return category; }
+    }
+}
 
 [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = false)]
 public sealed class InputAttribute : Attribute
