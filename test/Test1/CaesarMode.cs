@@ -27,5 +27,11 @@ namespace Test1
         {
             return Task.CompletedTask;
         }
+
+        public async Task<int> Test5(int ss)
+        {
+            await Task.CompletedTask;
+            return ss;
+        }
     }
 }

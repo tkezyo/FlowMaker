@@ -107,18 +107,40 @@ namespace FlowMaker.SourceGenerator
                         //如果是没有泛型参数的 Task，则不需要返回值
                         else if (returnType is INamedTypeSymbol namedTypeSymbol1 && namedTypeSymbol1.Name == "Task")
                         {
-                            isVoid = true;
+                            //如果返回值是 Task，则获取 Task 的泛型参数
+                            if (namedTypeSymbol1.TypeArguments.Length > 0)
+                            {
+                                returnType = namedTypeSymbol1.TypeArguments[0];
+                                if (returnType is INamedTypeSymbol namedTypeSymbol3 && namedTypeSymbol3.IsTupleType)
+                                {
+                                    var tupleElements = namedTypeSymbol3.TupleElements;
+                                    foreach (var tupleElement in tupleElements)
+                                    {
+                                        var output = new Output
+                                        {
+                                            Name = tupleElement.Name,
+                                            Type = tupleElement.Type.ToDisplayString()
+                                        };
+                                        outputs.Add(output);
+                                    }
+                                }
+                                else
+                                {
+                                    var output = new Output
+                                    {
+                                        Name = "Result",
+                                        Type = returnType.ToDisplayString()
+                                    };
+                                    outputs.Add(output);
+                                }
+                            }
+                            else
+                            {
+                                isVoid = true;
+                            }
                         }
                         else
                         {
-                            //如果返回值不是元组，则直接获取返回值
-                            //如果返回值是 Task，则获取 Task 的泛型参数
-                            if (returnType is INamedTypeSymbol namedTypeSymbol2 && namedTypeSymbol2.IsGenericType && namedTypeSymbol2.Name == "Task")
-                            {
-                                returnType = namedTypeSymbol2.TypeArguments[0];
-                            }
-
-
                             var output = new Output
                             {
                                 Name = "Result",
@@ -166,7 +188,7 @@ namespace FlowMaker.SourceGenerator
                         }
                         else if (outputs.Count == 1)
                         {
-                            outputString = $"    Result = result;";
+                            outputString = $"        Result = result;";
                         }
                         else
                         {
