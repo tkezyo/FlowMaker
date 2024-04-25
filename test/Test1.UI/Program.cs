@@ -4,10 +4,12 @@ using ReactiveUI;
 using Serilog;
 using Serilog.Events;
 using System;
+using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ty;
+using Windows.Networking;
 
 namespace Test1
 {
@@ -22,8 +24,13 @@ namespace Test1
 #else
             .MinimumLevel.Information()
 #endif
-           .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+           .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+           .WriteTo.File($"logs/log.txt", rollingInterval: RollingInterval.Day)
+            .WriteTo.Map(
+        keyPropertyName: "TestName",
+        configure: (testName, wt) => wt.File($"logs/{testName}.log"))
            .Enrich.FromLogContext();
+
 
             Log.Logger = configuration.CreateLogger();
 

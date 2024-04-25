@@ -25,6 +25,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     {
         _flowMakerOption = options.Value;
         CreateCommand = ReactiveCommand.CreateFromTask<bool>(Create);
+        CreateEmbeddedCommand = ReactiveCommand.Create<bool>(CreateEmbedded);
         CreateGlobeDataCommand = ReactiveCommand.Create(CreateGlobeData);
         ChangeScaleCommand = ReactiveCommand.Create<int>(ChangeScale);
         ChangePreCommand = ReactiveCommand.Create<FlowStepViewModel>(ChangePre);
@@ -80,6 +81,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 }
                 else
                 {
+                    Render();
                     SimpleMode = false;
                 }
             }
@@ -105,7 +107,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
         });
 
-        this.WhenAnyValue(c => c.FlowStep).Subscribe(c =>
+        this.WhenAnyValue(c => c.FlowStep).WhereNotNull().Subscribe(c =>
         {
             ShowEdit = c is not null;
         });
@@ -160,8 +162,8 @@ public class FlowMakerEditViewModel : ViewModelBase
             };
             if (item.Type == StepType.Embedded)
             {
-                item.Category = Category;
-                item.Name = Name;
+                f.Category = Category;
+                f.Name = Name;
 
                 var embeddedFlow = new EmbeddedFlowDefinition
                 {
@@ -519,8 +521,16 @@ public class FlowMakerEditViewModel : ViewModelBase
         model.Init();
         if (FlowStep is not null)
         {
-            model.PreSteps.Add(FlowStep.Id);
-            Steps.Insert(Steps.IndexOf(FlowStep) + 1, model);
+            var steps = GetParent(FlowStep, Steps);
+            if (steps is null)
+            {
+                return;
+            }
+            if (!SimpleMode)
+            {
+                model.PreSteps.Add(FlowStep.Id);
+            }
+            steps.Insert(steps.IndexOf(FlowStep) + 1, model);
             ChangePre(FlowStep);
             ChangePre(model);
         }
@@ -532,6 +542,37 @@ public class FlowMakerEditViewModel : ViewModelBase
         Render();
 
         await Task.CompletedTask;
+    }
+
+    public void CreateEmbedded(bool embedded)
+    {
+        if (FlowStep is not null && FlowStep.Type == StepType.Embedded)
+        {
+            var model = new FlowStepViewModel(this, embedded ? StepType.Embedded : StepType.Normal);
+
+            model.Init();
+            FlowStep.Steps.Add(model);
+        }
+    }
+
+    private ObservableCollection<FlowStepViewModel>? GetParent(FlowStepViewModel flowStepViewModel, ObservableCollection<FlowStepViewModel> all)
+    {
+        //从steps中找到这个元素,那么返回steps,如果找不到,那么递归找
+        var parent = all.Contains(flowStepViewModel);
+        if (parent)
+        {
+            return all;
+        }
+        foreach (var item in all)
+        {
+            var r = GetParent(flowStepViewModel, item.Steps);
+            if (r is not null)
+            {
+                return r;
+            }
+        }
+        return null;
+
     }
 
     public ReactiveCommand<Unit, Unit> DeleteActionCommand { get; }
@@ -547,8 +588,11 @@ public class FlowMakerEditViewModel : ViewModelBase
         var deletes = GlobeDatas.Where(c => c.FromStepId == temp.Id);
 
         GlobeDatas.RemoveMany(deletes);
-
-        Steps.Remove(temp);
+        var steps = GetParent(FlowStep, Steps);
+        if (steps is not null)
+        {
+            steps.Remove(temp);
+        }
         Render();
     }
     [Reactive]
@@ -694,12 +738,17 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     public void MoveAction(FlowStepViewModel action, bool up)
     {
-        var oldIndex = Steps.IndexOf(action);
+        var steps = GetParent(action, Steps);
+        if (steps is null)
+        {
+            return;
+        }
+        var oldIndex = steps.IndexOf(action);
         if (oldIndex >= 0)
         {
-            if (up && oldIndex != 0 || !up && oldIndex != Steps.Count - 1)
+            if (up && oldIndex != 0 || !up && oldIndex != steps.Count - 1)
             {
-                Steps.Move(oldIndex, up ? --oldIndex : ++oldIndex);
+                steps.Move(oldIndex, up ? --oldIndex : ++oldIndex);
                 Render();
                 return;
             }
@@ -1533,7 +1582,7 @@ public class FlowStepViewModel : ReactiveObject
 {
     private readonly FlowMakerEditViewModel _flowMakerEditViewModel;
 
-
+    public FlowMakerEditViewModel MainViewModel => _flowMakerEditViewModel;
     public FlowStepViewModel(FlowMakerEditViewModel flowMakerEditViewModel, StepType stepType)
     {
         Id = Guid.NewGuid();

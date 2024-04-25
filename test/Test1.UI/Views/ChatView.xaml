@@ -14,5 +14,6 @@ xmlns:hc="https://handyorg.github.io/handycontrol"
     <Grid>
        
         <TextBlock Text="{Binding Name}"/>
+   
     </Grid>
 </rxui:ReactiveUserControl>

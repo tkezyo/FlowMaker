@@ -89,20 +89,30 @@ namespace FlowMaker.ViewModels
                 {
                     return;
                 }
-                var step = Model.Steps.FirstOrDefault(v => v.Id == c.StepId);
-                if (step is null)
+                //遍历所有的子步骤
+                foreach (var item in Model.Steps)
                 {
-                    return;
+                    void Continue(MonitorStepInfoViewModel step)
+                    {
+                        if (step.Id == c.StepId)
+                        {
+                            if (c.Debugging)
+                            {
+                                step.Stop(null);
+                            }
+                            else
+                            {
+                                step.Start(DateTime.Now);
+                            }
+                            step.Debugging = c.Debugging;
+                        }
+                        foreach (var sub in step.Steps)
+                        {
+                            Continue(sub);
+                        }
+                    }
+                    Continue(item);
                 }
-                if (c.Debugging)
-                {
-                    step.Stop(null);
-                }
-                else
-                {
-                    step.Start(DateTime.Now);
-                }
-                step.Debugging = c.Debugging;
             })
             .DisposeWith(Disposables);
 
@@ -421,7 +431,26 @@ namespace FlowMaker.ViewModels
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(c, "debug");
                 if (mid is DebugMiddleware debug)
                 {
-                    debug.AddDebugs(c, monitorInfoViewModel.Steps.Where(c => c.IsDebug && c.Id.HasValue).Select(c => c.Id!.Value).ToList());
+                    List<Guid> debugs = [];
+
+                    //遍历所有的子步骤
+                    foreach (var item in monitorInfoViewModel.Steps)
+                    {
+                        void AddDebugs(MonitorStepInfoViewModel step, List<Guid> debugs)
+                        {
+                            if (step.IsDebug && step.Id.HasValue)
+                            {
+                                debugs.Add(step.Id.Value);
+                            }
+                            foreach (var sub in step.Steps)
+                            {
+                                AddDebugs(sub, debugs);
+                            }
+                        }
+                        AddDebugs(item, debugs);
+                    }
+
+                    debug.AddDebugs(c, debugs);
                 }
                 monitorInfoViewModel.Id = c;
                 if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))

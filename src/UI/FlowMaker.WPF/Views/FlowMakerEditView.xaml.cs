@@ -36,9 +36,32 @@ namespace FlowMaker.Views
                         ViewModel!.FlowStep = x as FlowStepViewModel;
                     }).DisposeWith(d);
 
-               
+
+                //Observable.FromEventPattern<KeyEventHandler, KeyEventArgs>(
+                //     h => this.tree.PreviewKeyDown += h,
+                //     h => this.tree.PreviewKeyDown -= h)
+                // .Where(e => e.EventArgs.Key == Key.Up)
+                // .Subscribe(e =>
+                // {
+                //     ViewModel?.UpAction();
+
+                //     e.EventArgs.Handled = true; // 防止事件进一步冒泡
+
+                // }).DisposeWith(d);
+
+                //Observable.FromEventPattern<KeyEventHandler, KeyEventArgs>(
+                //     h => this.tree.PreviewKeyDown += h,
+                //     h => this.tree.PreviewKeyDown -= h)
+                //.Where(e => e.EventArgs.Key == Key.Down)
+                //.Subscribe(e =>
+                //{
+                //    ViewModel?.DownAction();
+                //    e.EventArgs.Handled = true; // 防止事件进一步冒泡
+
+                //}).DisposeWith(d);
+
             });
-            
+
         }
     }
 }

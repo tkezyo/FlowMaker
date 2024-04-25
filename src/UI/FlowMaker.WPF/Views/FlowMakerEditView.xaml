@@ -76,20 +76,33 @@
             <TextBox Text="{Binding Category}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="分组:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <TextBox Text="{Binding Name}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="名称:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <Separator Margin="10,0"/>
-            <Button Margin="4,0" Command="{Binding CreateCommand}" Content="新牛马">
-                <Button.CommandParameter>
-                    <s:Boolean>False</s:Boolean>
-                </Button.CommandParameter>
-            </Button>
-            <Button Margin="4,0" Command="{Binding CreateCommand}" Content="新牛马群">
-                <Button.CommandParameter>
-                    <s:Boolean>True</s:Boolean>
-                </Button.CommandParameter>
-            </Button>
+            <hc:ButtonGroup Margin="4,0">
+                <Button  Command="{Binding CreateCommand}" Content="新牛马">
+                    <Button.CommandParameter>
+                        <s:Boolean>False</s:Boolean>
+                    </Button.CommandParameter>
+                </Button>
+                <Button  Command="{Binding CreateCommand}" Content="新牛马群">
+                    <Button.CommandParameter>
+                        <s:Boolean>True</s:Boolean>
+                    </Button.CommandParameter>
+                </Button>
+                <Button  Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="新小牛马">
+                    <Button.CommandParameter>
+                        <s:Boolean>False</s:Boolean>
+                    </Button.CommandParameter>
+                </Button>
+                <Button  Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="新小牛马群">
+                    <Button.CommandParameter>
+                        <s:Boolean>True</s:Boolean>
+                    </Button.CommandParameter>
+                </Button>
+            </hc:ButtonGroup>
+           
             <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
             <Button  Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}"  ></Button>
             <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}"  ></Button>
-            <CheckBox Content="编辑前置步骤"   Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}" IsChecked="{Binding EditPreStep}"/>
+            <CheckBox Content="编辑前置步骤"   Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}" IsChecked="{Binding EditPreStep}"/>
             <Separator Margin="10,0"/>
             <CheckBox Content="检查项"  Name="showChecker"/>
             <Button Command="{Binding AddFlowCheckerCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showChecker}">创建检查项</Button>
@@ -102,7 +115,7 @@
             <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100" Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
         </ToolBar>
         <ScrollViewer x:Name="viewer"
-                      Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Visible">
+                      Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Auto">
             <Grid  Margin="2">
                 <ItemsControl ItemsSource="{Binding Steps}"
                                Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
@@ -169,22 +182,31 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TreeView ItemsSource="{Binding Steps}" x:Name="tree"  Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+                <TreeView ItemsSource="{Binding Steps}" x:Name="tree"  Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource TreeView.Small}">
                     <TreeView.ItemTemplate>
                         <HierarchicalDataTemplate
                               ItemsSource="{Binding Steps}"
                               DataType="vms:FlowStepViewModel">
-                            <StackPanel Orientation="Horizontal">
-                                <ToggleButton IsChecked="{Binding Parallel}" FontWeight="Bold" FontSize="20" Width="30">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="添加" 
+                  Command="{Binding Path=PlacementTarget.DataContext.MainViewModel.CreateEmbeddedCommand, 
+                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                  CommandParameter="{Binding Path=PlacementTarget.DataContext, 
+                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                                <ToggleButton IsChecked="{Binding Parallel}" FontFamily="Segoe UI Emoji" FontWeight="Bold" FontSize="20" Width="30">
                                     <ToggleButton.Style>
                                         <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonCustom}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsChecked" Value="True">
-                                                    <Setter Property="Content" Value="⇒" />
+                                                    <Setter Property="Content" Value="➡" />
                                                     <Setter Property="Foreground" Value="Green" />
                                                 </Trigger>
                                                 <Trigger Property="IsChecked" Value="False">
-                                                    <Setter Property="Content" Value="⇓" />
+                                                    <Setter Property="Content" Value="⬇" />
                                                     <Setter Property="Foreground" Value="LightBlue" />
                                                 </Trigger>
                                             </Style.Triggers>
@@ -193,17 +215,6 @@
                                 </ToggleButton>
                                 <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
                             </StackPanel>
-                            <HierarchicalDataTemplate.ItemContainerStyle>
-                                <Style TargetType="TreeViewItem">
-                                    <Setter Property="ContextMenu">
-                                        <Setter.Value>
-                                            <ContextMenu>
-                                                <MenuItem Header="删除" />
-                                            </ContextMenu>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </HierarchicalDataTemplate.ItemContainerStyle>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>

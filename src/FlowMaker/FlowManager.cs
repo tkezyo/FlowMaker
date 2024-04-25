@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
+using Splat;
 using System.Collections.Concurrent;
 using System.Data;
 using System.Text.Encodings.Web;
@@ -18,10 +19,11 @@ public class FlowManager
     private readonly IServiceProvider _serviceProvider;
     private readonly IFlowProvider _flowProvider;
     private readonly ILogger<FlowManager> _logger;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly FlowMakerOption _flowMakerOption;
 
 
-    public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IFlowProvider flowProvider, ILogger<FlowManager> logger)
+    public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IFlowProvider flowProvider, ILogger<FlowManager> logger, ILoggerFactory loggerFactory)
     {
         _jsonSerializerOptions = new()
         {
@@ -33,6 +35,7 @@ public class FlowManager
         this._serviceProvider = serviceProvider;
         this._flowProvider = flowProvider;
         this._logger = logger;
+        this._loggerFactory = loggerFactory;
     }
 
     #region Run
@@ -70,6 +73,7 @@ public class FlowManager
     {
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
+        var testName = DateTime.Now.ToString("yyyyMMdd") + "/" + runner.Id;
         _status[runner.Id] = new RunnerStatus(runner, scope)
         {
             ConfigName = configDefinition.ConfigName,
@@ -82,8 +86,12 @@ public class FlowManager
         var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
         if (flow is null)
         {
+            _logger.LogError("未找到流程:{TestName}", testName);
+
             throw new InvalidOperationException("未找到流程");
         }
+        _logger.LogInformation("流程开始:{TestName}", testName);
+
         List<FlowResult> result = [];
         for (int i = 0; i < configDefinition.Repeat; i++)
         {
@@ -105,10 +113,12 @@ public class FlowManager
                 }
                 catch (TaskCanceledException)
                 {
-                    _logger.LogInformation("流程被取消:{Id}", runner.Id);
+                    _logger.LogInformation("流程被取消:{TestName}", testName);
                 }
                 catch (Exception e)
                 {
+                    _logger.LogError(e, "流程出现错误:{TestName}", testName);
+
                     result.Add(new FlowResult
                     {
                         ErrorIndex = errorTimes,
@@ -120,11 +130,14 @@ public class FlowManager
                     {
                         if (configDefinition.ErrorHandling == ErrorHandling.Skip)
                         {
+                            _logger.LogError(e, "流程失败跳过:{TestName}", testName);
+
                             break;
                         }
                         switch (configDefinition.ErrorHandling)
                         {
                             case ErrorHandling.Terminate:
+                                _logger.LogError(e, "流程执行失败:{TestName}", testName);
                                 throw new Exception("流程执行失败", e);
                             default:
                                 break;

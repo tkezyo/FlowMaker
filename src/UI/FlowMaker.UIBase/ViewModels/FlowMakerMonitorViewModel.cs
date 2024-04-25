@@ -163,8 +163,16 @@ public class FlowMakerMonitorViewModel : ViewModelBase
             flow.FlowCategory = item.Category;
             flow.FlowName = item.Name;
             flow.ConfigName = item.ConfigName;
-            await flow.Load();
-            Flows.Add(flow);
+            try
+            {
+                await flow.Load();
+                Flows.Add(flow);
+            }
+            catch (Exception e)
+            {
+                await _messageBoxManager.Alert.Handle(new AlertInfo(e.Message));
+            }
+
         }
     }
 }
