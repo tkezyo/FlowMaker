@@ -94,9 +94,31 @@ namespace FlowMaker.SourceGenerator
                         {
                             description = methodSymbol.Name;
                         }
+                        string stepContext = string.Empty;
+                        string cancellationToken = string.Empty;
+
+                        if (parameters.Length > 0)
+                        {
+                            if (parameters[0].Type.ToDisplayString() == "FlowMaker.StepContext")
+                            {
+                                stepContext = parameters[0].Name;
+                            }
+
+                            //如果最后一个参数是 CancellationToken，则认为是 CancellationToken
+                            if (parameters[parameters.Length - 1].Type.ToDisplayString() == "System.Threading.CancellationToken")
+                            {
+                                cancellationToken = parameters[parameters.Length - 1].Name;
+                            }
+                        }
 
                         foreach (var parameter in parameters)
                         {
+                            //如果是 StepContext 或者 CancellationToken，则跳过
+                            if (parameter.Type.ToDisplayString() == "FlowMaker.StepContext" || parameter.Type.ToDisplayString() == "System.Threading.CancellationToken")
+                            {
+                                continue;
+                            }
+
                             var input = new Input
                             {
                                 Name = parameter.Name,
@@ -189,6 +211,8 @@ namespace FlowMaker.SourceGenerator
                         StringBuilder outputDefStringBuilder = new();
                         List<string> props = [];
 
+
+
                         foreach (var input in inputs)
                         {
                             input.Name = textInfo.ToTitleCase(input.Name.ToLower());
@@ -215,6 +239,7 @@ namespace FlowMaker.SourceGenerator
 
                             bool isArray = false;
                             string subType = string.Empty;
+
 
                             if (input.Type.TypeKind == TypeKind.Array && input.Type is IArrayTypeSymbol arrayTypeSymbol)
                             {
@@ -252,11 +277,11 @@ namespace FlowMaker.SourceGenerator
         var {{input.Name}}Input = stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}}));
         if ({{input.Name}}Input.Mode == InputMode.Array)
         {
-            {{input.Name}} = ({{input.Type.ToDisplayString()}})IDataConverterInject.Reshape<{{subType}}>({{input.Name}}Input.Dims, await IDataConverterInject.GetArrayValue<{{subType}}>({{input.Name}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
+            {{input.Name}} = ({{input.Type.ToDisplayString()}})IDataConverterInject.Reshape<{{subType}}>({{input.Name}}Input.Dims, await IDataConverterInject.GetArrayValue<{{subType}}>({{input.Name}}Input, serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
         }
         else
         {
-            {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>({{input.Name}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
+            {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>({{input.Name}}Input, serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
         }
         stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
 """);
@@ -266,14 +291,14 @@ namespace FlowMaker.SourceGenerator
                                 if (input.Type.SpecialType == SpecialType.System_String)
                                 {
                                     inputStringBuilder.AppendLine($$"""
-        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, context, s => s?.ToString(), cancellationToken);
+        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, stepContext.FlowContext, s => s?.ToString(), cancellationToken);
         stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
 """);
                                 }
                                 else
                                 {
                                     inputStringBuilder.AppendLine($$"""
-        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, context, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
         stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
 """);
                                 }
@@ -336,7 +361,7 @@ namespace FlowMaker.SourceGenerator
 
 
                             outputStringBuilder.AppendLine($$"""
-        await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{output.Name}})), {{output.Name}}, serviceProvider, context, cancellationToken);
+        await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{output.Name}})), {{output.Name}}, serviceProvider, stepContext.FlowContext, cancellationToken);
         stepContext.StepOnceStatus.Outputs.Add(new NameValue(nameof({{output.Name}}), JsonSerializer.Serialize({{output.Name}})));
 """);
 
@@ -358,16 +383,22 @@ namespace FlowMaker.SourceGenerator
 
                         }
 
-                        string inputString = string.Empty;
-                        if (inputs.Count > 1)
+                        List<string> inputStrings = new();
+                        if (!string.IsNullOrEmpty(stepContext))
                         {
-                            inputString = string.Join(",", inputs.Select(v => v.Name));
+                            inputStrings.Add(stepContext);
                         }
-                        else if (inputs.Count == 1)
+                        foreach (var input in inputs)
                         {
-                            inputString = inputs[0].Name;
+                            inputStrings.Add(input.Name);
+                        }
+                        if (!string.IsNullOrEmpty(cancellationToken))
+                        {
+                            inputStrings.Add(cancellationToken);
                         }
 
+
+                        string inputString = string.Join(", ", inputStrings);
 
 
 
@@ -382,17 +413,17 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Na
     public static string Name => "{{description}}";
 {{inputPropStringBuilder}}
 {{outputPropStringBuilder}}
-    public async Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
+    public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
         {{(isVoid ? string.Empty : "var result = ")}}{{(isTask ? "await " : "")}}_service.{{methodSymbol.Name}}({{inputString}});
 {{outputString}}
         await Task.CompletedTask;
     }
 
-    public async Task WrapAsync(FlowContext context, StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    public async Task WrapAsync(StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
 {{inputStringBuilder}}
-        await Run(context, stepContext, cancellationToken);
+        await Run(stepContext, cancellationToken);
 
 {{outputStringBuilder}}
     }

@@ -18,17 +18,17 @@ namespace Test1
     [Steps("CaesarModeKK")]
     public class CaesarMode
     {
-        public (int, string) Test(int ss = 2)
+        public (int, string) Test(int ss = 3, CancellationToken cancellationToken = default)
         {
             return (ss, "ss");
         }
 
-        public int Test2(DayOfWeek ss)
+        public int Test2(StepContext stepContext, DayOfWeek ss, CancellationToken cancellationToken)
         {
             return 1;
         }
 
-        public void Test3(int ss)
+        public void Test3(StepContext stepContext, int ss)
         {
 
         }

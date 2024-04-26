@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace FlowMaker;
 
@@ -174,14 +175,15 @@ public class FlowContext
 
 }
 
-public class StepContext(FlowStep step, StepStatus status, StepOnceStatus stepOnceStatus)
+public class StepContext(FlowStep step, FlowContext flowContext, StepStatus status, StepOnceStatus stepOnceStatus)
 {
     public FlowStep Step { get; } = step;
+    public FlowContext FlowContext { get; } = flowContext;
     public StepStatus Status { get; set; } = status;
     public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
-    public void AddLog(string log)
+    public void AddLog(string log, LogLevel logLevel)
     {
-        StepOnceStatus.Logs.Add(new LogInfo(log, DateTime.Now));
+        StepOnceStatus.Logs.Add(new LogInfo(log, logLevel, DateTime.Now));
     }
 }
 
@@ -213,9 +215,9 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// </summary>
     public List<LogInfo> Logs { get; set; } = [];
 
-    public void AddLog(string log)
+    public void AddLog(string log, LogLevel logLevel)
     {
-        Logs.Add(new LogInfo(log, DateTime.Now));
+        Logs.Add(new LogInfo(log, logLevel, DateTime.Now));
     }
 
     /// <summary>
@@ -225,10 +227,10 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
 
 }
 
-public class LogInfo(string log, DateTime time)
+public class LogInfo(string log, LogLevel logLevel, DateTime time)
 {
     public string Log { get; set; } = log;
-
+    public LogLevel Level { get; set; } = logLevel;
     public DateTime Time { get; set; } = time;
 }
 

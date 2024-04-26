@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 
 namespace Test1;
@@ -9,7 +10,7 @@ public partial class MyClass : IStep
 
     public static string Name => "名称";
 
-    public Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
+    public Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -42,9 +43,10 @@ public partial class Flow1 : IStep
     /// 执行的命令
     /// </summary>
     /// <returns></returns>
-    public Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
+    public Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
         Prop3 = 100;
+        stepContext.AddLog("测试日志", LogLevel.Information);
         return Task.CompletedTask;
     }
 

@@ -19,8 +19,8 @@ public interface IStep : IStepInject
 
 public interface IStepInject
 {
-    Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken);
-    Task WrapAsync(FlowContext context, StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken);
+    Task Run(StepContext stepContext, CancellationToken cancellationToken);
+    Task WrapAsync(StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
 

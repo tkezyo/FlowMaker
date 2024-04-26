@@ -124,7 +124,7 @@ public class FlowRunner : IDisposable
                 ?? throw new Exception($"未找到{step.Category}，{step.Name}定义");
 
             var stepObj = _serviceProvider.GetRequiredKeyedService<IStepInject>(stepDefinition.Category + ":" + stepDefinition.Name);
-            await stepObj.WrapAsync(Context, stepContext, _serviceProvider, cancellationToken);
+            await stepObj.WrapAsync(stepContext, _serviceProvider, cancellationToken);
         }
         else if (step.Type == StepType.Embedded)
         {
@@ -376,7 +376,7 @@ public class FlowRunner : IDisposable
                         StepOnceStatus once = new(i, errorIndex);
                         once.State = StepOnceState.Skip;
 
-                        once.AddLog("Skip Reason: " + reason);
+                        once.AddLog("Skip Reason: " + reason, Microsoft.Extensions.Logging.LogLevel.Information);
 
                         Context.StepState[step.Id].OnceStatuses.Add(once);
                         foreach (var item in stepOnceMiddlewares)
@@ -393,7 +393,7 @@ public class FlowRunner : IDisposable
                     StepOnceStatus once = new(i, errorIndex);
                     once.State = StepOnceState.Skip;
 
-                    once.AddLog("Skip Reason: Finally");
+                    once.AddLog("Skip Reason: Finally", Microsoft.Extensions.Logging.LogLevel.Information);
                     Context.StepState[step.Id].OnceStatuses.Add(once);
                     foreach (var item in stepOnceMiddlewares)
                     {
@@ -426,11 +426,11 @@ public class FlowRunner : IDisposable
                         if (timeOut > 0)
                         {
                             var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(timeOut), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                            await timeoutPolicy.ExecuteAsync(async c => await RunStep(step, new StepContext(step, Context.StepState[step.Id], once), c), cancellationToken);
+                            await timeoutPolicy.ExecuteAsync(async c => await RunStep(step, new StepContext(step, Context, Context.StepState[step.Id], once), c), cancellationToken);
                         }
                         else
                         {
-                            await RunStep(step, new StepContext(step, Context.StepState[step.Id], once), cancellationToken);
+                            await RunStep(step, new StepContext(step, Context, Context.StepState[step.Id], once), cancellationToken);
                         }
                         once.EndTime = DateTime.Now;
                         once.State = StepOnceState.Complete;
