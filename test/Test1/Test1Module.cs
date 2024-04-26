@@ -28,6 +28,16 @@ namespace Test1
             hostApplicationBuilder.Services.AddScoped<CaesarMode>();
             hostApplicationBuilder.Services.AddICaesarModeFlowStep();
 
+            hostApplicationBuilder.Services.AddITestStepFlowStep();
+            hostApplicationBuilder.Services.AddKeyedScoped<ITestStep, TestStep1>("Test1");
+            hostApplicationBuilder.Services.AddKeyedScoped<ITestStep, TestStep2>("Test2");
+
+            hostApplicationBuilder.Services.Configure<ITestStepInstanceOption>(c =>
+            {
+                c.Instances.Add(new FlowMaker.NameValue("Test1", "Test1"));
+                c.Instances.Add(new FlowMaker.NameValue("Test2", "Test2"));
+            });
+
             return Task.CompletedTask;
         }
     }

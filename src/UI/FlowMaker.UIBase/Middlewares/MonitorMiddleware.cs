@@ -26,6 +26,16 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
     public Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken)
     {
+        if (flowStep.Type == StepType.Embedded)
+        {
+            return Task.CompletedTask;
+        }
+        if (stepOnceStatus.EndTime.HasValue)
+        {
+            CompleteCount += 0.5;
+            Percent = (double)CompleteCount / TotalCount * 100;
+        }
+
         PercentChange.OnNext(Percent);
         StepChange.OnNext(new MonitorStepOnceMessage(stepOnceStatus, flowContext.FlowIds, flowStep.Id));
 

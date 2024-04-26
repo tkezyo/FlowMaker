@@ -4,6 +4,28 @@ using System.ComponentModel;
 
 namespace Test1
 {
+    [Steps("FFF")]
+    public interface ITestStep
+    {
+        int Test(int ss = 2);
+    }
+
+    public class TestStep1 : ITestStep
+    {
+        public int Test(int ss = 2)
+        {
+            return 1;
+        }
+    }
+
+    public class TestStep2 : ITestStep
+    {
+        public int Test(int ss = 2)
+        {
+            return 2;
+        }
+    }
+
     [Steps("算法")]
     public interface ICaesarMode
     {
@@ -14,7 +36,7 @@ namespace Test1
         Task Test4(int ss);
         Task<int> Test5(int ss);
     }
-   
+
     [Steps("CaesarModeKK")]
     public class CaesarMode
     {

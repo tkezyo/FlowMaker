@@ -444,10 +444,7 @@ public class FlowRunner : IDisposable
                     catch (Exception e)
                     {
                         var retry = await IDataConverterInject.GetValue(step.Retry, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
-                        if (retry < errorIndex)
-                        {
-                            break;
-                        }
+
                         errorIndex++;
                         once.EndTime = DateTime.Now;
                         once.State = StepOnceState.Error;
@@ -456,6 +453,12 @@ public class FlowRunner : IDisposable
                         {
                             await item.OnError(Context, step, Context.StepState[step.Id], once, e, CancellationTokenSource.Token);
                         }
+
+                        if (retry >= errorIndex)
+                        {
+                            continue;
+                        }
+
                         var errorHandling = await IDataConverterInject.GetValue(step.ErrorHandling, _serviceProvider, Context, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
                         success = false;
                         switch (errorHandling)
@@ -477,6 +480,8 @@ public class FlowRunner : IDisposable
                             default:
                                 break;
                         }
+
+                        break;
                     }
                 }
             }

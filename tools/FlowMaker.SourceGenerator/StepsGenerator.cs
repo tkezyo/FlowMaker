@@ -224,6 +224,12 @@ namespace FlowMaker.SourceGenerator
         InstanceProviderProp.IsInput = true;
         InstanceProviderProp.OptionProviderName = {{item.Option.Name}}InstanceProvider.Type + ":" + {{item.Option.Name}}InstanceProvider.Name;;
 """);
+
+                            inputStringBuilder.AppendLine($$"""
+        InstanceProvider = await IDataConverterInject.GetValue<string>(stepContext.Step.Inputs.First(v=> v.Name == nameof(InstanceProvider)), serviceProvider, stepContext.FlowContext, s => s?.ToString(), cancellationToken);
+        stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof(InstanceProvider), JsonSerializer.Serialize(InstanceProvider)));
+""");
+                            props.Add("InstanceProviderProp");
                         }
 
                         foreach (var input in inputs)
@@ -418,6 +424,13 @@ namespace FlowMaker.SourceGenerator
                         extensionBuilder.AppendLine($$"""
                                     serviceDescriptors.AddFlowStep<{{item.Option.Name}}_{{methodSymbol.Name}}>();
                             """);
+                        if (isInterface)
+                        {
+                            
+                        extensionBuilder.AppendLine($$"""
+                                    serviceDescriptors.AddFlowOption<{{item.Option.Name}}InstanceProvider>();
+                            """);
+                        }
 
                         if (!isInterface)
                         {
@@ -522,7 +535,7 @@ using Microsoft.Extensions.Options;
 
 namespace {{item.Option.ContainingNamespace}};
 
-#nullable enable
+#nullable disable
 
 {{stringBuilder}}
 
@@ -539,7 +552,7 @@ public class {{item.Option.Name}}InstanceOption
 {
     public List<NameValue> Instances { get; set; } = [];
 }
-public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option.Name}}InstanceOption> {{item.Option.Name}}InstanceProvider) : IOptionProvider<string>
+public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option.Name}}InstanceOption> {{item.Option.Name}}InstanceOption) : IOptionProvider<string>
 {
     public static string DisplayName => "{{category}}";
 
@@ -550,7 +563,7 @@ public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option
     public async Task<IEnumerable<NameValue>> GetOptions()
     {
         await Task.CompletedTask;
-        return [new NameValue("默认", ""), .. {{item.Option.Name}}InstanceProvider.Value.Instances];
+        return [new NameValue("", "默认"), ..{{item.Option.Name}}InstanceOption.Value.Instances];
     }
 }
 #nullable restore
