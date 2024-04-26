@@ -27,6 +27,7 @@ namespace Test1
             hostApplicationBuilder.Services.AddCaesarModeFlowStep();
             hostApplicationBuilder.Services.AddScoped<CaesarMode>();
             hostApplicationBuilder.Services.AddICaesarModeFlowStep();
+
             return Task.CompletedTask;
         }
     }

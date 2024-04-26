@@ -60,10 +60,13 @@ namespace FlowMaker.SourceGenerator
                 var attires = item.Option.GetAttributes();
                 var category = attires.FirstOrDefault(v => v.AttributeClass?.Name == "StepsAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString();
 
-                StringBuilder stringBuilder = new StringBuilder();
-                StringBuilder extensionBuilder = new StringBuilder();
+                StringBuilder stringBuilder = new();
+                StringBuilder extensionBuilder = new();
                 foreach (var member in item.Option.GetMembers())
                 {
+                    //item.Option是否为接口
+                    var isInterface = item.Option.TypeKind == TypeKind.Interface;
+
                     if (member is IMethodSymbol methodSymbol)
                     {
                         //确保是 public
@@ -211,7 +214,17 @@ namespace FlowMaker.SourceGenerator
                         StringBuilder outputDefStringBuilder = new();
                         List<string> props = [];
 
-
+                        if (isInterface)
+                        {
+                            inputPropStringBuilder.AppendLine("    [Input]");
+                            inputPropStringBuilder.AppendLine($"    [OptionProvider<{item.Option.Name}InstanceProvider>]");
+                            inputPropStringBuilder.AppendLine($"    public string InstanceProvider {{ get; set; }}");
+                            defStringBuilder.AppendLine($$"""
+        var InstanceProviderProp = new DataDefinition("InstanceProvider", "实例", "string", "");
+        InstanceProviderProp.IsInput = true;
+        InstanceProviderProp.OptionProviderName = {{item.Option.Name}}InstanceProvider.Type + ":" + {{item.Option.Name}}InstanceProvider.Name;;
+""");
+                        }
 
                         foreach (var input in inputs)
                         {
@@ -405,7 +418,10 @@ namespace FlowMaker.SourceGenerator
                         extensionBuilder.AppendLine($$"""
                                     serviceDescriptors.AddFlowStep<{{item.Option.Name}}_{{methodSymbol.Name}}>();
                             """);
-                        stringBuilder.AppendLine($$"""
+
+                        if (!isInterface)
+                        {
+                            stringBuilder.AppendLine($$"""
 public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Name}} _service): IStep
 {
     public static string Category => "{{category}}";
@@ -441,6 +457,57 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Na
 }
 
 """);
+                        }
+                        else
+                        {
+                            stringBuilder.AppendLine($$"""
+public partial class {{item.Option.Name}}_{{methodSymbol.Name}}(IServiceProvider _serviceProvider): IStep
+{
+    public static string Category => "{{category}}";
+    
+    public static string Name => "{{description}}";
+{{inputPropStringBuilder}}
+{{outputPropStringBuilder}}
+    public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
+    {
+        {{item.Option.Name}} _service = null;
+        if (string.IsNullOrEmpty(InstanceProvider))
+        {
+            _service = _serviceProvider.GetRequiredService<{{item.Option.Name}}>();
+        }
+        else
+        {
+            _service = _serviceProvider.GetRequiredKeyedService<{{item.Option.Name}}>(InstanceProvider);
+        }
+        {{(isVoid ? string.Empty : "var result = ")}}{{(isTask ? "await " : "")}}_service.{{methodSymbol.Name}}({{inputString}});
+{{outputString}}
+        await Task.CompletedTask;
+    }
+
+    public async Task WrapAsync(StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken)
+    {
+{{inputStringBuilder}}
+        await Run(stepContext, cancellationToken);
+
+{{outputStringBuilder}}
+    }
+
+    public static StepDefinition GetDefinition()
+    {
+{{defStringBuilder}}
+        return new StepDefinition
+        {
+            Category = {{item.Option.Name}}_{{methodSymbol.Name}}.Category,
+            Name = {{item.Option.Name}}_{{methodSymbol.Name}}.Name,
+            Data = [ {{string.Join(", ", props)}} ]
+        };
+    }
+}
+
+""");
+                        }
+
+                      
 
                     }
                 }
@@ -451,6 +518,7 @@ using FlowMaker;
 using System.Text.Json;
 using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace {{item.Option.ContainingNamespace}};
 
@@ -464,6 +532,25 @@ public static partial class FlowMakerExtension
     public static void Add{{item.Option.Name}}FlowStep(this IServiceCollection serviceDescriptors)
     {
 {{extensionBuilder}}
+    }
+}
+
+public class {{item.Option.Name}}InstanceOption
+{
+    public List<NameValue> Instances { get; set; } = [];
+}
+public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option.Name}}InstanceOption> {{item.Option.Name}}InstanceProvider) : IOptionProvider<string>
+{
+    public static string DisplayName => "{{category}}";
+
+    public const string FullName = "string" + ":" + nameof({{item.Option.ContainingNamespace}}) + "." + nameof({{item.Option.Name}}InstanceProvider);
+    public static string Name => typeof({{item.Option.Name}}InstanceProvider).FullName ?? string.Empty;
+    public static string Type => "string";
+
+    public async Task<IEnumerable<NameValue>> GetOptions()
+    {
+        await Task.CompletedTask;
+        return [new NameValue("默认", ""), .. {{item.Option.Name}}InstanceProvider.Value.Instances];
     }
 }
 #nullable restore
