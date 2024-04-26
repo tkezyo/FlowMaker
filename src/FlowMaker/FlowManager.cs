@@ -128,17 +128,19 @@ public class FlowManager
                     });
                     if (errorTimes >= configDefinition.Retry)
                     {
-                        if (configDefinition.ErrorHandling == ErrorHandling.Skip)
-                        {
-                            _logger.LogError(e, "流程失败跳过:{TestName}", testName);
-
-                            break;
-                        }
                         switch (configDefinition.ErrorHandling)
                         {
+                            case ErrorHandling.Skip:
+                                _logger.LogError(e, "流程失败跳过:{TestName}", testName);
+
+                                break;
+                            case ErrorHandling.Finally:
+                                _logger.LogError(e, "流程失败停止:{TestName}", testName);
+
+                                break;
                             case ErrorHandling.Terminate:
-                                _logger.LogError(e, "流程执行失败:{TestName}", testName);
-                                throw new Exception("流程执行失败", e);
+                                _logger.LogError(e, "流程失败立即停止:{TestName}", testName);
+                                throw new Exception("流程失败立即停止", e);
                             default:
                                 break;
                         }

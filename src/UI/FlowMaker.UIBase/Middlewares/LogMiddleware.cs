@@ -1,4 +1,5 @@
 ﻿using FlowMaker.Persistence;
+using Microsoft.Extensions.Logging;
 
 namespace FlowMaker.Middlewares;
 
@@ -37,12 +38,6 @@ public class LogFlowMiddleware(IFlowLogWriter flowLogWriter) : IFlowMiddleware
 }
 public class LogStepMiddleware : IStepMiddleware
 {
-    public async Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception exception, CancellationToken cancellationToken)
-    {
-        await Task.CompletedTask;
-
-    }
-
     public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
@@ -53,10 +48,13 @@ public class LogStepMiddleware : IStepMiddleware
         await Task.CompletedTask;
     }
 }
-public class LogStepOnceMiddleware(IFlowLogWriter flowLogWriter) : IStepOnceMiddleware
+public class LogStepOnceMiddleware(IFlowLogWriter flowLogWriter, ILogger<LogStepOnceMiddleware> logger) : IStepOnceMiddleware
 {
     public async Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken)
     {
+        logger.LogError(exception, "Error{TestName}", flowContext.FlowIds[0]);
+        await flowLogWriter.LogStep(flowContext, flowStep, step, stepOnceStatus, exception);
+
         await Task.CompletedTask;
     }
 

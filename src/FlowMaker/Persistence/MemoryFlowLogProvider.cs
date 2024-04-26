@@ -11,7 +11,7 @@ namespace FlowMaker.Persistence
             await Task.CompletedTask;
             return log?.ToArray() ?? [];
         }
-        public async Task LogFlow(FlowContext flowContext)
+        public async Task LogFlow(FlowContext flowContext, Exception? exception = null)
         {
             if (!Logs.TryGetValue(flowContext.FlowIds[0], out var logs))
             {
@@ -80,7 +80,7 @@ namespace FlowMaker.Persistence
             await Task.CompletedTask;
         }
 
-        public async Task LogStep(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus)
+        public async Task LogStep(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, Exception? exception = null)
         {
             if (!Logs.TryGetValue(flowContext.FlowIds[0], out var logs))
             {
@@ -103,10 +103,8 @@ namespace FlowMaker.Persistence
             }
             else
             {
-                if (stepStatus.Complete)
-                {
-                    stepLog.EndTime = DateTime.Now;
-                }
+
+                stepLog.EndTime = stepStatus.EndTime;
             }
 
             await Task.CompletedTask;

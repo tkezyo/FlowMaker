@@ -29,10 +29,7 @@ public class FlowStep
     /// </summary>
     public required string Name { get; set; }
 
-    /// <summary>
-    /// 结束步骤
-    /// </summary>
-    public bool Finally { get; set; }
+
     /// <summary>
     /// 并行执行-仅在简单模式下有效
     /// </summary>
@@ -67,6 +64,11 @@ public class FlowStep
     /// 出现错误时处理方式 ErrorHandling
     /// </summary>
     public FlowInput ErrorHandling { get; set; }
+
+    /// <summary>
+    /// 结束步骤
+    /// </summary>
+    public FlowInput Finally { get; set; }
 
     /// <summary>
     /// 是否可执行，同时可作为Break的条件, 可能来自于全局的 checker或自己的 checker

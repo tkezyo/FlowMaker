@@ -1,21 +1,31 @@
 ﻿using FlowMaker;
 using System.ComponentModel;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Text.Json;
 
 namespace Test1
 {
-    [Steps("CaesarMode")]
+    [Steps("算法")]
+    public interface ICaesarMode
+    {
+        [Description("算法A")]
+        (int, string) Test(int ss = 2);
+        int Test2(DayOfWeek ss);
+        void Test3(int ss);
+        Task Test4(int ss);
+        Task<int> Test5(int ss);
+    }
+
+
+    [Steps("CaesarModeKK")]
     public class CaesarMode
     {
-        public (int, string) Test(int ss)
+        public (int, string) Test(int ss = 2)
         {
             return (ss, "ss");
         }
 
-        public int Test2(int ss)
+        public int Test2(DayOfWeek ss)
         {
-            return ss;
+            return 1;
         }
 
         public void Test3(int ss)
@@ -32,6 +42,17 @@ namespace Test1
         {
             await Task.CompletedTask;
             return ss;
+        }
+
+        public async Task<int> Test6(bool ss)
+        {
+            await Task.CompletedTask;
+            return 12;
+        }
+
+        public void Error()
+        {
+            throw new Exception("错误了");
         }
     }
 }

@@ -302,6 +302,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                         <controls:FlowInputView DataContext="{Binding FlowStep.Repeat}"></controls:FlowInputView>
                         <controls:FlowInputView DataContext="{Binding FlowStep.Retry}"></controls:FlowInputView>
                         <controls:FlowInputView DataContext="{Binding FlowStep.ErrorHandling}"></controls:FlowInputView>
+                        <controls:FlowInputView DataContext="{Binding FlowStep.Finally}"></controls:FlowInputView>
 
                         <TextBox Text="{Binding FlowStep.Time}" hc:InfoElement.Title="显示时间" />
                     </StackPanel>

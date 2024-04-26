@@ -22,6 +22,8 @@ public class FlowContext
     public IFlowDefinition FlowDefinition { get; }
     public List<FlowInput> Checkers { get; set; }
 
+    public bool Finally { get; set; }
+
     public ConfigDefinition ConfigDefinition { get; set; }
     public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
     public List<string> Middlewares { get; set; } = [];
@@ -177,6 +179,10 @@ public class StepContext(FlowStep step, StepStatus status, StepOnceStatus stepOn
     public FlowStep Step { get; } = step;
     public StepStatus Status { get; set; } = status;
     public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
+    public void AddLog(string log)
+    {
+        StepOnceStatus.Logs.Add(new LogInfo(log, DateTime.Now));
+    }
 }
 
 public class StepOnceStatus(int currentIndex, int errorIndex)
@@ -205,7 +211,12 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// <summary>
     /// 日志
     /// </summary>
-    public List<string> Logs { get; set; } = [];
+    public List<LogInfo> Logs { get; set; } = [];
+
+    public void AddLog(string log)
+    {
+        Logs.Add(new LogInfo(log, DateTime.Now));
+    }
 
     /// <summary>
     /// 附加属性
@@ -214,17 +225,15 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
 
 }
 
+public class LogInfo(string log, DateTime time)
+{
+    public string Log { get; set; } = log;
+
+    public DateTime Time { get; set; } = time;
+}
+
 public class StepStatus
 {
-    /// <summary>
-    /// 已完成
-    /// </summary>
-    public bool Complete { get; set; }
-    /// <summary>
-    /// 已开始
-    /// </summary>
-    public bool Started { get; set; }
-
     public StepState State { get; set; }
 
     public DateTime? StartTime { get; set; }

@@ -8,8 +8,8 @@ public interface IFlowLogReader
 
 public interface IFlowLogWriter
 {
-    Task LogFlow(FlowContext flowContext);
-    Task LogStep(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus);
+    Task LogFlow(FlowContext flowContext, Exception? exception = null);
+    Task LogStep(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, Exception? exception = null);
     Task LogEvent(FlowContext flowContext, string eventName, string? eventData);
     Task LogMiddleware(Guid id, List<string> middlewares);
 }

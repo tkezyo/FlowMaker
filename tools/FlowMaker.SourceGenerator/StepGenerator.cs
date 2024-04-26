@@ -86,7 +86,6 @@ namespace FlowMaker.SourceGenerator
                     StringBuilder outputStringBuilder = new();
 
                     StringBuilder defStringBuilder = new();
-                    StringBuilder outputDefStringBuilder = new();
                     List<string> props = [];
                     foreach (var member in item.Option.GetMembers())
                     {
@@ -178,9 +177,16 @@ namespace FlowMaker.SourceGenerator
                                         enumDisplayName = enumDisplayNameAttr.ConstructorArguments[0].Value.ToString();
                                     }
                                     defStringBuilder.AppendLine($$"""
-        {{property.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", "{{enumValue.Name}}"));
+        {{property.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", $"{(int){{typeSymbol.Name}}.{{enumValue.Name}}}"));
 """);
                                 }
+                            }
+                            if (property.Type.SpecialType == SpecialType.System_Boolean)
+                            {
+                                defStringBuilder.AppendLine($$"""
+        {{property.Name}}Prop.Options.Add(new OptionDefinition("是", "true"));
+        {{property.Name}}Prop.Options.Add(new OptionDefinition("否", "false"));
+""");
                             }
 
                             if (optionProviderAttr is not null && optionProviderAttr.AttributeClass.TypeArguments.Length > 0)
@@ -235,7 +241,7 @@ namespace FlowMaker.SourceGenerator
         stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                                     }
-                              
+
                                 }
                             }
 
@@ -270,7 +276,6 @@ public partial class {item.Option.MetadataName}
     public static StepDefinition GetDefinition()
     {{
 {defStringBuilder}
-{outputDefStringBuilder}
         return new StepDefinition
         {{
             Category = {item.Option.MetadataName}.Category,

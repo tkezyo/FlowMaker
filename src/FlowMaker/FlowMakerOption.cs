@@ -87,7 +87,7 @@ public class FlowMakerOptionGroup
     public List<CustomViewDefinition> CustomPageViewDefinitions { get; set; } = [];
 }
 
-public static class FlowMakerExtension
+public static partial class FlowMakerExtension
 {
 
     public static void AddFlowStep<T>(this IServiceCollection serviceDescriptors)

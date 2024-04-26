@@ -28,6 +28,20 @@ namespace FlowMaker.SourceGenerator
                     return true;
                 }
             }
+            if (node is InterfaceDeclarationSyntax iids)
+            {
+                if (iids.AttributeLists.Any(v => v.Attributes.Any(c =>
+                {
+                    if (c.Name is IdentifierNameSyntax ff && ff.Identifier.Text == "Steps")
+                    {
+                        return true;
+                    }
+                    return false;
+                })))
+                {
+                    return true;
+                }
+            }
             return false;
         }
         private SyntaxModel Transform(GeneratorSyntaxContext context, CancellationToken cancellationToken)
@@ -46,6 +60,8 @@ namespace FlowMaker.SourceGenerator
                 var attires = item.Option.GetAttributes();
                 var category = attires.FirstOrDefault(v => v.AttributeClass?.Name == "StepsAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString();
 
+                StringBuilder stringBuilder = new StringBuilder();
+                StringBuilder extensionBuilder = new StringBuilder();
                 foreach (var member in item.Option.GetMembers())
                 {
                     if (member is IMethodSymbol methodSymbol)
@@ -71,12 +87,20 @@ namespace FlowMaker.SourceGenerator
                         List<Input> inputs = new List<Input>();
                         List<Output> outputs = new List<Output>();
 
+                        //获取Description标签的描述
+                        var description = methodSymbol.GetAttributes().FirstOrDefault(v => v.AttributeClass?.Name == "DescriptionAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString();
+
+                        if (string.IsNullOrEmpty(description))
+                        {
+                            description = methodSymbol.Name;
+                        }
+
                         foreach (var parameter in parameters)
                         {
                             var input = new Input
                             {
                                 Name = parameter.Name,
-                                Type = parameter.Type.ToDisplayString(),
+                                Type = parameter.Type,
                                 DefaultValue = parameter.HasExplicitDefaultValue ? parameter.ExplicitDefaultValue?.ToString() : null,
                                 Description = parameter.GetAttributes().FirstOrDefault(v => v.AttributeClass?.Name == "DescriptionAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString()
                             };
@@ -94,7 +118,7 @@ namespace FlowMaker.SourceGenerator
                                 var output = new Output
                                 {
                                     Name = tupleElement.Name,
-                                    Type = tupleElement.Type.ToDisplayString()
+                                    Type = tupleElement.Type
                                 };
                                 outputs.Add(output);
                             }
@@ -119,7 +143,7 @@ namespace FlowMaker.SourceGenerator
                                         var output = new Output
                                         {
                                             Name = tupleElement.Name,
-                                            Type = tupleElement.Type.ToDisplayString()
+                                            Type = tupleElement.Type
                                         };
                                         outputs.Add(output);
                                     }
@@ -129,7 +153,7 @@ namespace FlowMaker.SourceGenerator
                                     var output = new Output
                                     {
                                         Name = "Result",
-                                        Type = returnType.ToDisplayString()
+                                        Type = returnType
                                     };
                                     outputs.Add(output);
                                 }
@@ -144,14 +168,23 @@ namespace FlowMaker.SourceGenerator
                             var output = new Output
                             {
                                 Name = "Result",
-                                Type = returnType.ToDisplayString()
+                                Type = returnType
                             };
                             outputs.Add(output);
                         }
                         var textInfo = new CultureInfo("en-US", false).TextInfo;
 
 
-                        StringBuilder inputPropStringBuilder = new StringBuilder();
+                        StringBuilder inputPropStringBuilder = new();
+                        StringBuilder outputPropStringBuilder = new();
+
+                        StringBuilder inputStringBuilder = new();
+                        StringBuilder outputStringBuilder = new();
+
+                        StringBuilder defStringBuilder = new();
+                        StringBuilder outputDefStringBuilder = new();
+                        List<string> props = [];
+
                         foreach (var input in inputs)
                         {
                             input.Name = textInfo.ToTitleCase(input.Name.ToLower());
@@ -168,16 +201,142 @@ namespace FlowMaker.SourceGenerator
                                 inputPropStringBuilder.AppendLine($"    [Description(\"{input.Description}\")]");
                             }
 
-                            inputPropStringBuilder.AppendLine($"    public {input.Type} {input.Name} {{ get; set; }}");
+                            inputPropStringBuilder.AppendLine($"    public {input.Type.ToDisplayString()} {input.Name} {{ get; set; }}");
+
+
+                            defStringBuilder.AppendLine($$"""
+        var {{input.Name}}Prop = new DataDefinition("{{input.Name}}", "{{input.Description}}", "{{input.Type.ToDisplayString()}}", "{{input.DefaultValue}}");
+        {{input.Name}}Prop.IsInput = true;
+""");
+
+                            bool isArray = false;
+                            string subType = string.Empty;
+
+                            if (input.Type.TypeKind == TypeKind.Array && input.Type is IArrayTypeSymbol arrayTypeSymbol)
+                            {
+                                string GetSubType(IArrayTypeSymbol arrayType)
+                                {
+                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
+                                    {
+                                        return GetSubType(subArrayType);
+                                    }
+                                    else
+                                    {
+                                        return arrayType.ElementType.ToDisplayString();
+                                    }
+                                }
+                                subType = GetSubType(arrayTypeSymbol);
+                                var rank = arrayTypeSymbol.ToDisplayString().Count(c => c == '[');
+                                defStringBuilder.AppendLine($$"""
+        {{input.Name}}Prop.IsArray = true;        
+        {{input.Name}}Prop.Rank = {{rank}};        
+        {{input.Name}}Prop.SubType = "{{subType}}";
+""");
+                            }//如果是布尔类型
+                            if (input.Type.SpecialType == SpecialType.System_Boolean)
+                            {
+                                defStringBuilder.AppendLine($$"""
+        {{input.Name}}Prop.Options.Add(new OptionDefinition("是", "true"));
+        {{input.Name}}Prop.Options.Add(new OptionDefinition("否", "false"));
+""");
+                            }
+
+
+                            if (isArray)
+                            {
+                                inputStringBuilder.AppendLine($$"""
+        var {{input.Name}}Input = stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}}));
+        if ({{input.Name}}Input.Mode == InputMode.Array)
+        {
+            {{input.Name}} = ({{input.Type.ToDisplayString()}})IDataConverterInject.Reshape<{{subType}}>({{input.Name}}Input.Dims, await IDataConverterInject.GetArrayValue<{{subType}}>({{input.Name}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
+        }
+        else
+        {
+            {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>({{input.Name}}Input, serviceProvider, context, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
+        }
+        stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
+""");
+                            }
+                            else
+                            {
+                                if (input.Type.SpecialType == SpecialType.System_String)
+                                {
+                                    inputStringBuilder.AppendLine($$"""
+        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, context, s => s?.ToString(), cancellationToken);
+        stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
+""");
+                                }
+                                else
+                                {
+                                    inputStringBuilder.AppendLine($$"""
+        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, context, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
+        stepContext.StepOnceStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
+""");
+                                }
+
+                            }
+
+                            if (input.Type is INamedTypeSymbol typeSymbol && typeSymbol.TypeKind == TypeKind.Enum)
+                            {
+                                var enumValues = typeSymbol.GetMembers().Where(c => c.Kind == SymbolKind.Field).ToList();
+                                foreach (var enumValue in enumValues)
+                                {
+                                    var enumAttires = enumValue.GetAttributes();
+                                    var enumDisplayNameAttr = enumAttires.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
+                                    var enumDisplayName = enumValue.Name;
+                                    if (enumDisplayNameAttr is not null)
+                                    {
+                                        enumDisplayName = enumDisplayNameAttr.ConstructorArguments[0].Value.ToString();
+                                    }
+                                    defStringBuilder.AppendLine($$"""
+        {{input.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", $"{(int){{typeSymbol.Name}}.{{enumValue.Name}}}"));
+""");
+                                }
+                            }
+
+                            props.Add($"{input.Name}Prop");
                         }
 
-                        StringBuilder outputPropStringBuilder = new StringBuilder();
                         foreach (var output in outputs)
                         {
                             output.Name = textInfo.ToTitleCase(output.Name.ToLower());
 
                             outputPropStringBuilder.AppendLine("    [Output]");
                             outputPropStringBuilder.AppendLine($"    public {output.Type} {output.Name} {{ get; set; }}");
+
+                            defStringBuilder.AppendLine($$"""
+        var {{output.Name}}Prop = new DataDefinition("{{output.Name}}", "{{output.Name}}", "{{output.Type}}", "");
+        {{output.Name}}Prop.IsOutput = true;
+""");
+                            if (output.Type.TypeKind == TypeKind.Array && output.Type is IArrayTypeSymbol arrayTypeSymbol)
+                            {
+                                string GetSubType(IArrayTypeSymbol arrayType)
+                                {
+                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
+                                    {
+                                        return GetSubType(subArrayType);
+                                    }
+                                    else
+                                    {
+                                        return arrayType.ElementType.ToDisplayString();
+                                    }
+                                }
+                                var subType = GetSubType(arrayTypeSymbol);
+                                var rank = arrayTypeSymbol.ToDisplayString().Count(c => c == '[');
+                                defStringBuilder.AppendLine($$"""
+        {{output.Name}}Prop.IsArray = true;        
+        {{output.Name}}Prop.Rank = {{rank}};        
+        {{output.Name}}Prop.SubType = "{{subType}}";
+""");
+                            }
+
+
+                            outputStringBuilder.AppendLine($$"""
+        await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{output.Name}})), {{output.Name}}, serviceProvider, context, cancellationToken);
+        stepContext.StepOnceStatus.Outputs.Add(new NameValue(nameof({{output.Name}}), JsonSerializer.Serialize({{output.Name}})));
+""");
+
+                            props.Add($"{output.Name}Prop");
                         }
 
 
@@ -208,20 +367,15 @@ namespace FlowMaker.SourceGenerator
 
 
 
-                        var source = new StringBuilder();
-                        source.AppendLine($$"""
-using FlowMaker;
-using System.Text.Json;
-
-namespace {{item.Option.ContainingNamespace}};
-
-#nullable enable
-
+                        extensionBuilder.AppendLine($$"""
+                                    serviceDescriptors.AddFlowStep<{{item.Option.Name}}_{{methodSymbol.Name}}>();
+                            """);
+                        stringBuilder.AppendLine($$"""
 public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Name}} _service): IStep
 {
     public static string Category => "{{category}}";
     
-    public static string Name => "{{methodSymbol.Name}}";
+    public static string Name => "{{description}}";
 {{inputPropStringBuilder}}
 {{outputPropStringBuilder}}
     public async Task Run(FlowContext context, StepContext stepContext, CancellationToken cancellationToken)
@@ -233,28 +387,54 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Na
 
     public async Task WrapAsync(FlowContext context, StepContext stepContext, IServiceProvider serviceProvider, CancellationToken cancellationToken)
     {
+{{inputStringBuilder}}
         await Run(context, stepContext, cancellationToken);
 
+{{outputStringBuilder}}
     }
 
     public static StepDefinition GetDefinition()
     {
+{{defStringBuilder}}
         return new StepDefinition
         {
             Category = {{item.Option.Name}}_{{methodSymbol.Name}}.Category,
             Name = {{item.Option.Name}}_{{methodSymbol.Name}}.Name,
-            Data = []
+            Data = [ {{string.Join(", ", props)}} ]
         };
     }
 }
 
-#nullable restore
 """);
-
-                        c.AddSource($"{item.Option.Name}_{methodSymbol.Name}.s.g.cs", SourceText.From(source.ToString(), Encoding.UTF8));
 
                     }
                 }
+
+                var source = new StringBuilder();
+                source.AppendLine($$"""
+using FlowMaker;
+using System.Text.Json;
+using System.ComponentModel;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {{item.Option.ContainingNamespace}};
+
+#nullable enable
+
+{{stringBuilder}}
+
+
+public static partial class FlowMakerExtension
+{
+    public static void Add{{item.Option.Name}}FlowStep(this IServiceCollection serviceDescriptors)
+    {
+{{extensionBuilder}}
+    }
+}
+#nullable restore
+""");
+
+                c.AddSource($"{item.Option.Name}.s.g.cs", SourceText.From(source.ToString(), Encoding.UTF8));
             });
 
         }
@@ -263,14 +443,16 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Na
     public class Input
     {
         public string Name { get; set; }
-        public string Type { get; set; }
+        public ITypeSymbol Type { get; set; }
         public string DefaultValue { get; set; }
         public string Description { get; set; }
+
+
     }
 
     public class Output
     {
         public string Name { get; set; }
-        public string Type { get; set; }
+        public ITypeSymbol Type { get; set; }
     }
 }

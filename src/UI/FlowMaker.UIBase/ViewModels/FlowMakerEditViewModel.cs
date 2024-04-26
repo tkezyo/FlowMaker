@@ -158,7 +158,6 @@ public class FlowMakerEditViewModel : ViewModelBase
                 Type = item.Type,
                 Parallel = item.Parallel,
                 Time = item.Time,
-                Finally = item.Finally,
             };
             if (item.Type == StepType.Embedded)
             {
@@ -184,6 +183,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             f.Repeat = CreateInput(item.Repeat);
             f.Retry = CreateInput(item.Retry);
             f.TimeOut = CreateInput(item.TimeOut);
+            f.Finally = CreateInput(item.Finally);
             foreach (var ifItem in item.Ifs)
             {
                 if (ifItem.Enable)
@@ -344,7 +344,6 @@ public class FlowMakerEditViewModel : ViewModelBase
                 Status = StepStatus.Normal,
                 Time = flowStepItem.Time,
                 Parallel = flowStepItem.Parallel,
-                Finally = flowStepItem.Finally,
             };
 
             flowStepViewModel.Category = flowStepItem.Category;
@@ -1595,7 +1594,7 @@ public class FlowStepViewModel : ReactiveObject
             Value = "Skip",
             Id = Guid.NewGuid(),
             Mode = InputMode.Option,
-            Options = [new FlowStepOptionViewModel("Skip", "跳过"), new FlowStepOptionViewModel("Finally", "终止"), new FlowStepOptionViewModel("Terminate", "立即停止")],
+            Options = [new FlowStepOptionViewModel("Skip", "跳过"), new FlowStepOptionViewModel("Finally", "停止"), new FlowStepOptionViewModel("Terminate", "立即停止")],
             HasOption = true,
         };
         Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", 0, _flowMakerEditViewModel)
@@ -1615,6 +1614,14 @@ public class FlowStepViewModel : ReactiveObject
             Value = "0",
             Mode = InputMode.Normal,
             Id = Guid.NewGuid(),
+        };
+        Finally = new FlowStepInputViewModel("Finally", "总会执行", "bool", 0, _flowMakerEditViewModel)
+        {
+            Value = "false",
+            Mode = InputMode.Option,
+            Id = Guid.NewGuid(),
+            Options = [new FlowStepOptionViewModel("true", "是"), new FlowStepOptionViewModel("false", "否")],
+            HasOption = true,
         };
     }
 
@@ -1679,6 +1686,7 @@ public class FlowStepViewModel : ReactiveObject
             _flowMakerEditViewModel.InsertConverterInput(Repeat, flowStep.Repeat);
             _flowMakerEditViewModel.InsertConverterInput(Retry, flowStep.Retry);
             _flowMakerEditViewModel.InsertConverterInput(TimeOut, flowStep.TimeOut);
+            _flowMakerEditViewModel.InsertConverterInput(Finally, flowStep.Finally);
         }
 
 
@@ -1760,11 +1768,7 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public string? Name { get; set; }
-    /// <summary>
-    /// 结束步骤
-    /// </summary>
-    [Reactive]
-    public bool Finally { get; set; }
+
     /// <summary>
     /// 并行执行-仅在简单模式下有效
     /// </summary>
@@ -1792,6 +1796,12 @@ public class FlowStepViewModel : ReactiveObject
     /// </summary>
     [Reactive]
     public FlowStepInputViewModel ErrorHandling { get; set; }
+
+    /// <summary>
+    /// 是否为错误后执行的步骤
+    /// </summary>
+    [Reactive]
+    public FlowStepInputViewModel Finally { get; set; }
     /// <summary>
     /// 前置任务
     /// </summary>

@@ -228,7 +228,6 @@ public interface IStepMiddleware
 {
     Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
     Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
-    Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception exception, CancellationToken cancellationToken);
 }
 public interface IStepOnceMiddleware
 {
