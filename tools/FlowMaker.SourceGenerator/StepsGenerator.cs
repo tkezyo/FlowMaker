@@ -104,6 +104,10 @@ namespace FlowMaker.SourceGenerator
                                 DefaultValue = parameter.HasExplicitDefaultValue ? parameter.ExplicitDefaultValue?.ToString() : null,
                                 Description = parameter.GetAttributes().FirstOrDefault(v => v.AttributeClass?.Name == "DescriptionAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString()
                             };
+                            if (string.IsNullOrEmpty(input.Description))
+                            {
+                                input.Description = input.Name;
+                            }
                             inputs.Add(input);
                         }
                         bool isVoid = methodSymbol.ReturnsVoid;
