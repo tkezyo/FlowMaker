@@ -55,7 +55,7 @@ namespace Test1
 
         }
 
-        public Task Test4(int ss)
+        public Task Test4(int[][] ss)
         {
             return Task.CompletedTask;
         }

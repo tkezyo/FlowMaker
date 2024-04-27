@@ -1406,6 +1406,13 @@ public class FlowStepInputViewModel : ReactiveObject
 
         this.WhenAnyValue(c => c.Mode).DistinctUntilChanged().Subscribe(c =>
         {
+            if (c != InputMode.Converter || c == InputMode.Array)
+            {
+                ConverterCategory = null;
+                ConverterName = null;
+                SubInputs.Clear();
+            }
+
             _flowStepEditViewModel.InsertConverterInput(this);
             _flowStepEditViewModel.InitGlobe(this);
         });

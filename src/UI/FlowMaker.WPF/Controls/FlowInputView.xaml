@@ -59,7 +59,7 @@
             <ComboBox Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="名称"  hc:TitleElement.TitlePlacement="Left" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="Name"></ComboBox>
         </StackPanel>
 
-        <ItemsControl ItemsSource="{Binding SubInputs}" Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
+        <ItemsControl ItemsSource="{Binding SubInputs}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
             <ItemsControl.ItemTemplate>
                 <DataTemplate>
                     <local:FlowInputView/>
