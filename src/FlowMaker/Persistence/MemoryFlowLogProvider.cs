@@ -2,7 +2,7 @@
 
 namespace FlowMaker.Persistence
 {
-    public class MemoryFlowLogProvider : IFlowLogReader, IFlowLogWriter
+    public class MemoryFlowLogProvider : IFlowLogger
     {
         public ConcurrentDictionary<Guid, List<FlowLog>> Logs { get; set; } = [];
         public async Task<FlowLog[]> GetFlowLog(Guid id)

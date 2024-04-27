@@ -20,44 +20,20 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    public Task OnError(FlowContext flowContext, FlowState state, Exception exception, CancellationToken cancellationToken)
-    {
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
-        return Task.CompletedTask;
-    }
-
-    public Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken)
-    {
-        if (flowStep.Type == StepType.Embedded)
-        {
-            return Task.CompletedTask;
-        }
-        if (stepOnceStatus.EndTime.HasValue)
-        {
-            CompleteCount += 0.5;
-            Percent = (double)CompleteCount / TotalCount * 100;
-        }
-
-        PercentChange.OnNext(Percent);
-        StepChange.OnNext(new MonitorStepOnceMessage(stepOnceStatus, flowContext.FlowIds, flowStep.Id));
-
-        return Task.CompletedTask;
-    }
-
-    public Task OnExecuted(FlowContext flowContext, FlowState state, CancellationToken cancellationToken)
+    public Task OnExecuted(FlowContext flowContext, FlowState state, Exception? exception, CancellationToken cancellationToken)
     {
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
  
         return Task.CompletedTask;
     }
 
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
+    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus,Exception? exception, CancellationToken cancellationToken)
     {
         if (flowStep.Type == StepType.Embedded)
         {
             return Task.CompletedTask;
         }
-        if (stepOnceStatus.State == StepOnceState.Complete && stepOnceStatus.EndTime.HasValue)
+        if (stepOnceStatus.EndTime.HasValue)
         {
             CompleteCount += 0.5;
             Percent = (double)CompleteCount / TotalCount * 100;

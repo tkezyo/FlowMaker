@@ -7,12 +7,8 @@ public class DebugMiddleware : IStepOnceMiddleware, IDisposable
 {
     public Dictionary<Guid, List<Guid>> DebugList { get; set; } = [];
     public ConcurrentDictionary<string, TaskCompletionSource> Debugging { get; set; } = [];
-    public Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken)
-    {
-        return Task.CompletedTask;
-    }
 
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
+    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
     }

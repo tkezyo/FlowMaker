@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace FlowMaker.Middlewares;
 
-public class LogEventMiddleware(IFlowLogWriter flowLogWriter) : IEventMiddleware
+public class LogEventMiddleware(IFlowLogger flowLogWriter) : IEventMiddleware
 {
     public async Task OnExecuting(FlowContext flowContext, string eventName, string? eventData, CancellationToken cancellationToken)
     {
@@ -13,14 +13,9 @@ public class LogEventMiddleware(IFlowLogWriter flowLogWriter) : IEventMiddleware
         }
     }
 }
-public class LogFlowMiddleware(IFlowLogWriter flowLogWriter) : IFlowMiddleware
+public class LogFlowMiddleware(IFlowLogger flowLogWriter) : IFlowMiddleware
 {
-    public async Task OnError(FlowContext flowContext, FlowState runnerState, Exception exception, CancellationToken cancellationToken)
-    {
-        await Task.CompletedTask;
-    }
-
-    public async Task OnExecuted(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, FlowState runnerState, Exception? exception, CancellationToken cancellationToken)
     {
         if (flowContext.FlowIds.Length == 1)
         {
@@ -38,7 +33,7 @@ public class LogFlowMiddleware(IFlowLogWriter flowLogWriter) : IFlowMiddleware
 }
 public class LogStepMiddleware : IStepMiddleware
 {
-    public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception? exception, CancellationToken cancellationToken)
     {
         await Task.CompletedTask;
     }
@@ -48,17 +43,9 @@ public class LogStepMiddleware : IStepMiddleware
         await Task.CompletedTask;
     }
 }
-public class LogStepOnceMiddleware(IFlowLogWriter flowLogWriter, ILogger<LogStepOnceMiddleware> logger) : IStepOnceMiddleware
+public class LogStepOnceMiddleware(IFlowLogger flowLogWriter, ILogger<LogStepOnceMiddleware> logger) : IStepOnceMiddleware
 {
-    public async Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken)
-    {
-        logger.LogError(exception, "Error{TestName}", flowContext.FlowIds[0]);
-        await flowLogWriter.LogStep(flowContext, flowStep, step, stepOnceStatus, exception);
-
-        await Task.CompletedTask;
-    }
-
-    public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
     {
         await flowLogWriter.LogStep(flowContext, flowStep, step, stepOnceStatus);
     }

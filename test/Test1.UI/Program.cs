@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using ReactiveUI;
 using Serilog;
 using Serilog.Events;
+using Serilog.Formatting.Compact;
 using System;
 using System.Reactive;
 using System.Reactive.Linq;
@@ -26,23 +27,33 @@ namespace Test1
 #endif
            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
            .WriteTo.File($"logs/log.txt", rollingInterval: RollingInterval.Day)
-            .WriteTo.Map(
+          //    .WriteTo.Map(
+          //keyPropertyName: "TestName",
+          //configure: (testName, wt) => wt.File(new CompactJsonFormatter(), $"logs/{testName}.log"))
+          .WriteTo.Map(
         keyPropertyName: "TestName",
-        configure: (testName, wt) => wt.File($"logs/{testName}.log"))
+        configure: (testName, wt) => wt.SQLite($"logs/{testName}.db"))
            .Enrich.FromLogContext();
 
 
             Log.Logger = configuration.CreateLogger();
 
-
-            var host = await IModule.CreateApplicationHost<Test1UIModule>(args) ?? throw new Exception();
-
-            Thread thread = new(async () =>
+            try
             {
-                await host.RunAsync();
-            });
-            thread.SetApartmentState(ApartmentState.STA);
-            thread.Start();
+                var host = await IModule.CreateApplicationHost<Test1UIModule>(args) ?? throw new Exception();
+
+                Thread thread = new(async () =>
+                {
+                    await host.RunAsync();
+                });
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+            }
+            catch (Exception)
+            {
+                Log.CloseAndFlush();
+            }
+
 
 
         }

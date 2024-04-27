@@ -276,7 +276,7 @@ public class FlowRunner : IDisposable
 
             foreach (var middleware in middlewares)
             {
-                await middleware.OnExecuted(Context, State, CancellationTokenSource.Token);
+                await middleware.OnExecuted(Context, State, null, CancellationTokenSource.Token);
             }
 
             return result;
@@ -287,7 +287,7 @@ public class FlowRunner : IDisposable
 
             foreach (var middleware in middlewares)
             {
-                await middleware.OnError(Context, State, e, CancellationTokenSource.Token);
+                await middleware.OnExecuted(Context, State, e, CancellationTokenSource.Token);
             }
             throw;
         }
@@ -436,7 +436,7 @@ public class FlowRunner : IDisposable
                         once.State = StepOnceState.Complete;
                         foreach (var item in stepOnceMiddlewares)
                         {
-                            await item.OnExecuted(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
+                            await item.OnExecuted(Context, step, Context.StepState[step.Id], once, null, CancellationTokenSource.Token);
                         }
 
                         break;
@@ -451,7 +451,7 @@ public class FlowRunner : IDisposable
 
                         foreach (var item in stepOnceMiddlewares)
                         {
-                            await item.OnError(Context, step, Context.StepState[step.Id], once, e, CancellationTokenSource.Token);
+                            await item.OnExecuted(Context, step, Context.StepState[step.Id], once, e, CancellationTokenSource.Token);
                         }
 
                         if (retry >= errorIndex)
@@ -473,7 +473,7 @@ public class FlowRunner : IDisposable
                                 Context.StepState[step.Id].EndTime = DateTime.Now;
                                 foreach (var item in stepMiddlewares)
                                 {
-                                    await item.OnExecuted(Context, step, Context.StepState[step.Id], CancellationTokenSource.Token);
+                                    await item.OnExecuted(Context, step, Context.StepState[step.Id], null, CancellationTokenSource.Token);
                                 }
                                 TaskCompletionSource?.SetException(e);
                                 return;
@@ -500,7 +500,7 @@ public class FlowRunner : IDisposable
                 {
                     return;
                 }
-                await item.OnExecuted(Context, step, Context.StepState[step.Id], CancellationTokenSource.Token);
+                await item.OnExecuted(Context, step, Context.StepState[step.Id], null, CancellationTokenSource.Token);
             }
             if (cancellationToken.IsCancellationRequested)
             {
@@ -538,7 +538,7 @@ public class FlowRunner : IDisposable
         }
         foreach (var middleware in middlewares)
         {
-            await middleware.OnExecuted(Context, State, CancellationTokenSource.Token);
+            await middleware.OnExecuted(Context, State, null, CancellationTokenSource.Token);
         }
         foreach (var item in SubFlowRunners)
         {

@@ -13,7 +13,4 @@ public interface IFlowProvider
     Task<ConfigDefinition?> LoadConfigDefinitionAsync(string? category, string? name, string configName);
     Task SaveConfig(ConfigDefinition configDefinition);
     Task RemoveConfig(string configName, string category, string name);
-
-
-
 }

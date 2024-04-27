@@ -14,6 +14,7 @@ using Ty;
 using Serilog;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using FlowMaker.Persistence;
 
 namespace Test1
 {
@@ -32,7 +33,10 @@ namespace Test1
             hostApplicationBuilder.Services.AddHostedService<WpfHostedService<App, MainWindow>>();
             hostApplicationBuilder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
-          hostApplicationBuilder.Services.AddTransientCustomPageView<ChatViewModel, ChatView>();
+
+            hostApplicationBuilder.Services.AddSingleton<IFlowLogger, MemoryFlowLogProvider>();
+
+            hostApplicationBuilder.Services.AddTransientCustomPageView<ChatViewModel, ChatView>();
             hostApplicationBuilder.Services.AddCustomLogView<CustomLogViewModel, CustomLogView>();
 
             hostApplicationBuilder.Services.AddAutoMapper(typeof(ConfigProfile).Assembly);

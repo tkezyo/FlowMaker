@@ -73,7 +73,7 @@ public class FlowManager
     {
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
-        var testName = DateTime.Now.ToString("yyyyMMdd") + "/" + runner.Id;
+        var testName = DateTime.Now.ToString("yyyyMMdd") + runner.Id;
         _status[runner.Id] = new RunnerStatus(runner, scope)
         {
             ConfigName = configDefinition.ConfigName,

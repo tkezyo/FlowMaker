@@ -1,13 +1,12 @@
-﻿namespace FlowMaker.Persistence;
+﻿using Microsoft.Extensions.Logging;
 
-public interface IFlowLogReader
+namespace FlowMaker.Persistence;
+
+
+
+public interface IFlowLogger
 {
     Task<FlowLog[]> GetFlowLog(Guid id);
-}
-
-
-public interface IFlowLogWriter
-{
     Task LogFlow(FlowContext flowContext, Exception? exception = null);
     Task LogStep(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, Exception? exception = null);
     Task LogEvent(FlowContext flowContext, string eventName, string? eventData);

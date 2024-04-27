@@ -15,11 +15,6 @@ namespace FlowMaker
         }
         public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            hostApplicationBuilder.Services.AddSingleton<MemoryFlowLogProvider>();
-            hostApplicationBuilder.Services.AddSingleton<IFlowLogReader>(c => c.GetRequiredService<MemoryFlowLogProvider>());
-            hostApplicationBuilder.Services.AddSingleton<IFlowLogWriter>(c => c.GetRequiredService<MemoryFlowLogProvider>());
-
-
             hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
             hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
 

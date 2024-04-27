@@ -221,19 +221,17 @@ public interface IOptionProviderInject
 public interface IFlowMiddleware
 {
     Task OnExecuting(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken);
-    Task OnError(FlowContext flowContext, FlowState runnerState, Exception exception, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, FlowState runnerState, Exception? exception, CancellationToken cancellationToken);
 }
 public interface IStepMiddleware
 {
     Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception? exception, CancellationToken cancellationToken);
 }
 public interface IStepOnceMiddleware
 {
     Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken);
-    Task OnError(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception exception, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken);
 }
 public interface IEventMiddleware
 {

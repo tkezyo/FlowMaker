@@ -11,7 +11,7 @@ namespace FlowMaker.ViewModels;
 
 public partial class FlowMakerLogViewModel : ViewModelBase
 {
-    private readonly IFlowLogReader _flowLogReader;
+    private readonly IFlowLogger _flowLogReader;
     private readonly FlowManager _flowManager;
 
     public static string Category => "Log";
@@ -23,7 +23,7 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     public string? FlowCategory { get; set; }
     public string? FlowName { get; set; }
 
-    public FlowMakerLogViewModel(IFlowLogReader flowLogReader, FlowManager flowManager)
+    public FlowMakerLogViewModel(IFlowLogger flowLogReader, FlowManager flowManager)
     {
         this._flowLogReader = flowLogReader;
         this._flowManager = flowManager;
