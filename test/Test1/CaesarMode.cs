@@ -7,13 +7,19 @@ namespace Test1
     [Steps("FFF")]
     public interface ITestStep
     {
-        int Test(StepContext stepContext, int ss = 2);
+        Task<int> Test(StepContext stepContext, int ss = 2);
     }
 
     public class TestStep1 : ITestStep
     {
-        public int Test(StepContext stepContext, int ss = 2)
+        public async Task<int> Test(StepContext stepContext, int ss = 2)
         {
+            for (int i = 0; i < 10; i++)
+            {
+
+                await Task.Delay(200);
+                stepContext.AddLog("sdfw+1" + i);
+            }
             stepContext.AddLog("sdfw");
             return 1;
         }
@@ -21,10 +27,16 @@ namespace Test1
 
     public class TestStep2 : ITestStep
     {
-        public int Test(StepContext stepContext, int ss = 2)
+        public async Task<int> Test(StepContext stepContext, int ss = 2)
         {
+            for (int i = 0; i < 30; i++)
+            {
+
+                await Task.Delay(100);
+                stepContext.AddLog("sdfw+2" + i);
+            }
             stepContext.AddLog("sdfw");
-            return 2;
+            return 3;
         }
     }
 

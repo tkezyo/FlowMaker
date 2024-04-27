@@ -1,5 +1,6 @@
 ﻿using FlowMaker.Middlewares;
 using FlowMaker.Persistence;
+using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
@@ -62,7 +63,8 @@ public partial class FlowMakerLogViewModel : ViewModelBase
                         StepCurrentIndex = item.CurrentIndex,
                         StepErrorIndex = item.ErrorIndex,
                         FlowCurrentIndex = log.CurrentIndex,
-                        FlowErrorIndex = log.ErrorIndex
+                        FlowErrorIndex = log.ErrorIndex,
+                        Logs = [.. item.Logs.Select(c => new LogInfoViewModel(c.Log, c.Level, c.Time))]
                     });
                 }
             }
@@ -101,14 +103,37 @@ public partial class FlowMakerLogViewModel : ViewModelBase
 
 public class StepLogViewModel : ReactiveObject
 {
+    [Reactive]
     public required string Name { get; set; }
+    [Reactive]
     public required string State { get; set; }
+    [Reactive]
     public DateTime? StartTime { get; set; }
+    [Reactive]
     public DateTime? EndTime { get; set; }
+    [Reactive]
     public int FlowCurrentIndex { get; set; }
+    [Reactive]
     public int FlowErrorIndex { get; set; }
+    [Reactive]
     public int StepCurrentIndex { get; set; }
+    [Reactive]
     public int StepErrorIndex { get; set; }
+
     public List<NameValue> Inputs { get; set; } = [];
     public List<NameValue> Outputs { get; set; } = [];
+
+    public required ObservableCollection<LogInfoViewModel> Logs { get; set; }
+}
+
+
+
+public class LogInfoViewModel(string log, LogLevel logLevel, DateTime time) : ReactiveObject
+{
+    [Reactive]
+    public string Log { get; set; } = log;
+    [Reactive]
+    public LogLevel Level { get; set; } = logLevel;
+    [Reactive]
+    public DateTime Time { get; set; } = time;
 }

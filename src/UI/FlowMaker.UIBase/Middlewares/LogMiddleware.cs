@@ -19,7 +19,7 @@ public class LogFlowMiddleware(IFlowLogger flowLogWriter) : IFlowMiddleware
     {
         if (flowContext.FlowIds.Length == 1)
         {
-            await flowLogWriter.LogFlow(flowContext);
+            await flowLogWriter.LogFlow(flowContext, exception);
         }
     }
 
@@ -47,7 +47,7 @@ public class LogStepOnceMiddleware(IFlowLogger flowLogWriter, ILogger<LogStepOnc
 {
     public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
     {
-        await flowLogWriter.LogStep(flowContext, flowStep, step, stepOnceStatus);
+        await flowLogWriter.LogStep(flowContext, flowStep, step, stepOnceStatus, exception);
     }
 
     public async Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)

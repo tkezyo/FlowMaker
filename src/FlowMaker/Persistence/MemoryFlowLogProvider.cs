@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace FlowMaker.Persistence
 {
@@ -29,14 +30,6 @@ namespace FlowMaker.Persistence
                     StartTime = DateTime.Now,
                     CurrentIndex = flowContext.CurrentIndex,
                     ErrorIndex = flowContext.ErrorIndex,
-                    // Inputs = flowContext.Inputs.Select(x => new NameValue(x.Name, x.Value)).ToList(),
-                    //  Middlewares = flowContext.Middlewares,
-                    //StepLogs = flowContext.StepIds.Select(x => new StepLog
-                    //{
-                    //    FlowIds = flowContext.FlowIds,
-                    //    StepId = x,
-                    //    StartTime = DateTime.Now
-                    //}).ToList()
                 };
                 logs.Add(log);
             }
@@ -103,11 +96,18 @@ namespace FlowMaker.Persistence
             }
             else
             {
-
                 stepLog.EndTime = stepStatus.EndTime;
             }
 
             await Task.CompletedTask;
+        }
+
+        public async Task Log(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
+        {
+            if (!Logs.TryGetValue(flowContext.FlowIds[0], out var logs))
+            {
+                return;
+            }
         }
     }
 }

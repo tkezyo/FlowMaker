@@ -93,7 +93,7 @@ public class FlowManager
         _logger.LogInformation("流程开始:{TestName}", testName);
 
         List<FlowResult> result = [];
-        for (int i = 0; i < configDefinition.Repeat; i++)
+        for (int i = 1; i <= configDefinition.Repeat; i++)
         {
             var errorTimes = 0;
             while (!_status[runner.Id].Cancel.IsCancellationRequested)

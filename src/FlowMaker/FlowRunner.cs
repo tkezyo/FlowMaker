@@ -362,7 +362,7 @@ public class FlowRunner : IDisposable
             int errorIndex = 0;
             bool skip = false;
             bool success = true;
-            for (int i = 0; i < repeat; i++)//重复执行
+            for (int i = 1; i <= repeat; i++)//重复执行
             {
                 foreach (var item2 in step.Ifs)
                 {

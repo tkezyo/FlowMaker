@@ -313,7 +313,7 @@ public class StepLog
     public Guid[] FlowIds { get; set; } = [];
     public Guid StepId { get; set; }
     public required string StepName { get; set; }
-    public DateTime? StartTime { get; set; }
+    public DateTime StartTime { get; set; }
     public DateTime? EndTime { get; set; }
     public List<StepOnceStatus> StepOnceLogs { get; set; } = [];
 }
