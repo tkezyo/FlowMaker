@@ -117,6 +117,7 @@ public class FlowManager
                 }
                 catch (Exception e)
                 {
+                    errorTimes++;
                     _logger.LogError(e, "流程出现错误:{TestName}", testName);
 
                     result.Add(new FlowResult
@@ -126,7 +127,7 @@ public class FlowManager
                         CurrentIndex = i,
                         Success = false,
                     });
-                    if (errorTimes >= configDefinition.Retry)
+                    if (errorTimes < configDefinition.Retry)
                     {
                         switch (configDefinition.ErrorHandling)
                         {
@@ -144,6 +145,10 @@ public class FlowManager
                             default:
                                 break;
                         }
+                    }
+                    else
+                    {
+                        throw new Exception("流程失败立即停止:" + testName, e);
                     }
                 }
             }

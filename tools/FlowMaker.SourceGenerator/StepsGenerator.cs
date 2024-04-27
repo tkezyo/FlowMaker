@@ -563,7 +563,7 @@ public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option
     public async Task<IEnumerable<NameValue>> GetOptions()
     {
         await Task.CompletedTask;
-        return [new NameValue("", "默认"), ..{{item.Option.Name}}InstanceOption.Value.Instances];
+        return {{item.Option.Name}}InstanceOption.Value.Instances;
     }
 }
 #nullable restore

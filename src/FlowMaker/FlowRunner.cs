@@ -376,9 +376,9 @@ public class FlowRunner : IDisposable
                         StepOnceStatus once = new(i, errorIndex);
                         once.State = StepOnceState.Skip;
 
-                        once.AddLog("Skip Reason: " + reason, Microsoft.Extensions.Logging.LogLevel.Information);
-
                         Context.StepState[step.Id].OnceStatuses.Add(once);
+                        once.AddLog(Context, step.Id, "Skip Reason: " + reason, Microsoft.Extensions.Logging.LogLevel.Information);
+
                         foreach (var item in stepOnceMiddlewares)
                         {
                             await item.OnExecuting(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
@@ -393,8 +393,8 @@ public class FlowRunner : IDisposable
                     StepOnceStatus once = new(i, errorIndex);
                     once.State = StepOnceState.Skip;
 
-                    once.AddLog("Skip Reason: Finally", Microsoft.Extensions.Logging.LogLevel.Information);
                     Context.StepState[step.Id].OnceStatuses.Add(once);
+                    once.AddLog(Context, step.Id, "Skip Reason: Finally", Microsoft.Extensions.Logging.LogLevel.Information);
                     foreach (var item in stepOnceMiddlewares)
                     {
                         await item.OnExecuting(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);

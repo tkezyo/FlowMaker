@@ -210,7 +210,8 @@ public class MonitorRunningViewModel : ReactiveObject
     public FlowState RunnerState { get; set; }
 
     public IDisposable? StepChange { get; set; }
-
+    [Reactive]
+    public DateTime StartTime { get; set; }
 
 }
 
@@ -376,7 +377,9 @@ public class MonitorStepInfoViewModel : ReactiveObject
     /// 是否完成
     /// </summary>
     [Reactive]
-    public bool Complete { get; set; }
+    public StepState State { get; set; }
+
+
 
     [Reactive]
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];

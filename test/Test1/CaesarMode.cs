@@ -7,21 +7,23 @@ namespace Test1
     [Steps("FFF")]
     public interface ITestStep
     {
-        int Test(int ss = 2);
+        int Test(StepContext stepContext, int ss = 2);
     }
 
     public class TestStep1 : ITestStep
     {
-        public int Test(int ss = 2)
+        public int Test(StepContext stepContext, int ss = 2)
         {
+            stepContext.AddLog("sdfw");
             return 1;
         }
     }
 
     public class TestStep2 : ITestStep
     {
-        public int Test(int ss = 2)
+        public int Test(StepContext stepContext, int ss = 2)
         {
+            stepContext.AddLog("sdfw");
             return 2;
         }
     }

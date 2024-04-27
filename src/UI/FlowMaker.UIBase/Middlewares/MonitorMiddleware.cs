@@ -1,5 +1,7 @@
-﻿using FlowMaker.Persistence;
+﻿using DynamicData;
+using FlowMaker.Persistence;
 using ReactiveUI;
+using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
@@ -44,8 +46,8 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
     public Task OnExecuted(FlowContext flowContext, FlowState state, CancellationToken cancellationToken)
     {
-
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
+ 
         return Task.CompletedTask;
     }
 
@@ -109,10 +111,15 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             Percent = 0;
             StepChange.Dispose();
             StepChange = new ReplaySubject<MonitorStepOnceMessage>(TotalCount);
+            PercentChange.Dispose();
+            PercentChange = new ReplaySubject<double>(1);
+            flowContext.LogSubject.Subscribe(c =>
+            {
+                MessageBus.Current.SendMessage(new LogMessage(flowContext, c.Item1, c.Item2));
+            });
         }
-     
         PercentChange.OnNext(Percent);
-  
+
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
     }
 
@@ -141,7 +148,12 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
         return Task.CompletedTask;
     }
 }
-
+public class LogMessage(FlowContext context, Guid stepId, LogInfo logInfo)
+{
+    public FlowContext Context { get; set; } = context;
+    public Guid StepId { get; } = stepId;
+    public LogInfo LogInfo { get; } = logInfo;
+}
 public class MonitorMessage(FlowContext context, FlowState runnerState, int totalCount)
 {
     public FlowContext Context { get; set; } = context;
