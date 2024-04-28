@@ -24,6 +24,7 @@ namespace Test1
         {
             AddDepend<Test1Module>();
             AddDepend<FlowMakerWpfModule>();
+            AddDepend<FlowMakerUIBaseModule>();
         }
         public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
