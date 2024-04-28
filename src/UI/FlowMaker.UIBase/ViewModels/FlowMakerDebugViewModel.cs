@@ -74,7 +74,7 @@ namespace FlowMaker.ViewModels
             SendEventCommand = ReactiveCommand.CreateFromTask(SendEvent);
             SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
             RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
-
+            EditFlowCommand = ReactiveCommand.CreateFromTask(EditFlow);
         }
 
         public CompositeDisposable? Disposables { get; set; }
@@ -581,7 +581,17 @@ namespace FlowMaker.ViewModels
             await _flowProvider.SaveConfig(configDefinition);
         }
 
-
+        public ReactiveCommand<Unit, Unit> EditFlowCommand { get; }
+        public async Task EditFlow()
+        {
+            var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
+            await vm.Load(FlowCategory, FlowName);
+            var title = "牛马编辑器" + " " + FlowCategory + " " + FlowName;
+            _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
+            {
+               // LoadFlows();
+            });
+        }
         public async ValueTask DisposeAsync()
         {
             if (Model is not null && Model.Id.HasValue)

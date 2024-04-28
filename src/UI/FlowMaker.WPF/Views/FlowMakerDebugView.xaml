@@ -34,13 +34,57 @@
                 <Button Margin="2,0,0,0" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
                     <iconPacks:PackIconPixelartIcons Kind="NotesDelete" />
                 </Button>
-             
 
-                <Separator Margin="10,0"/>
-                <CheckBox  Content="事件"  x:Name="event"/>
+                <ToggleButton x:Name="edit" Style="{StaticResource ToggleButtonDefault.Small}" Margin="2,0,0,0">
+                    <iconPacks:PackIconPixelartIcons Kind="EditBox" />
+                </ToggleButton>
 
-                <CheckBox Margin="6,0,0,0" Content="编辑"  x:Name="edit"/>
-            
+                <ToggleButton x:Name="event" Margin="2,0,0,0">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonDefault.Small}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="True">
+                                    <Setter Property="Content">
+                                        <Setter.Value>
+                                            <iconPacks:PackIconPixelartIcons Kind="MailCheck" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="False">
+                                    <Setter Property="Content">
+                                        <Setter.Value>
+                                            <iconPacks:PackIconPixelartIcons Kind="Mail" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+                
+                <ToggleButton x:Name="log" Margin="2,0,0,0">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonDefault.Small}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="True">
+                                    <Setter Property="Content">
+                                        <Setter.Value>
+                                            <iconPacks:PackIconPixelartIcons Kind="BookOpen" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="False">
+                                    <Setter Property="Content">
+                                        <Setter.Value>
+                                            <iconPacks:PackIconPixelartIcons Kind="Book" />
+                                        </Setter.Value>
+                                    </Setter>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+
             </ToolBar>
             <ToolBar Visibility="{Binding IsChecked,ElementName=event,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
                 <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}">
@@ -53,7 +97,9 @@
             <ToolBar Visibility="{Binding IsChecked,ElementName=edit,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
                 <Button  Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}">
                     <iconPacks:PackIconPixelartIcons Kind="Save" />
-
+                </Button>
+                <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0">
+                    <iconPacks:PackIconPixelartIcons Kind="Edit" />
                 </Button>
                 <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
