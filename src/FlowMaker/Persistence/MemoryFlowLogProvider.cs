@@ -91,23 +91,24 @@ namespace FlowMaker.Persistence
                     StartTime = DateTime.Now,
 
                 };
-                stepLog.StepOnceLogs.Add(stepOnceStatus);
                 log.StepLogs.TryAdd(stepId, stepLog);
             }
             else
             {
                 stepLog.EndTime = stepStatus.EndTime;
             }
+            if (!stepLog.StepOnceLogs.Contains(stepOnceStatus))
+            {
+                stepLog.StepOnceLogs.Add(stepOnceStatus);
+            }
 
             await Task.CompletedTask;
         }
 
-        public async Task Log(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
+        public async Task Log(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, DateTime time, string log, LogLevel logLevel = LogLevel.Information, CancellationToken cancellationToken = default)
         {
-            if (!Logs.TryGetValue(flowContext.FlowIds[0], out var logs))
-            {
-                return;
-            }
+            stepOnceStatus.Logs.Add(new LogInfo(log, logLevel, time));
+            await Task.CompletedTask;
         }
     }
 }

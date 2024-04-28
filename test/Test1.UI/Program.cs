@@ -1,16 +1,12 @@
-﻿using FlowMaker;
-using Microsoft.Extensions.Hosting;
-using ReactiveUI;
+﻿using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
 using System;
-using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Ty;
-using Windows.Networking;
 
 namespace Test1
 {
@@ -27,12 +23,9 @@ namespace Test1
 #endif
            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
            .WriteTo.File($"logs/log.txt", rollingInterval: RollingInterval.Day)
-          //    .WriteTo.Map(
-          //keyPropertyName: "TestName",
-          //configure: (testName, wt) => wt.File(new CompactJsonFormatter(), $"logs/{testName}.log"))
-          .WriteTo.Map(
-        keyPropertyName: "TestName",
-        configure: (testName, wt) => wt.SQLite($"logs/{testName}.db"))
+              .WriteTo.Map(
+          keyPropertyName: "TestName",
+          configure: (testName, wt) => wt.File(new CompactJsonFormatter(), $"logs/{testName}.log"))
            .Enrich.FromLogContext();
 
 

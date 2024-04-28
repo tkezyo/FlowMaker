@@ -176,7 +176,7 @@ namespace FlowMaker.ViewModels
                                     {
                                         step.Start(c.StepOnce.StartTime.Value);
                                     }
-                                    if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
+                                    if (c.StepOnce.EndTime.HasValue)
                                     {
                                         step.Stop(c.StepOnce.EndTime.Value);
                                     }
@@ -391,77 +391,93 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<Unit, Unit> RunCommand { get; }
         public async Task Run()
         {
-            var monitorInfoViewModel = Model;
-            if (monitorInfoViewModel is null)
+            await Task.CompletedTask;
+            RxApp.TaskpoolScheduler.Schedule(async () =>
             {
-                return;
-            }
-            var config = new ConfigDefinition
-            {
-                Category = monitorInfoViewModel.Category,
-                ConfigName = monitorInfoViewModel.ConfigName,
-                Name = monitorInfoViewModel.Name,
-                LogView = monitorInfoViewModel.LogView,
-                Timeout = monitorInfoViewModel.Timeout,
-                ErrorHandling = monitorInfoViewModel.ErrorHandling,
-                Repeat = monitorInfoViewModel.Repeat,
-                Retry = monitorInfoViewModel.Retry,
-            };
-            foreach (var item in monitorInfoViewModel.Data)
-            {
-                if (string.IsNullOrEmpty(item.Value))
+                var monitorInfoViewModel = Model;
+                if (monitorInfoViewModel is null)
                 {
-                    throw new Exception($"{item.Name}未填写");
+                    return;
                 }
-                config.Data.Add(new NameValue(item.Name, item.Value));
-            }
-            foreach (var item in monitorInfoViewModel.Middlewares)
-            {
-                if (item.Selected)
+                var config = new ConfigDefinition
                 {
-                    config.Middlewares.Add(item.Value);
-                }
-            }
-
-            Reset(monitorInfoViewModel.Steps);
-            monitorInfoViewModel.StepChange?.Dispose();
-            monitorInfoViewModel.StepChange = [];
-            await _flowManager.Run(config, c =>
-            {
-                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(c, "debug");
-                if (mid is DebugMiddleware debug)
+                    Category = monitorInfoViewModel.Category,
+                    ConfigName = monitorInfoViewModel.ConfigName,
+                    Name = monitorInfoViewModel.Name,
+                    LogView = monitorInfoViewModel.LogView,
+                    Timeout = monitorInfoViewModel.Timeout,
+                    ErrorHandling = monitorInfoViewModel.ErrorHandling,
+                    Repeat = monitorInfoViewModel.Repeat,
+                    Retry = monitorInfoViewModel.Retry,
+                };
+                foreach (var item in monitorInfoViewModel.Data)
                 {
-                    List<Guid> debugs = [];
-
-                    //遍历所有的子步骤
-                    foreach (var item in monitorInfoViewModel.Steps)
+                    if (string.IsNullOrEmpty(item.Value))
                     {
-                        void AddDebugs(MonitorStepInfoViewModel step, List<Guid> debugs)
+                        throw new Exception($"{item.Name}未填写");
+                    }
+                    config.Data.Add(new NameValue(item.Name, item.Value));
+                }
+                foreach (var item in monitorInfoViewModel.Middlewares)
+                {
+                    if (item.Selected)
+                    {
+                        config.Middlewares.Add(item.Value);
+                    }
+                }
+
+                Reset(monitorInfoViewModel.Steps);
+                monitorInfoViewModel.StepChange?.Dispose();
+                monitorInfoViewModel.StepChange = [];
+                try
+                {
+                    await _flowManager.Run(config, c =>
+                    {
+                        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(c, "debug");
+                        if (mid is DebugMiddleware debug)
                         {
-                            if (step.IsDebug && step.Id.HasValue)
+                            List<Guid> debugs = [];
+
+                            //遍历所有的子步骤
+                            foreach (var item in monitorInfoViewModel.Steps)
                             {
-                                debugs.Add(step.Id.Value);
+                                void AddDebugs(MonitorStepInfoViewModel step, List<Guid> debugs)
+                                {
+                                    if (step.IsDebug && step.Id.HasValue)
+                                    {
+                                        debugs.Add(step.Id.Value);
+                                    }
+                                    foreach (var sub in step.Steps)
+                                    {
+                                        AddDebugs(sub, debugs);
+                                    }
+                                }
+                                AddDebugs(item, debugs);
                             }
-                            foreach (var sub in step.Steps)
+
+                            debug.AddDebugs(c, debugs);
+                        }
+                        monitorInfoViewModel.Id = c;
+                        if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))
+                        {
+                            var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(monitorInfoViewModel.LogView);
+                            if (vm is ILogViewModel viewModel)
                             {
-                                AddDebugs(sub, debugs);
+                                monitorInfoViewModel.DisplayView(viewModel);
                             }
                         }
-                        AddDebugs(item, debugs);
-                    }
-
-                    debug.AddDebugs(c, debugs);
+                    });
                 }
-                monitorInfoViewModel.Id = c;
-                if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))
+                catch (Exception e)
                 {
-                    var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(monitorInfoViewModel.LogView);
-                    if (vm is ILogViewModel viewModel)
+                    RxApp.MainThreadScheduler.Schedule(async () =>
                     {
-                        monitorInfoViewModel.DisplayView(viewModel);
-                    }
+                        await _messageBoxManager.Alert.Handle(new AlertInfo(e.Message));
+                    });
                 }
+
             });
+
         }
         protected void Reset(IList<MonitorStepInfoViewModel> steps)
         {

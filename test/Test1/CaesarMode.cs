@@ -18,9 +18,9 @@ namespace Test1
             {
 
                 await Task.Delay(200);
-                stepContext.AddLog("sdfw+1" + i);
+                stepContext.Log("sdfw+1" + i);
             }
-            stepContext.AddLog("sdfw");
+            stepContext.Log("sdfw");
             return 1;
         }
     }
@@ -31,11 +31,10 @@ namespace Test1
         {
             for (int i = 0; i < 30; i++)
             {
-
                 await Task.Delay(100);
-                stepContext.AddLog("sdfw+2" + i);
+                stepContext.Log("sdfw+2" + i);
             }
-            stepContext.AddLog("sdfw");
+            stepContext.Log("sdfw");
             return 3;
         }
     }
@@ -86,8 +85,13 @@ namespace Test1
             return 12;
         }
 
-        public void Error()
+        public void Error(StepContext stepContext)
         {
+            Thread.Sleep(1000);
+            stepContext.Log("sdfwoiefjwoiefj");
+            stepContext.Log("sdfwoiefjwoiefj");
+            stepContext.Log("sdfwoiefjwoiefj");
+            stepContext.Log("sdfwoiefjwoiefj");
             throw new Exception("错误了");
         }
     }

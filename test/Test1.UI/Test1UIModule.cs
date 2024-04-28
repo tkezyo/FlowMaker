@@ -38,12 +38,13 @@ namespace Test1
 
             hostApplicationBuilder.Services.AddTransientCustomPageView<ChatViewModel, ChatView>();
             hostApplicationBuilder.Services.AddCustomLogView<CustomLogViewModel, CustomLogView>();
+            hostApplicationBuilder.Services.AddTransientView<LoadingViewModel, Loading>();
 
             hostApplicationBuilder.Services.AddAutoMapper(typeof(ConfigProfile).Assembly);
 
             hostApplicationBuilder.Services.Configure<PageOptions>(options =>
             {
-                options.FirstLoadPage = typeof(FlowMakerMainViewModel);
+                options.FirstLoadPage = typeof(LoadingViewModel);
                 options.Title = "牛马指挥官";
             });
             hostApplicationBuilder.Services.Configure<FlowMakerOption>(options =>

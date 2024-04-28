@@ -1,4 +1,5 @@
-﻿using FlowMaker.Persistence;
+﻿using DynamicData;
+using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -117,6 +118,10 @@ public class FlowManager
                 }
                 catch (Exception e)
                 {
+                    if (e is StepOnFinallyException finallyException)
+                    {
+                        result.Add(finallyException.Result);
+                    }
                     errorTimes++;
                     _logger.LogError(e, "流程出现错误:{TestName}", testName);
 
@@ -127,7 +132,7 @@ public class FlowManager
                         CurrentIndex = i,
                         Success = false,
                     });
-                    if (errorTimes < configDefinition.Retry)
+                    if (errorTimes <= configDefinition.Retry)
                     {
                         switch (configDefinition.ErrorHandling)
                         {
@@ -148,7 +153,7 @@ public class FlowManager
                     }
                     else
                     {
-                        throw new Exception("流程失败立即停止:" + testName, e);
+                        throw new Exception("流程失败停止:" + testName, e);
                     }
                 }
             }
@@ -168,8 +173,8 @@ public class FlowManager
     {
         if (_status.TryGetValue(id, out var status))
         {
-            status.Cancel.Cancel();
             await status.FlowRunner.StopAsync();
+            status.Cancel.Cancel();
         }
     }
 

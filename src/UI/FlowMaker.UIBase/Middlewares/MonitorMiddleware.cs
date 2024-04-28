@@ -1,7 +1,5 @@
-﻿using DynamicData;
-using FlowMaker.Persistence;
+﻿using FlowMaker.Persistence;
 using ReactiveUI;
-using System.Reactive.Disposables;
 using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
@@ -23,11 +21,11 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     public Task OnExecuted(FlowContext flowContext, FlowState state, Exception? exception, CancellationToken cancellationToken)
     {
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
- 
+
         return Task.CompletedTask;
     }
 
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus,Exception? exception, CancellationToken cancellationToken)
+    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
     {
         if (flowStep.Type == StepType.Embedded)
         {
@@ -89,10 +87,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             StepChange = new ReplaySubject<MonitorStepOnceMessage>(TotalCount);
             PercentChange.Dispose();
             PercentChange = new ReplaySubject<double>(1);
-            flowContext.LogSubject.Subscribe(c =>
-            {
-                MessageBus.Current.SendMessage(new LogMessage(flowContext, c.Item1, c.Item2));
-            });
+
         }
         PercentChange.OnNext(Percent);
 

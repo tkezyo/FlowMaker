@@ -57,7 +57,7 @@ namespace FlowMaker.ViewModels
 
             await LoadFlows();
 
-            MessageBus.Current.Listen<MonitorMessage>().Subscribe(c =>
+            MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
             {
                 var id = c.Context.FlowIds[0];
                 var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);

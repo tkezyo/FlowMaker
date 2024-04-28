@@ -12,17 +12,22 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <ToolBar Grid.Row="0">
             <TextBlock Text="{Binding FlowCategory,StringFormat=流程类别：{0}}" Margin="10,0"/>
             <TextBlock Text="{Binding FlowName,StringFormat=流程名称：{0}}"/>
         </ToolBar>
-        <DataGrid Grid.Row="1"
+        <Border CornerRadius="3" Grid.Row="1" Padding="4" Margin="4" Background="White">
+            <TextBlock Text="{Binding Detail}" >
+
+            </TextBlock>
+        </Border>
+        <DataGrid Grid.Row="2"
                   Style="{StaticResource DataGrid.Small}"
-                  ItemsSource="{Binding StepLogs}" AutoGenerateColumns="False" SelectedItem="{Binding CurrentLog}" IsReadOnly="True">
+                  ItemsSource="{Binding StepLogs}" AutoGenerateColumns="False" SelectedItem="{Binding CurrentLog}" IsReadOnly="True" SelectionMode="Single">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">
                     <Style.Triggers>
@@ -32,11 +37,19 @@
                         <DataTrigger Binding="{Binding State}" Value="Complete">
                             <Setter Property="Background" Value="SpringGreen" />
                         </DataTrigger>
+                        <!-- 失去焦点时的背景颜色触发器 -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#F5F5F5"/>
+                        </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="名称" Binding="{Binding  Name}"/>
+                <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
                 <!--<DataGridTextColumn Header="状态" Binding="{Binding  State}"/>-->
                 <DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
                 <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
@@ -47,11 +60,7 @@
 
             </DataGrid.Columns>
         </DataGrid>
-        <Border CornerRadius="3" Grid.Row="2" Padding="4" Margin="4" Background="White">
-            <TextBlock Text="{Binding Detail}" >
-
-            </TextBlock>
-        </Border>
+        
         <Border CornerRadius="3" Grid.Row="3" Margin="4" Background="White">
             <ListBox ItemsSource="{Binding CurrentLog.Logs}">
                 <ListBox.ItemTemplate>

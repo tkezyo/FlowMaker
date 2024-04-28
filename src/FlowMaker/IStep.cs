@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -236,4 +237,9 @@ public interface IStepOnceMiddleware
 public interface IEventMiddleware
 {
     Task OnExecuting(FlowContext flowContext, string eventName, string? eventData, CancellationToken cancellationToken);
+}
+
+public interface ILogMiddleware
+{
+    Task Log(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, DateTime time, string log, LogLevel logLevel = LogLevel.Information, CancellationToken cancellationToken = default);
 }

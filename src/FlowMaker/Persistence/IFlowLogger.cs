@@ -11,4 +11,5 @@ public interface IFlowLogger
     Task LogStep(FlowContext flowContext, FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, Exception? exception = null);
     Task LogEvent(FlowContext flowContext, string eventName, string? eventData);
     Task LogMiddleware(Guid id, List<string> middlewares);
+    Task Log(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, DateTime time, string log, LogLevel logLevel = LogLevel.Information, CancellationToken cancellationToken = default);
 }

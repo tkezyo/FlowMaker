@@ -70,7 +70,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 }
             });
         }).Subscribe();
-        this.WhenAnyValue(c => c.SimpleMode).Subscribe(async c =>
+        this.WhenAnyValue(c => c.SimpleMode).Skip(1).Subscribe(async c =>
         {
             if (c)
             {
@@ -1277,7 +1277,7 @@ public class FlowMakerEditViewModel : ViewModelBase
 
     #region SimpleMode
     [Reactive]
-    public bool SimpleMode { get; set; }
+    public bool SimpleMode { get; set; } = true;
 
     public void RenderSimpleMode()
     {

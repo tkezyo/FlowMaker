@@ -13,8 +13,8 @@
                           mc:Ignorable="d" 
                             xmlns:s="clr-namespace:System;assembly=mscorlib"
                           x:Name="page"
-                           xmlns:converters="clr-namespace:FlowMaker.Converters"
-             d:DesignHeight="450" d:DesignWidth="800">
+                           xmlns:converters="clr-namespace:FlowMaker.Converters" xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
+                          d:DesignHeight="450" d:DesignWidth="800">
     <UserControl.Resources>
         <converters:LeftToMarginConverter x:Key="marginConverter" />
         <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
@@ -71,37 +71,47 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <ToolBar Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4">
-            <Button Content="保存" Style="{StaticResource ButtonSuccess}" Command="{Binding SaveCommand}"/>
+            <Button  Style="{StaticResource ButtonCustom}" Command="{Binding SaveCommand}" Foreground="LimeGreen">
+                <iconPacks:PackIconPixelartIcons Kind="Save" />
+            </Button>
             <Separator Margin="10,0"/>
             <TextBox Text="{Binding Category}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="分组:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <TextBox Text="{Binding Name}" hc:TitleElement.TitlePlacement="Left" hc:TitleElement.Title="名称:" Style="{StaticResource TextBoxExtend}" MinWidth="80"/>
             <Separator Margin="10,0"/>
-            <hc:ButtonGroup Margin="4,0">
-                <Button  Command="{Binding CreateCommand}" Content="新牛马">
-                    <Button.CommandParameter>
-                        <s:Boolean>False</s:Boolean>
-                    </Button.CommandParameter>
-                </Button>
-                <Button  Command="{Binding CreateCommand}" Content="新牛马群">
-                    <Button.CommandParameter>
-                        <s:Boolean>True</s:Boolean>
-                    </Button.CommandParameter>
-                </Button>
-                <Button  Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="新小牛马">
-                    <Button.CommandParameter>
-                        <s:Boolean>False</s:Boolean>
-                    </Button.CommandParameter>
-                </Button>
-                <Button  Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Content="新小牛马群">
-                    <Button.CommandParameter>
-                        <s:Boolean>True</s:Boolean>
-                    </Button.CommandParameter>
-                </Button>
-            </hc:ButtonGroup>
-           
-            <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="删除" Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonDanger}" ></Button>
-            <Button  Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="上移" Command="{Binding DataContext.UpActionCommand,ElementName=page}"  ></Button>
-            <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Content="下移" Command="{Binding DataContext.DownActionCommand,ElementName=page}"  ></Button>
+            <Button  Margin="4,0" Command="{Binding CreateCommand}" Foreground="SkyBlue" Style="{StaticResource ButtonCustom}">
+                <Button.CommandParameter>
+                    <s:Boolean>False</s:Boolean>
+                </Button.CommandParameter>
+                <iconPacks:PackIconPixelartIcons Kind="AddBox" />
+            </Button>
+            <Button  Margin="4,0" Command="{Binding CreateCommand}"   Foreground="SkyBlue" Style="{StaticResource ButtonCustom}">
+                <Button.CommandParameter>
+                    <s:Boolean>True</s:Boolean>
+                </Button.CommandParameter>
+                <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
+            </Button>
+            <Button  Margin="4,0" Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}"  Foreground="LimeGreen" Style="{StaticResource ButtonCustom}">
+                <Button.CommandParameter>
+                    <s:Boolean>False</s:Boolean>
+                </Button.CommandParameter>
+                <iconPacks:PackIconPixelartIcons Kind="AddBox" />
+            </Button>
+            <Button  Margin="4,0" Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="LimeGreen" Style="{StaticResource ButtonCustom}">
+                <Button.CommandParameter>
+                    <s:Boolean>True</s:Boolean>
+                </Button.CommandParameter>
+                <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
+            </Button>
+
+            <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonCustom}" Foreground="OrangeRed">
+                <iconPacks:PackIconPixelartIcons Kind="RemoveBox" />
+            </Button>
+            <Button  Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"   Command="{Binding DataContext.UpActionCommand,ElementName=page}" Style="{StaticResource ButtonCustom}" >
+                <iconPacks:PackIconPixelartIcons Kind="ArrowUpBox" />
+            </Button>
+            <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"   Command="{Binding DataContext.DownActionCommand,ElementName=page}"  Style="{StaticResource ButtonCustom}">
+                <iconPacks:PackIconPixelartIcons Kind="ArrowDownBox" />
+            </Button>
             <CheckBox Content="编辑前置步骤"   Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}" IsChecked="{Binding EditPreStep}"/>
             <Separator Margin="10,0"/>
             <CheckBox Content="检查项"  Name="showChecker"/>
@@ -202,11 +212,19 @@
                                         <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonCustom}">
                                             <Style.Triggers>
                                                 <Trigger Property="IsChecked" Value="True">
-                                                    <Setter Property="Content" Value="➡" />
+                                                    <Setter Property="Content" >
+                                                        <Setter.Value>
+                                                            <iconPacks:PackIconPixelartIcons Kind="ArrowRight" />
+                                                        </Setter.Value>
+                                                    </Setter>
                                                     <Setter Property="Foreground" Value="Green" />
                                                 </Trigger>
                                                 <Trigger Property="IsChecked" Value="False">
-                                                    <Setter Property="Content" Value="⬇" />
+                                                    <Setter Property="Content" >
+                                                        <Setter.Value>
+                                                            <iconPacks:PackIconPixelartIcons Kind="ArrowDown" />
+                                                        </Setter.Value>
+                                                    </Setter>
                                                     <Setter Property="Foreground" Value="LightBlue" />
                                                 </Trigger>
                                             </Style.Triggers>
@@ -354,12 +372,16 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 </GroupBox>
                 <GroupBox Header="检查项">
                     <StackPanel>
-                        <Button Command="{Binding AddCheckerCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left">添加</Button>
+                        <Button Command="{Binding AddCheckerCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                            <iconPacks:PackIconPixelartIcons Kind="Plus" />
+                        </Button>
                         <ItemsControl ItemsSource="{Binding FlowStep.Checkers}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Margin="5">
-                                        <Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}">删除</Button>
+                                        <Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}" Padding="1">
+                                            <iconPacks:PackIconPixelartIcons Kind="Minus"/>
+                                        </Button>
                                         <controls:FlowInputView  EditMode="True"></controls:FlowInputView>
                                     </StackPanel>
                                 </DataTemplate>
@@ -369,7 +391,9 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 </GroupBox>
                 <GroupBox Header="执行条件">
                     <StackPanel>
-                        <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left">载入</Button>
+                        <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                            <iconPacks:PackIconPixelartIcons Kind="Reload" />
+                        </Button>
                         <ItemsControl ItemsSource="{Binding FlowStep.Ifs}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
@@ -384,12 +408,16 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 </GroupBox>
                 <GroupBox Header="等待事件">
                     <StackPanel>
-                        <Button Command="{Binding AddWaitEventCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left">添加</Button>
+                        <Button Command="{Binding AddWaitEventCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                            <iconPacks:PackIconPixelartIcons Kind="Plus" />
+                        </Button>
                         <ItemsControl ItemsSource="{Binding FlowStep.WaitEvents}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource ButtonDanger.Small}">删除</Button>
+                                        <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource ButtonDanger.Small}" Padding="1">
+                                            <iconPacks:PackIconPixelartIcons Kind="Minus" />
+                                        </Button>
                                         <TextBox Text="{Binding .}" hc:TitleElement.Title="名称" />
                                     </StackPanel>
                                 </DataTemplate>

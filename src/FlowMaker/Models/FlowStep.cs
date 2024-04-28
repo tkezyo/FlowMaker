@@ -11,6 +11,7 @@ public class FlowStep
         Retry = new FlowInput("Retry");
         Repeat = new FlowInput("Repeat");
         ErrorHandling = new FlowInput("ErrorHandling");
+        Finally = new FlowInput("Finally");
     }
     /// <summary>
     /// 步骤唯一Id

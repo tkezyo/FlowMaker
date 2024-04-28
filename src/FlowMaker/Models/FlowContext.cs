@@ -161,9 +161,6 @@ public class FlowContext
         }
     }
 
-    public Subject<(Guid, LogInfo)> LogSubject { get; } = new();
-
-
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
@@ -178,18 +175,16 @@ public class FlowContext
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
 }
 
-public class StepContext(FlowStep step, FlowContext flowContext, StepStatus status, StepOnceStatus stepOnceStatus)
+public class StepContext(FlowStep step, FlowContext flowContext, StepStatus status, StepOnceStatus stepOnceStatus, Action<string, LogLevel> logger)
 {
     public FlowStep Step { get; } = step;
     public FlowContext FlowContext { get; } = flowContext;
     public StepStatus Status { get; set; } = status;
     public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
 
-    public void AddLog(string log, LogLevel logLevel = LogLevel.Information)
+    public void Log(string log, LogLevel logLevel = LogLevel.Information)
     {
-        var logInfo = new LogInfo(log, logLevel, DateTime.Now);
-        StepOnceStatus.Logs.Add(logInfo);
-        FlowContext.LogSubject.OnNext((Step.Id, logInfo));
+        logger.Invoke(log, logLevel);
     }
 }
 
@@ -225,14 +220,6 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// 附加属性
     /// </summary>
     public Dictionary<string, object> ExtraData { get; set; } = [];
-
-    public void AddLog(FlowContext flowContext, Guid stepId, string log, LogLevel logLevel = LogLevel.Information)
-    {
-        var logInfo = new LogInfo(log, logLevel, DateTime.Now);
-        Logs.Add(logInfo);
-        flowContext.LogSubject.OnNext((stepId, logInfo));
-    }
-
 }
 
 public class LogInfo(string log, LogLevel logLevel, DateTime time)
@@ -317,3 +304,51 @@ public class StepLog
     public DateTime? EndTime { get; set; }
     public List<StepOnceStatus> StepOnceLogs { get; set; } = [];
 }
+
+/// <summary>
+/// 步骤运行状态
+/// </summary>
+public enum FlowState
+{
+    None,
+    Running,
+    Complete,
+    Cancel,
+    Error,
+}
+public enum StepState
+{
+    Wait,
+    Start,
+    Complete,
+    Error,
+}
+
+public enum StepOnceState
+{
+    Wait,
+    Start,
+    Complete,
+    Error,
+    Skip
+}
+/// <summary>
+/// 触发步骤的事件
+/// </summary>
+public class ExecuteStepEvent
+{
+    public EventType Type { get; set; }
+    public Guid? StepId { get; set; }
+    public string? EventName { get; set; }
+    public string? EventData { get; set; }
+}
+/// <summary>
+/// 事件类型
+/// </summary>
+public enum EventType
+{
+    PreStep,
+    Event,
+    StartFlow,
+}
+

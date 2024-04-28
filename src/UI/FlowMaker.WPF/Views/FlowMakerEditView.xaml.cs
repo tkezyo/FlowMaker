@@ -40,7 +40,7 @@ namespace FlowMaker.Views
                 //Observable.FromEventPattern<KeyEventHandler, KeyEventArgs>(
                 //     h => this.tree.PreviewKeyDown += h,
                 //     h => this.tree.PreviewKeyDown -= h)
-                // .Where(e => e.EventArgs.Key == Key.Up)
+                // .Where(e => e.EventArgs.Key == Key.W)
                 // .Subscribe(e =>
                 // {
                 //     ViewModel?.UpAction();
@@ -52,7 +52,7 @@ namespace FlowMaker.Views
                 //Observable.FromEventPattern<KeyEventHandler, KeyEventArgs>(
                 //     h => this.tree.PreviewKeyDown += h,
                 //     h => this.tree.PreviewKeyDown -= h)
-                //.Where(e => e.EventArgs.Key == Key.Down)
+                //.Where(e => e.EventArgs.Key == Key.D)
                 //.Subscribe(e =>
                 //{
                 //    ViewModel?.DownAction();
