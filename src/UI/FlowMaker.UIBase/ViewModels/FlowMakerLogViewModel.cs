@@ -48,26 +48,26 @@ public partial class FlowMakerLogViewModel : ViewModelBase
         {
             FlowCategory = log.Category;
             FlowName = log.Name;
-            foreach (var stepLog in log.StepLogs)
-            {
-                foreach (var item in stepLog.Value.StepOnceLogs)
-                {
-                    StepLogs.Add(new StepLogViewModel
-                    {
-                        Name = stepLog.Value.StepName,
-                        State = item.State.ToString(),
-                        StartTime = item.StartTime,
-                        EndTime = item.EndTime,
-                        Inputs = item.Inputs,
-                        Outputs = item.Outputs,
-                        StepCurrentIndex = item.CurrentIndex,
-                        StepErrorIndex = item.ErrorIndex,
-                        FlowCurrentIndex = log.CurrentIndex,
-                        FlowErrorIndex = log.ErrorIndex,
-                        Logs = [.. item.Logs.Select(c => new LogInfoViewModel(c.Log, c.Level, c.Time))]
-                    });
-                }
-            }
+            //foreach (var stepLog in log.StepLogs)
+            //{
+            //    foreach (var item in stepLog.Value.StepOnceLogs)
+            //    {
+            //        StepLogs.Add(new StepLogViewModel
+            //        {
+            //            Name = stepLog.Value.StepName,
+            //            State = item.State.ToString(),
+            //            StartTime = item.StartTime,
+            //            EndTime = item.EndTime,
+            //            Inputs = item.Inputs,
+            //            Outputs = item.Outputs,
+            //            StepCurrentIndex = item.CurrentIndex,
+            //            StepErrorIndex = item.ErrorIndex,
+            //            FlowCurrentIndex = log.CurrentIndex,
+            //            FlowErrorIndex = log.ErrorIndex,
+            //            Logs = [.. item.Logs.Select(c => new LogInfoViewModel(c.Log, c.LogLevel, c.Time))]
+            //        });
+            //    }
+            //}
         }
     }
 
@@ -105,6 +105,9 @@ public class StepLogViewModel : ReactiveObject
 {
     [Reactive]
     public required string Name { get; set; }
+
+    [Reactive]
+    public Guid StepId { get; set; }
     [Reactive]
     public required string State { get; set; }
     [Reactive]

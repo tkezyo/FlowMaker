@@ -100,7 +100,6 @@ public class ConfigDefinition
     public required string Category { get; set; }
     public required string Name { get; set; }
     public string? ConfigName { get; set; }
-
     /// <summary>
     /// 重试
     /// </summary>
@@ -111,10 +110,8 @@ public class ConfigDefinition
     public int Repeat { get; set; }
     public int Timeout { get; set; }
     public string? LogView { get; set; }
-    /// <summary>
-    /// 出现错误时处理方式
-    /// </summary>
-    public ErrorHandling ErrorHandling { get; set; }
+    public bool ErrorStop { get; set; }
+
     public List<NameValue> Data { get; set; } = [];
     public List<string> Middlewares { get; set; } = [];
 }

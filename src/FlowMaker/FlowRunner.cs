@@ -264,11 +264,6 @@ public class FlowRunner : IDisposable
                 _stepOnceMiddlewares.AddRange(_serviceProvider.GetKeyedServices<IStepOnceMiddleware>(item));
             }
 
-            foreach (var item in Context.Middlewares)
-            {
-                _logMiddlewares.AddRange(_serviceProvider.GetKeyedServices<ILogMiddleware>(item));
-            }
-
 
             foreach (var item in flowInfo.Data)//写入 globe data
             {
@@ -328,7 +323,6 @@ public class FlowRunner : IDisposable
     protected readonly List<IEventMiddleware> _eventMiddlewares = [];
     protected readonly List<IStepMiddleware> _stepMiddlewares = [];
     protected readonly List<IStepOnceMiddleware> _stepOnceMiddlewares = [];
-    protected readonly List<ILogMiddleware> _logMiddlewares = [];
     protected readonly List<IFlowMiddleware> _flowMiddlewares = [];
     /// <summary>
     /// 发送事件
@@ -384,6 +378,7 @@ public class FlowRunner : IDisposable
             bool success = true;
             for (int i = 1; i <= repeat; i++)//重复执行
             {
+                string? skipReason = null;
                 foreach (var item2 in step.Ifs)
                 {
                     if (cancellationToken.IsCancellationRequested)
@@ -393,16 +388,7 @@ public class FlowRunner : IDisposable
                     (bool result, string reason) = await CheckStep(step, item2.Key, cancellationToken);
                     if (result != item2.Value)
                     {
-                        StepOnceStatus once = new(i, errorIndex);
-                        once.State = StepOnceState.Skip;
-
-                        Context.StepState[step.Id].OnceStatuses.Add(once);
-                        await Log(step, Context.StepState[step.Id], once, "Skip Reason: " + reason, LogLevel.Information, CancellationTokenSource.Token);
-
-                        foreach (var item in _stepOnceMiddlewares)
-                        {
-                            await item.OnExecuting(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
-                        }
+                        skipReason = reason;
                         skip = true;
                         break;
                     }
@@ -410,25 +396,29 @@ public class FlowRunner : IDisposable
 
                 if (Context.Finally && !isFinally)
                 {
+                    skipReason = "Finally";
+
+                    skip = true;
+                }
+                if (skip)
+                {
                     StepOnceStatus once = new(i, errorIndex);
+                   
                     once.State = StepOnceState.Skip;
 
                     Context.StepState[step.Id].OnceStatuses.Add(once);
-                    await Log(step, Context.StepState[step.Id], once, "Skip Reason: Finally", LogLevel.Information, CancellationTokenSource.Token);
+                    once.Log("Skip Reason: " + skipReason);
 
                     foreach (var item in _stepOnceMiddlewares)
                     {
                         await item.OnExecuting(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
                     }
-                    skip = true;
-                }
-                if (skip)
-                {
                     break;
                 }
                 while (true)
                 {
                     StepOnceStatus once = new(i, errorIndex);
+                   
                     Context.StepState[step.Id].OnceStatuses.Add(once);
                     try
                     {
@@ -443,11 +433,7 @@ public class FlowRunner : IDisposable
                         {
                             await item.OnExecuting(Context, step, Context.StepState[step.Id], once, CancellationTokenSource.Token);
                         }
-                        StepContext stepContext = new(step, Context, Context.StepState[step.Id], once, async (log, logLevel) =>
-                        {
-                            if (CancellationTokenSource.IsCancellationRequested) { return; }
-                            await Log(step, Context.StepState[step.Id], once, log, logLevel, CancellationTokenSource.Token);
-                        });
+                        StepContext stepContext = new(step, Context, Context.StepState[step.Id], once);
 
                         //超时策略
                         if (timeOut > 0)
@@ -583,15 +569,6 @@ public class FlowRunner : IDisposable
         CancellationTokenSource.Dispose();
         State = FlowState.Complete;
         Disposables.Dispose();
-    }
-
-    public async Task Log(FlowStep flowStep, StepStatus stepStatus, StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information, CancellationToken cancellationToken = default)
-    {
-        DateTime dateTime = DateTime.Now;
-        foreach (var item in _logMiddlewares)
-        {
-            await item.Log(Context, flowStep, stepStatus, stepOnceStatus, dateTime, log, logLevel, cancellationToken);
-        }
     }
 }
 

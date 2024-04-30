@@ -37,7 +37,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             Percent = (double)CompleteCount / TotalCount * 100;
         }
         PercentChange.OnNext(Percent);
-        StepChange.OnNext(new MonitorStepOnceMessage(stepOnceStatus, flowContext.FlowIds, flowStep.Id));
+        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, stepOnceStatus, flowContext.FlowIds, flowStep));
 
         return Task.CompletedTask;
     }
@@ -114,26 +114,22 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
         }
         PercentChange.OnNext(Percent);
 
-        StepChange.OnNext(new MonitorStepOnceMessage(stepOnceStatus, flowContext.FlowIds, flowStep.Id));
+        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, stepOnceStatus, flowContext.FlowIds, flowStep));
 
         return Task.CompletedTask;
     }
 }
-public class LogMessage(FlowContext context, Guid stepId, LogInfo logInfo)
-{
-    public FlowContext Context { get; set; } = context;
-    public Guid StepId { get; } = stepId;
-    public LogInfo LogInfo { get; } = logInfo;
-}
+
 public class MonitorMessage(FlowContext context, FlowState runnerState, int totalCount)
 {
     public FlowContext Context { get; set; } = context;
     public FlowState RunnerState { get; set; } = runnerState;
     public int TotalCount { get; set; } = totalCount;
 }
-public class MonitorStepOnceMessage(StepOnceStatus stepOnce, Guid[] flowIds, Guid stepId)
+public class MonitorStepOnceMessage(FlowContext flowContext, StepOnceStatus stepOnce, Guid[] flowIds, FlowStep step)
 {
+    public FlowContext FlowContext { get; set; } = flowContext;
     public StepOnceStatus StepOnce { get; set; } = stepOnce;
     public Guid[] FlowIds { get; set; } = flowIds;
-    public Guid StepId { get; set; } = stepId;
+    public FlowStep Step { get; set; } = step;
 }

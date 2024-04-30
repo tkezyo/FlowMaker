@@ -35,7 +35,7 @@
                    MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="0">
             <Expander.Header>
                 <StackPanel Orientation="Horizontal">
-                    <iconPacks:PackIconPixelartIcons Kind="Notification" Margin="0,0,3,0"/>
+                    <iconPacks:PackIconPixelartIcons Kind="Notification" Margin="0,0,3,0" Foreground="Orange"/>
                     <TextBlock Text="{Binding Runnings.Count,StringFormat=记录 ({0})}"/>
                 </StackPanel>
             </Expander.Header>

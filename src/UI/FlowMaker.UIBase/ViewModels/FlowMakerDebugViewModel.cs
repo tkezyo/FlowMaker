@@ -143,8 +143,12 @@ namespace FlowMaker.ViewModels
                         flow.Timeout = c.Context.ConfigDefinition.Timeout;
                         flow.Retry = c.Context.ConfigDefinition.Retry;
                         flow.Repeat = c.Context.ConfigDefinition.Repeat;
-                        flow.ErrorHandling = c.Context.ConfigDefinition.ErrorHandling;
+                        flow.ErrorStop = c.Context.ConfigDefinition.ErrorStop;
                         Reset(flow.Steps);
+                        RxApp.MainThreadScheduler.Schedule(() =>
+                        {
+                            StepOnceLogs.Clear();
+                        });
 
                         var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
                         if (mid is MonitorMiddleware monitor)
@@ -155,6 +159,37 @@ namespace FlowMaker.ViewModels
                             }).DisposeWith(flow.StepChange);
                             monitor.StepChange.Subscribe(c =>
                             {
+                                RxApp.MainThreadScheduler.Schedule(() =>
+                                {
+
+                                    var log = StepOnceLogs.FirstOrDefault(v => v.FlowCurrentIndex == c.FlowContext.CurrentIndex && v.FlowErrorIndex == c.FlowContext.ErrorIndex && v.StepCurrentIndex == c.StepOnce.CurrentIndex && v.StepErrorIndex == c.StepOnce.ErrorIndex && c.Step.Id == v.StepId);
+                                    if (log is null)
+                                    {
+                                        StepOnceLogs.Add(new StepLogViewModel
+                                        {
+                                            Logs = [],
+                                            StepId = c.Step.Id,
+                                            Name = c.Step.Name,
+                                            State = c.StepOnce.State.ToString(),
+                                            StartTime = c.StepOnce.StartTime,
+                                            EndTime = c.StepOnce.EndTime,
+                                            Inputs = c.StepOnce.Inputs,
+                                            Outputs = c.StepOnce.Outputs,
+                                            StepCurrentIndex = c.StepOnce.CurrentIndex,
+                                            StepErrorIndex = c.StepOnce.ErrorIndex,
+                                            FlowCurrentIndex = c.FlowContext.CurrentIndex,
+                                            FlowErrorIndex = c.FlowContext.ErrorIndex,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        log.State = c.StepOnce.State.ToString();
+                                        log.StartTime = c.StepOnce.StartTime;
+                                        log.EndTime = c.StepOnce.EndTime;
+                                        log.Inputs = c.StepOnce.Inputs;
+                                        log.Outputs = c.StepOnce.Outputs;
+                                    }
+                                });
                                 var steps = flow.Steps;
 
                                 foreach (var item in c.FlowIds.Skip(1))
@@ -169,7 +204,7 @@ namespace FlowMaker.ViewModels
                                 {
                                     return;
                                 }
-                                var step = steps.FirstOrDefault(v => v.Id == c.StepId);
+                                var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
                                 if (step is not null)
                                 {
                                     if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
@@ -311,7 +346,7 @@ namespace FlowMaker.ViewModels
                     Model.Timeout = config.Timeout;
                     Model.Retry = config.Retry;
                     Model.Repeat = config.Repeat;
-                    Model.ErrorHandling = config.ErrorHandling;
+                    Model.ErrorStop = config.ErrorStop;
                     Model.LogView = config.LogView;
                     foreach (var item in Model.Data)
                     {
@@ -355,7 +390,7 @@ namespace FlowMaker.ViewModels
                          {
                              return;
                          }
-                         var step = steps.FirstOrDefault(v => v.Id == c.StepId);
+                         var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
                          if (step is not null)
                          {
                              if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
@@ -378,6 +413,8 @@ namespace FlowMaker.ViewModels
             await Activate();
         }
 
+        [Reactive]
+        public ObservableCollection<StepLogViewModel> StepOnceLogs { get; set; } = [];
         public ReactiveCommand<Unit, Unit> RemoveCommand { get; }
         public async Task Remove()
         {
@@ -406,7 +443,7 @@ namespace FlowMaker.ViewModels
                     Name = monitorInfoViewModel.Name,
                     LogView = monitorInfoViewModel.LogView,
                     Timeout = monitorInfoViewModel.Timeout,
-                    ErrorHandling = monitorInfoViewModel.ErrorHandling,
+                     ErrorStop = monitorInfoViewModel.ErrorStop,
                     Repeat = monitorInfoViewModel.Repeat,
                     Retry = monitorInfoViewModel.Retry,
                 };
@@ -431,42 +468,47 @@ namespace FlowMaker.ViewModels
                 monitorInfoViewModel.StepChange = [];
                 try
                 {
-                    await _flowManager.Run(config, c =>
+                    var id =await _flowManager.Init(config);
+                    var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "debug");
+                    if (mid is DebugMiddleware debug)
                     {
-                        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(c, "debug");
-                        if (mid is DebugMiddleware debug)
-                        {
-                            List<Guid> debugs = [];
+                        List<Guid> debugs = [];
 
-                            //遍历所有的子步骤
-                            foreach (var item in monitorInfoViewModel.Steps)
+                        //遍历所有的子步骤
+                        foreach (var item in monitorInfoViewModel.Steps)
+                        {
+                            void AddDebugs(MonitorStepInfoViewModel step, List<Guid> debugs)
                             {
-                                void AddDebugs(MonitorStepInfoViewModel step, List<Guid> debugs)
+                                if (step.IsDebug && step.Id.HasValue)
                                 {
-                                    if (step.IsDebug && step.Id.HasValue)
-                                    {
-                                        debugs.Add(step.Id.Value);
-                                    }
-                                    foreach (var sub in step.Steps)
-                                    {
-                                        AddDebugs(sub, debugs);
-                                    }
+                                    debugs.Add(step.Id.Value);
                                 }
-                                AddDebugs(item, debugs);
+                                foreach (var sub in step.Steps)
+                                {
+                                    AddDebugs(sub, debugs);
+                                }
                             }
-
-                            debug.AddDebugs(c, debugs);
+                            AddDebugs(item, debugs);
                         }
-                        monitorInfoViewModel.Id = c;
-                        if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))
+
+                        debug.AddDebugs(id, debugs);
+                    }
+                    monitorInfoViewModel.Id = id;
+                    if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))
+                    {
+                        var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(monitorInfoViewModel.LogView);
+                        if (vm is ILogViewModel viewModel)
                         {
-                            var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(monitorInfoViewModel.LogView);
-                            if (vm is ILogViewModel viewModel)
+                            RxApp.MainThreadScheduler.Schedule(() =>
                             {
                                 monitorInfoViewModel.DisplayView(viewModel);
-                            }
+                            });
                         }
-                    });
+                    }
+                    await foreach (var item in _flowManager.Run(id))
+                    {
+
+                    }
                 }
                 catch (Exception e)
                 {
@@ -483,7 +525,8 @@ namespace FlowMaker.ViewModels
         {
             foreach (var item in steps)
             {
-                item.UsedTime = default;
+                item.StartTime = null;
+                item.UsedTime = null;
                 Reset(item.Steps);
             }
         }
@@ -559,7 +602,7 @@ namespace FlowMaker.ViewModels
                 Name = model.Name,
                 LogView = model.LogView,
                 ConfigName = model.ConfigName,
-                ErrorHandling = model.ErrorHandling,
+                ErrorStop = model.ErrorStop,
                 Repeat = model.Repeat,
                 Retry = model.Retry,
             };
@@ -589,7 +632,7 @@ namespace FlowMaker.ViewModels
             var title = "牛马编辑器" + " " + FlowCategory + " " + FlowName;
             _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
             {
-               // LoadFlows();
+                // LoadFlows();
             });
         }
         public async ValueTask DisposeAsync()

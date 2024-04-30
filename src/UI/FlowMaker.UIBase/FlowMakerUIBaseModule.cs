@@ -15,7 +15,6 @@ namespace FlowMaker
         }
         public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, StepOnceMiddleware>("iio");
             hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
 
             hostApplicationBuilder.Services.AddScoped<MonitorMiddleware>();

@@ -15,6 +15,10 @@ using Serilog;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using FlowMaker.Persistence;
+using SharpVectors.Renderers.Wpf;
+using SharpVectors.Converters;
+using System.Windows.Media;
+using System.Windows.Controls;
 
 namespace Test1
 {
@@ -47,6 +51,24 @@ namespace Test1
             {
                 options.FirstLoadPage = typeof(LoadingViewModel);
                 options.Title = "牛马指挥官";
+
+                WpfDrawingSettings settings = new WpfDrawingSettings();
+
+                // 创建一个FileSvgReader对象
+                FileSvgReader reader = new FileSvgReader(settings);
+
+                // 读取SVG文件并转换为WPF的DrawingGroup
+                DrawingGroup drawing = reader.Read(".\\PURE.svg");
+
+                // 创建一个DrawingImage并将DrawingGroup设置为其源
+                DrawingImage drawingImage = new DrawingImage(drawing);
+
+                Image image = new Image();
+                // 创建一个Image控件并将DrawingImage设置为其源
+                image.Source = drawingImage;
+
+                options.Loading = image;
+
             });
             hostApplicationBuilder.Services.Configure<FlowMakerOption>(options =>
             {

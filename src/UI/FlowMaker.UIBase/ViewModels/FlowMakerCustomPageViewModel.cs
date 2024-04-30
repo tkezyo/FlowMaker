@@ -824,7 +824,7 @@ namespace FlowMaker.ViewModels
             ConfigDefinition? config = null;
             if (action.Type == DefinitionType.Flow)
             {
-                config = new ConfigDefinition() { Category = action.Category, Name = action.Name, ConfigName = action.ConfigName ?? "", ErrorHandling = ErrorHandling.Terminate, Repeat = 1, Retry = 0, Timeout = 0 };
+                config = new ConfigDefinition() { Category = action.Category, Name = action.Name, ConfigName = action.ConfigName ?? "", ErrorStop = true, Repeat = 1, Retry = 0, Timeout = 0 };
                 foreach (var item in action.Inputs)
                 {
                     if (string.IsNullOrEmpty(item.Value))
@@ -855,10 +855,22 @@ namespace FlowMaker.ViewModels
             {
                 return;
             }
-            var result = await _flowManager.Run(config);
+            var id = await _flowManager.Init(config);
+            FlowResult? result = null;
+            await foreach (var item in _flowManager.Run(id))
+            {
+                if (result is null)
+                {
+                    result = item;
+                }
+            }
+            if (result is null)
+            {
+                return;
+            }
             foreach (var item in action.Outputs)
             {
-                var data = result[0].Data.FirstOrDefault(c => c.Name == item.Name);
+                var data = result.Data.FirstOrDefault(c => c.Name == item.Name);
                 item.Value = data?.Value;
             }
         }

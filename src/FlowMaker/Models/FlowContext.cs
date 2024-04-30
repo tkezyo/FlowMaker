@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DynamicData;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Reactive.Subjects;
 
@@ -175,7 +176,7 @@ public class FlowContext
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
 }
 
-public class StepContext(FlowStep step, FlowContext flowContext, StepStatus status, StepOnceStatus stepOnceStatus, Action<string, LogLevel> logger)
+public class StepContext(FlowStep step, FlowContext flowContext, StepStatus status, StepOnceStatus stepOnceStatus)
 {
     public FlowStep Step { get; } = step;
     public FlowContext FlowContext { get; } = flowContext;
@@ -184,7 +185,7 @@ public class StepContext(FlowStep step, FlowContext flowContext, StepStatus stat
 
     public void Log(string log, LogLevel logLevel = LogLevel.Information)
     {
-        logger.Invoke(log, logLevel);
+        StepOnceStatus.Log(log, logLevel);
     }
 }
 
@@ -214,7 +215,13 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// <summary>
     /// 日志
     /// </summary>
-    public List<LogInfo> Logs { get; set; } = [];
+    public SourceList<LogInfo> Logs { get; set; } = new SourceList<LogInfo>();
+
+    public void Log(string log, LogLevel logLevel = LogLevel.Information)
+    {
+        var info = new LogInfo(log, logLevel, DateTime.Now);
+        Logs.Add(info);
+    }
 
     /// <summary>
     /// 附加属性
@@ -222,13 +229,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     public Dictionary<string, object> ExtraData { get; set; } = [];
 }
 
-public class LogInfo(string log, LogLevel logLevel, DateTime time)
-{
-    public string Log { get; set; } = log;
-    public LogLevel Level { get; set; } = logLevel;
-    public DateTime Time { get; set; } = time;
-}
-
+public record LogInfo(string Log, LogLevel LogLevel, DateTime Time);
 public class StepStatus
 {
     public StepState State { get; set; }
@@ -284,7 +285,7 @@ public class FlowLog
     public List<NameValue> Inputs { get; set; } = [];
     public List<NameValue> Outputs { get; set; } = [];
 
-    public Dictionary<string, StepLog> StepLogs { get; set; } = [];
+    public SourceCache<StepLog, Guid> StepLogs { get; set; } = new SourceCache<StepLog, Guid>(c => c.StepId);
     public List<EventLog> Events { get; set; } = [];
 
     public List<string> Middlewares { get; set; } = [];
@@ -302,7 +303,8 @@ public class StepLog
     public required string StepName { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime? EndTime { get; set; }
-    public List<StepOnceStatus> StepOnceLogs { get; set; } = [];
+    public StepState State { get; set; }
+    public SourceCache<StepOnceStatus, string> StepOnceLogs { get; set; } = new SourceCache<StepOnceStatus, string>(c => c.CurrentIndex + "." + c.ErrorIndex);
 }
 
 /// <summary>

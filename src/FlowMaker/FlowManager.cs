@@ -40,17 +40,9 @@ public class FlowManager
     }
 
     #region Run
-    class RunnerStatus(FlowRunner flowRunner, IServiceScope serviceScope)
+    class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope)
     {
-        public string? ConfigName { get; set; }
-        /// <summary>
-        /// 流程的类别
-        /// </summary>
-        public required string Category { get; set; }
-        /// <summary>
-        /// 流程的名称
-        /// </summary>
-        public required string Name { get; set; }
+        public ConfigDefinition Config { get; set; } = config;
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
         public FlowRunner FlowRunner { get; set; } = flowRunner;
@@ -60,31 +52,39 @@ public class FlowManager
     public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
 
-    public async Task<List<FlowResult>> Run(string configName, string flowCategory, string flowName)
+    public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
     {
         var config = await _flowProvider.LoadConfigDefinitionAsync(flowCategory, flowName, configName);
         if (config is null)
         {
             throw new InvalidOperationException("未找到配置");
         }
-        return await Run(config);
+        var id = await Init(config);
+        await foreach (var item in Run(id))
+        {
+            yield return item;
+        }
     }
 
-    public async Task<List<FlowResult>> Run(ConfigDefinition configDefinition, Action<Guid>? Init = null)
+    public async Task<Guid> Init(ConfigDefinition configDefinition)
     {
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
-        var testName = DateTime.Now.ToString("yyyyMMdd") + runner.Id;
-        _status[runner.Id] = new RunnerStatus(runner, scope)
+        _status[runner.Id] = new RunnerStatus(configDefinition, runner, scope)
         {
-            ConfigName = configDefinition.ConfigName,
-            Category = configDefinition.Category,
-            Name = configDefinition.Name
+            Cancel = new CancellationTokenSource()
         };
-        _status[runner.Id].Cancel = new CancellationTokenSource();
-        Init?.Invoke(runner.Id);
+        await Task.CompletedTask;
+        return runner.Id;
+    }
 
-        var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
+    public async IAsyncEnumerable<FlowResult> Run(Guid id)
+    {
+        var status = _status[id];
+        var runner = _status[id].FlowRunner;
+        var testName = DateTime.Now.ToString("yyyyMMdd") + runner.Id;
+
+        var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.Category, status.Config.Name);
         if (flow is null)
         {
             _logger.LogError("未找到流程:{TestName}", testName);
@@ -92,23 +92,34 @@ public class FlowManager
             throw new InvalidOperationException("未找到流程");
         }
         _logger.LogInformation("流程开始:{TestName}", testName);
+        bool needThrow = false;
 
-        List<FlowResult> result = [];
-        for (int i = 1; i <= configDefinition.Repeat; i++)
+        for (int i = 1; i <= status.Config.Repeat; i++)
         {
-            var errorTimes = 0;
-            while (!_status[runner.Id].Cancel.IsCancellationRequested)
+            if (_status[id].Cancel.IsCancellationRequested)
             {
+                break;
+            }
+            if (needThrow)
+            {
+                break;
+            }
+
+            var errorTimes = 0;
+            while (!_status[id].Cancel.IsCancellationRequested)
+            {
+                FlowResult? flowResult = null;
+                bool needbreak = false;
                 try
                 {
-                    if (configDefinition.Timeout > 0)
+                    if (status.Config.Timeout > 0)
                     {
-                        var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(configDefinition.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        result.Add(await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token)));
+                        var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(status.Config.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
+                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, status.Config, [], i, errorTimes, _status[id].Cancel.Token));
                     }
                     else
                     {
-                        result.Add(await runner.Start(flow, flow.Checkers, configDefinition, [], i, errorTimes, _status[runner.Id].Cancel.Token));
+                        flowResult = await runner.Start(flow, flow.Checkers, status.Config, [], i, errorTimes, _status[id].Cancel.Token);
                     }
                     break;
                 }
@@ -118,48 +129,51 @@ public class FlowManager
                 }
                 catch (Exception e)
                 {
+                    _logger.LogError(e, "流程出现错误:{TestName}", testName);
                     if (e is StepOnFinallyException finallyException)
                     {
-                        result.Add(finallyException.Result);
+                        flowResult = finallyException.Result;
+                    }
+                    else
+                    {
+                        flowResult = new FlowResult
+                        {
+                            ErrorIndex = errorTimes,
+                            Exception = e,
+                            CurrentIndex = i,
+                            Success = false,
+                        };
                     }
                     errorTimes++;
-                    _logger.LogError(e, "流程出现错误:{TestName}", testName);
 
-                    result.Add(new FlowResult
+                    if (errorTimes <= status.Config.Retry)
                     {
-                        ErrorIndex = errorTimes,
-                        Exception = e,
-                        CurrentIndex = i,
-                        Success = false,
-                    });
-                    if (errorTimes <= configDefinition.Retry)
-                    {
-                        switch (configDefinition.ErrorHandling)
+                        if (status.Config.ErrorStop)
                         {
-                            case ErrorHandling.Skip:
-                                _logger.LogError(e, "流程失败跳过:{TestName}", testName);
-
-                                break;
-                            case ErrorHandling.Finally:
-                                _logger.LogError(e, "流程失败停止:{TestName}", testName);
-
-                                break;
-                            case ErrorHandling.Terminate:
-                                _logger.LogError(e, "流程失败立即停止:{TestName}", testName);
-                                throw new Exception("流程失败立即停止", e);
-                            default:
-                                break;
+                            _logger.LogError(e, "流程失败立即停止:{TestName}", testName);
+                            needThrow = true;
+                        }
+                        else
+                        {
+                            _logger.LogError(e, "流程失败继续:{TestName}", testName);
                         }
                     }
                     else
                     {
-                        throw new Exception("流程失败停止:" + testName, e);
+                        needbreak = true;
                     }
+                }
+                if (flowResult is not null)
+                {
+                    yield return flowResult;
+                }
+                if (needbreak || needThrow)
+                {
+                    break;
                 }
             }
         }
         await Dispose(runner.Id);
-        return result;
 
     }
     public async Task SendEvent(Guid id, string eventName, string? eventData = null)

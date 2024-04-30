@@ -16,10 +16,8 @@ namespace FlowMaker.ViewModels;
 
 public class FlowMakerMonitorViewModel : ViewModelBase
 {
-    private readonly FlowManager _flowManager;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMessageBoxManager _messageBoxManager;
-    private readonly IFlowProvider _flowProvider;
 
     [Reactive]
     public int ColCount { get; set; } = 3;
@@ -32,12 +30,10 @@ public class FlowMakerMonitorViewModel : ViewModelBase
     public ObservableCollection<ErrorHandling> ErrorHandlings { get; set; } = [];
     public ObservableCollection<FlowMakerDebugViewModel> Flows { get; set; } = [];
 
-    public FlowMakerMonitorViewModel(FlowManager flowManager, IOptions<FlowMakerOption> options, IServiceProvider serviceProvider, IMessageBoxManager messageBoxManager, IFlowProvider flowProvider)
+    public FlowMakerMonitorViewModel(IOptions<FlowMakerOption> options, IServiceProvider serviceProvider, IMessageBoxManager messageBoxManager)
     {
-        _flowManager = flowManager;
         _serviceProvider = serviceProvider;
         _messageBoxManager = messageBoxManager;
-        _flowProvider = flowProvider;
         _flowMakerOption = options.Value;
 
         SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
@@ -298,7 +294,7 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     /// 出现错误时处理方式
     /// </summary>
     [Reactive]
-    public ErrorHandling ErrorHandling { get; set; } = ErrorHandling.Skip;
+    public bool ErrorStop { get; set; }
     [Reactive]
     public ObservableCollection<SpikeInputViewModel> Data { get; set; } = [];
     [Reactive]

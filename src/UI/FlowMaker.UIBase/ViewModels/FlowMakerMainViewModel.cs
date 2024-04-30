@@ -208,9 +208,12 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RunConfigCommand { get; }
         public async Task RunConfig(ConfigDefinitionInfoViewModel flowDefinitionInfoViewModel)
         {
-            await _flowManager.Run(
+            await foreach (var item in _flowManager.Run(
                 flowDefinitionInfoViewModel.ConfigName,
-                flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
+                flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name))
+            {
+
+            }
         }
 
 

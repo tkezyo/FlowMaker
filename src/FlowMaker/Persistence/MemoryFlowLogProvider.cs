@@ -1,26 +1,34 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DynamicData;
+using System.Reactive.Linq;
 using System.Collections.Concurrent;
 
 namespace FlowMaker.Persistence
 {
     public class MemoryFlowLogProvider : IFlowLogger
     {
-        public ConcurrentDictionary<Guid, List<FlowLog>> Logs { get; set; } = [];
+        public ConcurrentDictionary<Guid, SourceCache<FlowLog, string>> Logs { get; set; } = [];
         public async Task<FlowLog[]> GetFlowLog(Guid id)
         {
             Logs.TryGetValue(id, out var log);
             await Task.CompletedTask;
-            return log?.ToArray() ?? [];
+            return log?.Items.ToArray() ?? [];
+        }
+        public async Task Move(Guid id)
+        {
+            await Task.CompletedTask;
+            Logs.TryRemove(id, out _);
         }
         public async Task LogFlow(FlowContext flowContext, Exception? exception = null)
         {
             if (!Logs.TryGetValue(flowContext.FlowIds[0], out var logs))
             {
-                logs = [];
+                logs = new SourceCache<FlowLog, string>(c => c.CurrentIndex + "," + c.ErrorIndex);
                 Logs.TryAdd(flowContext.FlowIds[0], logs);
             }
-            var last = logs.LastOrDefault();
-            if (last is null || !last.EndTime.HasValue)
+
+            var last = logs.Lookup(flowContext.CurrentIndex + "," + flowContext.ErrorIndex);
+
+            if (!last.HasValue)
             {
                 var log = new FlowLog
                 {
@@ -30,12 +38,14 @@ namespace FlowMaker.Persistence
                     StartTime = DateTime.Now,
                     CurrentIndex = flowContext.CurrentIndex,
                     ErrorIndex = flowContext.ErrorIndex,
+                    Middlewares = flowContext.Middlewares
                 };
-                logs.Add(log);
+                logs.AddOrUpdate(log);
             }
             else
             {
-                last.EndTime = DateTime.Now;
+                last.Value.EndTime = DateTime.Now;
+                logs.AddOrUpdate(last.Value);
             }
 
 
@@ -43,25 +53,13 @@ namespace FlowMaker.Persistence
         }
 
 
-
-        public Task LogMiddleware(Guid id, List<string> middlewares)
-        {
-            if (!Logs.TryGetValue(id, out var logs))
-            {
-                return Task.CompletedTask;
-            }
-            var log = logs.Last();
-            log.Middlewares = middlewares;
-            return Task.CompletedTask;
-        }
-
         public async Task LogEvent(FlowContext flowContext, string eventName, string? eventData)
         {
             if (!Logs.TryGetValue(flowContext.FlowIds[0], out var logs))
             {
                 return;
             }
-            var log = logs.Last();
+            var log = logs.Items.Last();
 
             log.Events.Add(new EventLog
             {
@@ -79,35 +77,27 @@ namespace FlowMaker.Persistence
             {
                 return;
             }
-            var log = logs.Last();
-            var stepId = string.Join(",", flowContext.FlowIds) + "," + flowStep.Id + "," + flowContext.CurrentIndex + "," + flowContext.ErrorIndex;
-            if (!log.StepLogs.TryGetValue(stepId, out var stepLog))
+            var log = logs.Items.Last();
+            var steplogOp = log.StepLogs.Lookup(flowStep.Id);
+            if (!steplogOp.HasValue)
             {
-                stepLog = new StepLog
+                var stepLog = new StepLog
                 {
                     FlowIds = flowContext.FlowIds,
                     StepName = flowStep.DisplayName,
                     StepId = flowStep.Id,
                     StartTime = DateTime.Now,
-
                 };
-                log.StepLogs.TryAdd(stepId, stepLog);
+                stepLog.StepOnceLogs.AddOrUpdate(stepOnceStatus);
+                log.StepLogs.AddOrUpdate(stepLog);
             }
             else
             {
-                stepLog.EndTime = stepStatus.EndTime;
-            }
-            if (!stepLog.StepOnceLogs.Contains(stepOnceStatus))
-            {
-                stepLog.StepOnceLogs.Add(stepOnceStatus);
+                steplogOp.Value.EndTime = stepStatus.EndTime;
+                log.StepLogs.AddOrUpdate(steplogOp.Value); // 更新已有记录
+                steplogOp.Value.StepOnceLogs.AddOrUpdate(stepOnceStatus);
             }
 
-            await Task.CompletedTask;
-        }
-
-        public async Task Log(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, DateTime time, string log, LogLevel logLevel = LogLevel.Information, CancellationToken cancellationToken = default)
-        {
-            stepOnceStatus.Logs.Add(new LogInfo(log, logLevel, time));
             await Task.CompletedTask;
         }
     }
