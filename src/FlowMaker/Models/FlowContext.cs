@@ -143,6 +143,8 @@ public class FlowContext
         {
             var state = new StepStatus();
 
+            state.StepId = item.Id;
+
             foreach (var wait in item.WaitEvents)
             {
                 var key = wait.Type + wait.Type switch
@@ -158,14 +160,14 @@ public class FlowContext
                 }
                 state.Waits.Add(key);
             }
-            StepState.Add(item.Id, state);
+            StepState.AddOrUpdate(state);
         }
     }
 
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
-    public Dictionary<Guid, StepStatus> StepState { get; protected set; } = [];
+    public SourceCache<StepStatus, Guid> StepState { get; protected set; } = new(c => c.StepId);
     /// <summary>
     /// 触发某事件时需要执行的Step
     /// </summary>
@@ -173,7 +175,7 @@ public class FlowContext
     /// <summary>
     /// 所有的全局变量
     /// </summary>
-    public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = new();
+    public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
 }
 
 public class StepContext(FlowStep step, FlowContext flowContext, StepStatus status, StepOnceStatus stepOnceStatus)
