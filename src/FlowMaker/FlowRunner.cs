@@ -578,7 +578,7 @@ public class FlowRunner : IDisposable
                         {
                             await item.OnExecuting(Context, step, stepState.Value, once, CancellationTokenSource.Token);
                         }
-                        StepContext stepContext = new(step, Context, once.CurrentIndex, once.ErrorIndex);
+                        StepContext stepContext = new(step, Context, once);
 
                         //超时策略
                         if (timeOut > 0)

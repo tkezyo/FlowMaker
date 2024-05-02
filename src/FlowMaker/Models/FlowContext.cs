@@ -51,35 +51,14 @@ public class FlowContext
 
 }
 
-public class StepContext
+public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus)
 {
 
-    public FlowStep Step { get; }
-    public FlowContext FlowContext { get; }
-    public int CurrentIndex { get; }
-    public int ErrorIndex { get; }
-    public StepOnceStatus StepOnceStatus { get; }
-
-    public StepContext(FlowStep step, FlowContext flowContext, int currentIndex, int errorIndex)
-    {
-        Step = step;
-        FlowContext = flowContext;
-        CurrentIndex = currentIndex;
-        ErrorIndex = errorIndex;
-        var stepState = FlowContext.StepState.Lookup(Step.Id);
-        if (stepState.HasValue)
-        {
-            var once = stepState.Value.OnceLogs.Lookup($"{CurrentIndex}.{ErrorIndex}");
-            if (once.HasValue)
-            {
-                StepOnceStatus = once.Value;
-            }
-        }
-        if (StepOnceStatus is null)
-        {
-            throw new Exception();
-        }
-    }
+    public FlowStep Step { get; } = step;
+    public FlowContext FlowContext { get; } = flowContext;
+    public int CurrentIndex { get; } = stepOnceStatus.CurrentIndex;
+    public int ErrorIndex { get; } = stepOnceStatus.ErrorIndex;
+    public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
 
     public void Log(string log, LogLevel logLevel = LogLevel.Information)
     {
