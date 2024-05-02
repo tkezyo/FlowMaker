@@ -109,7 +109,7 @@ public class FlowManager
             while (!_status[id].Cancel.IsCancellationRequested)
             {
                 FlowResult? flowResult = null;
-                bool needbreak = false;
+                bool needBreak = false;
                 try
                 {
                     if (status.Config.Timeout > 0)
@@ -160,14 +160,14 @@ public class FlowManager
                     }
                     else
                     {
-                        needbreak = true;
+                        needBreak = true;
                     }
                 }
                 if (flowResult is not null)
                 {
                     yield return flowResult;
                 }
-                if (needbreak || needThrow)
+                if (needBreak || needThrow)
                 {
                     break;
                 }

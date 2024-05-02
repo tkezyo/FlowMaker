@@ -39,7 +39,7 @@ namespace Test1
             hostApplicationBuilder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
 
-            hostApplicationBuilder.Services.AddSingleton<IFlowLogger, MemoryFlowLogProvider>();
+            //hostApplicationBuilder.Services.AddSingleton<IFlowLogger, MemoryFlowLogProvider>();
 
             hostApplicationBuilder.Services.AddTransientCustomPageView<ChatViewModel, ChatView>();
             hostApplicationBuilder.Services.AddCustomLogView<CustomLogViewModel, CustomLogView>();

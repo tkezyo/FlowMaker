@@ -46,7 +46,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     {
         if (TotalCount == -1)
         {
-            var definition = await flowProvider.LoadFlowDefinitionAsync(flowContext.FlowDefinition.Category, flowContext.FlowDefinition.Name);
+            var definition = await flowProvider.LoadFlowDefinitionAsync(flowContext.ConfigDefinition.Category, flowContext.ConfigDefinition.Name);
             if (definition is null)
             {
                 return;

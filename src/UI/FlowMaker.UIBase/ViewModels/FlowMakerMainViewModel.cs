@@ -63,7 +63,7 @@ namespace FlowMaker.ViewModels
                 var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);
                 if (running is null)
                 {
-                    running = new MonitorRunningViewModel() { DisplayName = DateTime.Now.ToString("HH:mm:ss") + "|" + c.Context.FlowDefinition.Category + "." + c.Context.FlowDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0], TotalCount = c.TotalCount };
+                    running = new MonitorRunningViewModel() { DisplayName = DateTime.Now.ToString("HH:mm:ss") + "|" + c.Context.ConfigDefinition.Category + "." + c.Context.ConfigDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0], TotalCount = c.TotalCount };
                     running.StartTime = DateTime.Now;
                     Runnings.Insert(0, running);
                     var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");

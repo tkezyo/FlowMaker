@@ -43,11 +43,11 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     {
         Id = id;
         StepLogs.Clear();
-        var logs = await _flowLogReader.GetFlowLog(Id.Value);
-        foreach (var log in logs)
+        //var logs = await _flowLogReader.GetFlowLog(Id.Value);
+        //foreach (var log in logs)
         {
-            FlowCategory = log.Category;
-            FlowName = log.Name;
+            //FlowCategory = log.Category;
+            //FlowName = log.Name;
             //foreach (var stepLog in log.StepLogs)
             //{
             //    foreach (var item in stepLog.Value.StepOnceLogs)
