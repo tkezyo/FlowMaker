@@ -78,8 +78,8 @@ namespace FlowMaker.Persistence
                 return;
             }
             var log = logs.Items.Last();
-            var steplogOp = log.StepLogs.Lookup(flowStep.Id);
-            if (!steplogOp.HasValue)
+            var stepLogOp = log.StepLogs.Lookup(flowStep.Id);
+            if (!stepLogOp.HasValue)
             {
                 var stepLog = new StepLog
                 {
@@ -93,9 +93,9 @@ namespace FlowMaker.Persistence
             }
             else
             {
-                steplogOp.Value.EndTime = stepStatus.EndTime;
-                log.StepLogs.AddOrUpdate(steplogOp.Value); // 更新已有记录
-                steplogOp.Value.StepOnceLogs.AddOrUpdate(stepOnceStatus);
+                stepLogOp.Value.EndTime = stepStatus.EndTime;
+                log.StepLogs.AddOrUpdate(stepLogOp.Value); // 更新已有记录
+                stepLogOp.Value.StepOnceLogs.AddOrUpdate(stepOnceStatus);
             }
 
             await Task.CompletedTask;

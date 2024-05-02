@@ -1,9 +1,7 @@
 ﻿using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -14,7 +12,6 @@ namespace FlowMaker;
 public class FlowRunner : IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly FlowManager _flowManager;
     private readonly IFlowProvider _flowProvider;
     private readonly FlowMakerOption _flowMakerOption;
     /// <summary>
@@ -40,11 +37,10 @@ public class FlowRunner : IDisposable
     private CompositeDisposable Disposables { get; set; } = [];
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
-    public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option, FlowManager flowManager, IFlowProvider flowProvider)
+    public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option, IFlowProvider flowProvider)
     {
         _flowMakerOption = option.Value;
         this._serviceProvider = serviceProvider;
-        this._flowManager = flowManager;
         this._flowProvider = flowProvider;
         var d = ExecuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
           {
@@ -403,7 +399,7 @@ public class FlowRunner : IDisposable
                 if (skip)
                 {
                     StepOnceStatus once = new(i, errorIndex);
-                   
+
                     once.State = StepOnceState.Skip;
 
                     Context.StepState[step.Id].OnceStatuses.Add(once);
@@ -418,7 +414,7 @@ public class FlowRunner : IDisposable
                 while (true)
                 {
                     StepOnceStatus once = new(i, errorIndex);
-                   
+
                     Context.StepState[step.Id].OnceStatuses.Add(once);
                     try
                     {

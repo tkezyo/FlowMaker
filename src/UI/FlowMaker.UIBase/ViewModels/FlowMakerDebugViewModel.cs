@@ -169,7 +169,7 @@ namespace FlowMaker.ViewModels
                                         {
                                             Logs = [],
                                             StepId = c.Step.Id,
-                                            Name = c.Step.Name,
+                                            Name = c.Step.DisplayName,
                                             State = c.StepOnce.State.ToString(),
                                             StartTime = c.StepOnce.StartTime,
                                             EndTime = c.StepOnce.EndTime,

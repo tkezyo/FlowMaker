@@ -232,6 +232,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
 public record LogInfo(string Log, LogLevel LogLevel, DateTime Time);
 public class StepStatus
 {
+    public Guid StepId { get; set; }
     public StepState State { get; set; }
 
     public DateTime? StartTime { get; set; }
