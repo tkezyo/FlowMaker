@@ -1,5 +1,4 @@
-﻿using DynamicData;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace FlowMaker;
@@ -57,7 +56,7 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = [];
 }
 
-public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus)
+public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus, Func<StepOnceStatus, string, LogLevel, Task> logAction)
 {
 
     public FlowStep Step { get; } = step;
@@ -65,10 +64,11 @@ public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus 
     public int CurrentIndex { get; } = stepOnceStatus.CurrentIndex;
     public int ErrorIndex { get; } = stepOnceStatus.ErrorIndex;
     public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
+    protected Func<StepOnceStatus, string, LogLevel, Task> LogAction { get; set; } = logAction;
 
-    public void Log(string log, LogLevel logLevel = LogLevel.Information)
+    public async Task Log(string log, LogLevel logLevel = LogLevel.Information)
     {
-        StepOnceStatus.Log(log, logLevel);
+        await LogAction.Invoke(StepOnceStatus, log, logLevel);
     }
 }
 
@@ -99,12 +99,6 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// 日志
     /// </summary>
     public List<LogInfo> Logs { get; set; } = [];
-
-    public void Log(string log, LogLevel logLevel = LogLevel.Information)
-    {
-        var info = new LogInfo(log, logLevel, DateTime.Now);
-        Logs.Add(info);
-    }
 
     /// <summary>
     /// 附加属性
