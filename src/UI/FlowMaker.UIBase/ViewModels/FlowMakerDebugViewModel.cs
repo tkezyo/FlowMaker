@@ -276,9 +276,9 @@ namespace FlowMaker.ViewModels
                         Model.TotalCount++;
                         models.Add(new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id });
                     }
-                    else if (item.Type == StepType.Embedded)
+                    else if (item.Type == StepType.Embedded && flowDefinition is FlowDefinition fde)
                     {
-                        var embedded = definition.EmbeddedFlows.First(c => c.StepId == item.Id);
+                        var embedded = fde.EmbeddedFlows.First(c => c.StepId == item.Id);
                         var sub = new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id };
                         models.Add(sub);
                         await SetFlowStepAsync(sub.Steps, embedded);
@@ -443,7 +443,7 @@ namespace FlowMaker.ViewModels
                     Name = monitorInfoViewModel.Name,
                     LogView = monitorInfoViewModel.LogView,
                     Timeout = monitorInfoViewModel.Timeout,
-                     ErrorStop = monitorInfoViewModel.ErrorStop,
+                    ErrorStop = monitorInfoViewModel.ErrorStop,
                     Repeat = monitorInfoViewModel.Repeat,
                     Retry = monitorInfoViewModel.Retry,
                 };
@@ -468,7 +468,7 @@ namespace FlowMaker.ViewModels
                 monitorInfoViewModel.StepChange = [];
                 try
                 {
-                    var id =await _flowManager.Init(config);
+                    var id = await _flowManager.Init(config);
                     var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "debug");
                     if (mid is DebugMiddleware debug)
                     {

@@ -192,7 +192,7 @@ public class FlowResultData
 {
     public required string Name { get; set; }
     public required string DisplayName { get; set; }
-    public required string Value { get; set; }
+    public  string? Value { get; set; }
     public required string Type { get; set; }
 }
 [Flags]

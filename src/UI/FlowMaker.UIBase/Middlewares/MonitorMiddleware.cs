@@ -27,10 +27,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
     public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
     {
-        if (flowStep.Type == StepType.Embedded)
-        {
-            return Task.CompletedTask;
-        }
+     
         if (stepOnceStatus.EndTime.HasValue)
         {
             CompleteCount += 0.5;
@@ -62,9 +59,9 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
                     {
                         TotalCount++;
                     }
-                    else if (item.Type == StepType.Embedded)
+                    else if (item.Type == StepType.Embedded&& flowDefinition is FlowDefinition fde)
                     {
-                        var stepDefinition = definition.EmbeddedFlows.First(c => c.StepId == item.Id);
+                        var stepDefinition = fde.EmbeddedFlows.First(c => c.StepId == item.Id);
 
                         await SetFlowStepAsync(stepDefinition);
                     }
@@ -96,10 +93,6 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
     public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
     {
-        if (flowStep.Type == StepType.Embedded)
-        {
-            return Task.CompletedTask;
-        }
         if (stepOnceStatus.State == StepOnceState.Start && stepOnceStatus.StartTime.HasValue)
         {
             CompleteCount += 0.5;

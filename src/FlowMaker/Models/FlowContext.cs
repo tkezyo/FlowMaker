@@ -4,32 +4,41 @@ using System.Collections.Concurrent;
 
 namespace FlowMaker;
 
-public class FlowContext
+public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex)
 {
     /// <summary>
-    /// 父流程Id
+    /// 流程Id
     /// </summary>
-    public Guid[] FlowIds { get; }
+    public Guid[] FlowIds { get; } = flowIds;
     /// <summary>
     /// 当前下标
     /// </summary>
-    public int CurrentIndex { get; }
+    public int CurrentIndex { get; } = currentIndex;
     /// <summary>
     /// 执行错误下标
     /// </summary>
-    public int ErrorIndex { get; }
+    public int ErrorIndex { get; } = errorIndex;
 
-    public DateTime StartTime { get; set; }
+    public DateTime StartTime { get; set; } = DateTime.Now;
     public DateTime? EndTime { get; set; }
-
-
-    public SourceList<EventLog> Events { get; set; } = new();
-
+    /// <summary>
+    /// 已经出错，不再执行，直接跳过到Finally步骤
+    /// </summary>
     public bool Finally { get; set; }
-
-    public ConfigDefinition ConfigDefinition { get; set; }
-    public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
+    /// <summary>
+    /// 使用的中间件
+    /// </summary>
     public List<string> Middlewares { get; set; } = [];
+
+    public ConfigDefinition ConfigDefinition { get; set; } = configDefinition;
+
+    /// <summary>
+    /// 事件数据
+    /// </summary>
+    public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
+    public SourceList<EventLog> EventLogs { get; set; } = new();
+
+
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
@@ -38,17 +47,6 @@ public class FlowContext
     /// 所有的全局变量
     /// </summary>
     public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
-
-    public FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex)
-    {
-        ConfigDefinition = configDefinition;
-        FlowIds = flowIds;
-        CurrentIndex = currentIndex;
-        ErrorIndex = errorIndex;
-        StartTime = DateTime.Now;
-    }
-
-
 }
 
 public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus)
