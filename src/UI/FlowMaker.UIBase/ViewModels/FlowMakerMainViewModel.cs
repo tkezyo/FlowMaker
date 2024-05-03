@@ -82,7 +82,7 @@ namespace FlowMaker.ViewModels
             }).DisposeWith(Disposables);
 
         }
-        public int MyProperty { get; set; }
+   
         [Reactive]
         public string PageName { get; set; } = "测试";
         public ReactiveCommand<Unit, Unit> ChangeViewCommand { get; set; }

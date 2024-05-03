@@ -46,6 +46,8 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// </summary>
     public SourceList<EventLog> EventLogs { get; set; } = new();
 
+    public SourceList<FlowContext> SubContexts { get; set; } = new();
+
 
     /// <summary>
     /// 所有步骤的状态

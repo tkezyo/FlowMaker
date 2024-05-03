@@ -31,7 +31,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         public CancellationTokenSource Cancel { get; set; } = new();
     }
- 
+
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
 
     public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
@@ -97,11 +97,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     if (status.Config.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(status.Config.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, status.Config, [], i, errorTimes, _status[id].Cancel.Token));
+                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, status.Config, null, i, errorTimes, _status[id].Cancel.Token));
                     }
                     else
                     {
-                        flowResult = await runner.Start(flow, flow.Checkers, status.Config, [], i, errorTimes, _status[id].Cancel.Token);
+                        flowResult = await runner.Start(flow, flow.Checkers, status.Config, null, i, errorTimes, _status[id].Cancel.Token);
                     }
                     break;
                 }

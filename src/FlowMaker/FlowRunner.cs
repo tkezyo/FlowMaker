@@ -294,7 +294,7 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            var results = await flowRunner.Start(embeddedFlow, subFlowDefinition.Checkers, config, Context.FlowIds, stepContext.CurrentIndex, stepContext.ErrorIndex, cancellationToken);
+            var results = await flowRunner.Start(embeddedFlow, subFlowDefinition.Checkers, config, Context, stepContext.CurrentIndex, stepContext.ErrorIndex, cancellationToken);
 
             foreach (var item in results.Data)
             {
@@ -321,7 +321,7 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            var results = await flowRunner.Start(subFlowDefinition, subFlowDefinition.Checkers, config, Context.FlowIds, stepContext.CurrentIndex, stepContext.ErrorIndex, cancellationToken);
+            var results = await flowRunner.Start(subFlowDefinition, subFlowDefinition.Checkers, config, Context, stepContext.CurrentIndex, stepContext.ErrorIndex, cancellationToken);
 
             foreach (var item in results.Data)
             {
@@ -354,7 +354,7 @@ public class FlowRunner : IDisposable
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<FlowResult> Start(IFlowDefinition flowInfo, List<FlowInput> checkers, ConfigDefinition config, Guid[] parentIds, int currentIndex, int errorIndex, CancellationToken? cancellationToken = null)
+    public async Task<FlowResult> Start(IFlowDefinition flowInfo, List<FlowInput> checkers, ConfigDefinition config, FlowContext? flowContext, int currentIndex, int errorIndex, CancellationToken? cancellationToken = null)
     {
         if (cancellationToken is null)
         {
@@ -376,7 +376,12 @@ public class FlowRunner : IDisposable
 
             FlowDefinition = flowInfo;
             Checkers = checkers;
+            var parentIds = flowContext?.FlowIds ?? [];
             Context = new(config, [.. parentIds, Id], currentIndex, errorIndex);
+            if (flowContext is not null)
+            {
+                flowContext.SubContexts.Add(Context);
+            }
 
             InitExecuteStepIds();
             InitState();
