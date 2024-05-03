@@ -28,6 +28,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
         public FlowRunner FlowRunner { get; set; } = flowRunner;
+        public SourceCache<FlowContext, string> FlowContexts { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 
         public CancellationTokenSource Cancel { get; set; } = new();
     }
@@ -52,19 +53,20 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         var scope = _serviceProvider.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
-        _status[runner.Id] = new RunnerStatus(configDefinition, runner, scope)
+        Guid id = Guid.NewGuid();
+        _status[id] = new RunnerStatus(configDefinition, runner, scope)
         {
             Cancel = new CancellationTokenSource()
         };
         await Task.CompletedTask;
-        return runner.Id;
+        return id;
     }
 
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
         var status = _status[id];
-        var runner = _status[id].FlowRunner;
-        var testName = DateTime.Now.ToString("yyyyMMdd") + runner.Id;
+        var runner = status.FlowRunner;
+        var testName = DateTime.Now.ToString("yyyyMMdd") + id;
 
         var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.Category, status.Config.Name);
         if (flow is null)
@@ -78,7 +80,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         for (int i = 1; i <= status.Config.Repeat; i++)
         {
-            if (_status[id].Cancel.IsCancellationRequested)
+            if (status.Cancel.IsCancellationRequested)
             {
                 break;
             }
@@ -88,20 +90,22 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             }
 
             var errorTimes = 0;
-            while (!_status[id].Cancel.IsCancellationRequested)
+            while (!status.Cancel.IsCancellationRequested)
             {
                 FlowResult? flowResult = null;
                 bool needBreak = false;
                 try
                 {
+                    FlowContext flowContext = new(status.Config, [id], i, errorTimes);
+                    status.FlowContexts.AddOrUpdate(flowContext);
                     if (status.Config.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(status.Config.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, status.Config, null, i, errorTimes, _status[id].Cancel.Token));
+                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, flowContext, status.Cancel.Token));
                     }
                     else
                     {
-                        flowResult = await runner.Start(flow, flow.Checkers, status.Config, null, i, errorTimes, _status[id].Cancel.Token);
+                        flowResult = await runner.Start(flow, flow.Checkers, flowContext, _status[id].Cancel.Token);
                     }
                     break;
                 }
@@ -155,7 +159,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 }
             }
         }
-        await Dispose(runner.Id);
+        await Dispose(id);
 
     }
     public async Task SendEvent(Guid id, string eventName, string? eventData = null)

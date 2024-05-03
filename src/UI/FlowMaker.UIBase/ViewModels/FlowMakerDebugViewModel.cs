@@ -474,6 +474,7 @@ namespace FlowMaker.ViewModels
                 try
                 {
                     var id = await _flowManager.Init(config);
+                    monitorInfoViewModel.Id = id;
                     var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "debug");
                     if (mid is DebugMiddleware debug)
                     {
@@ -498,7 +499,6 @@ namespace FlowMaker.ViewModels
 
                         debug.AddDebugs(id, debugs);
                     }
-                    monitorInfoViewModel.Id = id;
                     if (!string.IsNullOrWhiteSpace(monitorInfoViewModel.LogView))
                     {
                         var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(monitorInfoViewModel.LogView);
@@ -510,10 +510,8 @@ namespace FlowMaker.ViewModels
                             });
                         }
                     }
-                    await foreach (var item in _flowManager.Run(id))
-                    {
+                    await foreach (var item in _flowManager.Run(id)) { }
 
-                    }
                 }
                 catch (Exception e)
                 {

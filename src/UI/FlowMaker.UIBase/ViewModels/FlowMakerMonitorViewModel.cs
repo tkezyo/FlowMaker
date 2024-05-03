@@ -1,5 +1,4 @@
-﻿using FlowMaker.Persistence;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -111,7 +110,7 @@ public class FlowMakerMonitorViewModel : ViewModelBase
             Directory.CreateDirectory(_flowMakerOption.DebugPageRootDir);
         }
         var path = Path.Combine(_flowMakerOption.DebugPageRootDir, _flowMakerOption.Section + ".json");
-        List<ConfigInfo> infos = [];
+        List<ConfigInfo> configInfo = [];
         foreach (var item in Flows)
         {
             if (string.IsNullOrEmpty(item.FlowCategory) || string.IsNullOrEmpty(item.FlowName) || string.IsNullOrEmpty(item.ConfigName))
@@ -119,9 +118,9 @@ public class FlowMakerMonitorViewModel : ViewModelBase
                 await _messageBoxManager.Alert.Handle(new AlertInfo("必须先保存配置") { OwnerTitle = WindowTitle });
                 return;
             }
-            infos.Add(new ConfigInfo { Category = item.FlowCategory, ConfigName = item.ConfigName, Name = item.FlowName });
+            configInfo.Add(new ConfigInfo { Category = item.FlowCategory, ConfigName = item.ConfigName, Name = item.FlowName });
         }
-        var r = JsonSerializer.Serialize(infos);
+        var r = JsonSerializer.Serialize(configInfo);
         await File.WriteAllTextAsync(path, r);
         await _messageBoxManager.Alert.Handle(new AlertInfo("保存成功"));
     }
@@ -137,22 +136,22 @@ public class FlowMakerMonitorViewModel : ViewModelBase
         {
             return;
         }
-        var infos = new List<ConfigInfo>();
+        List<ConfigInfo>? configInfo;
         try
         {
             var r = await File.ReadAllTextAsync(path);
-            infos = JsonSerializer.Deserialize<List<ConfigInfo>>(r);
+            configInfo = JsonSerializer.Deserialize<List<ConfigInfo>>(r);
         }
         catch (Exception ex)
         {
             await _messageBoxManager.Alert.Handle(new AlertInfo(ex.Message) { OwnerTitle = WindowTitle });
             return;
         }
-        if (infos is null)
+        if (configInfo is null)
         {
             return;
         }
-        foreach (var item in infos)
+        foreach (var item in configInfo)
         {
             var flow = _serviceProvider.GetRequiredService<FlowMakerDebugViewModel>();
 

@@ -44,19 +44,17 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// <summary>
     /// 事件记录
     /// </summary>
-    public SourceList<EventLog> EventLogs { get; set; } = new();
-
-    public SourceList<FlowContext> SubContexts { get; set; } = new();
+    public List<EventLog> EventLogs { get; set; } = [];
 
 
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
-    public SourceCache<StepStatus, Guid> StepState { get; protected set; } = new(c => c.StepId);
+    public ConcurrentDictionary<Guid, StepStatus> StepState { get; set; } = [];
     /// <summary>
     /// 所有的全局变量
     /// </summary>
-    public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
+    public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = [];
 }
 
 public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus)
@@ -100,7 +98,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// <summary>
     /// 日志
     /// </summary>
-    public SourceList<LogInfo> Logs { get; set; } = new SourceList<LogInfo>();
+    public List<LogInfo> Logs { get; set; } = [];
 
     public void Log(string log, LogLevel logLevel = LogLevel.Information)
     {
@@ -123,11 +121,12 @@ public class StepStatus
     public DateTime? StartTime { get; set; }
 
     public DateTime? EndTime { get; set; }
+    public FlowContext? FlowContext { get; set; }
     /// <summary>
     /// 需要等待的事件
     /// </summary>
     public List<string> Waits { get; set; } = [];
-    public SourceCache<StepOnceStatus, string> OnceLogs { get; set; } = new SourceCache<StepOnceStatus, string>(c => c.CurrentIndex + "." + c.ErrorIndex);
+    public List<StepOnceStatus> OnceLogs { get; set; } = [];
 }
 
 

@@ -64,15 +64,13 @@ public interface IDataConverterInject
                 });
 
                 var result = await converter.GetStringResultAsync(context, output.Inputs, serviceProvider, cancellationToken);
-                var data = context.Data.Lookup(output.GlobeDataName);
-                if (!data.HasValue)
+                if (!context.Data.TryGetValue(output.GlobeDataName, out var data))
                 {
-                    context.Data.AddOrUpdate(new FlowGlobeData(output.GlobeDataName, output.Type, result));
+                    context.Data.TryAdd(output.GlobeDataName, new FlowGlobeData(output.GlobeDataName, output.Type, result));
                 }
                 else
                 {
-                    data.Value.Value = result;
-                    context.Data.AddOrUpdate(data.Value);
+                    data.Value = result;
                 }
             }
             else
@@ -82,15 +80,13 @@ public interface IDataConverterInject
         }
         else
         {
-            var data = context.Data.Lookup(output.GlobeDataName);
-            if (!data.HasValue)
+            if (!context.Data.TryGetValue(output.GlobeDataName, out var data))
             {
-                context.Data.AddOrUpdate(new FlowGlobeData(output.GlobeDataName, output.Type, valueStr));
+                context.Data.TryAdd(output.GlobeDataName, new FlowGlobeData(output.GlobeDataName, output.Type, valueStr));
             }
             else
             {
-                data.Value.Value = valueStr;
-                context.Data.AddOrUpdate(data.Value);
+                data.Value = valueStr;
             }
         }
     }
@@ -108,10 +104,9 @@ public interface IDataConverterInject
         {
             if (input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value))
             {
-                var data = context.Data.Lookup(input.Value);
-                if (data.HasValue)
+                if (context.Data.TryGetValue(input.Value, out var data))
                 {
-                    return data.Value.Value;
+                    return data.Value ?? string.Empty;
                 }
                 else
                 {
@@ -149,14 +144,13 @@ public interface IDataConverterInject
         {
             if (context is not null && input.Mode == InputMode.Globe && !string.IsNullOrEmpty(input.Value))
             {
-                var data = context.Data.Lookup(input.Value);
-                if (!data.HasValue)
+                if (!context.Data.TryGetValue(input.Value, out var data))
                 {
                     return convert.Invoke(string.Empty);
                 }
                 else
                 {
-                    return convert.Invoke(data.Value.Value);
+                    return convert.Invoke(data.Value ?? string.Empty);
                 }
             }
             else if (context is not null && input.Mode == InputMode.Event && !string.IsNullOrEmpty(input.Value) && context.EventData.TryGetValue(input.Value, out var eventData))
