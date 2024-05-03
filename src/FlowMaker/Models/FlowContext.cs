@@ -18,8 +18,13 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// 执行错误下标
     /// </summary>
     public int ErrorIndex { get; } = errorIndex;
-
+    /// <summary>
+    /// 开始时间
+    /// </summary>
     public DateTime StartTime { get; set; } = DateTime.Now;
+    /// <summary>
+    /// 结束时间
+    /// </summary>
     public DateTime? EndTime { get; set; }
     /// <summary>
     /// 已经出错，不再执行，直接跳过到Finally步骤
@@ -36,6 +41,9 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// 事件数据
     /// </summary>
     public ConcurrentDictionary<string, string?> EventData { get; set; } = [];
+    /// <summary>
+    /// 事件记录
+    /// </summary>
     public SourceList<EventLog> EventLogs { get; set; } = new();
 
 
@@ -158,7 +166,7 @@ public class EventLog
 /// </summary>
 public enum FlowState
 {
-    None,
+    Wait,
     Running,
     Complete,
     Cancel,

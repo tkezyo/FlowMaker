@@ -133,7 +133,7 @@ public class FlowRunner : IDisposable
     /// <summary>
     /// 流程状态
     /// </summary>
-    public FlowState State { get; protected set; } = FlowState.None;
+    public FlowState State { get; protected set; } = FlowState.Wait;
 
     /// <summary>
     /// 子流程执行器
@@ -364,7 +364,7 @@ public class FlowRunner : IDisposable
         {
             _cancellationToken = cancellationToken.Value;
         }
-        if (State != FlowState.None && State != FlowState.Complete && State != FlowState.Error)
+        if (State != FlowState.Wait && State != FlowState.Complete && State != FlowState.Error)
         {
             throw new Exception("正在运行中");
         }

@@ -29,10 +29,10 @@
                 </Button>
 
                 <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="Pause" />
+                    <iconPacks:PackIconPixelartIcons Kind="CloseBox" />
                 </Button>
                 <Button Margin="2,0,0,0" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="NotesDelete" />
+                    <iconPacks:PackIconPixelartIcons Kind="Trash" />
                 </Button>
 
                 <ToggleButton x:Name="edit" Style="{StaticResource ToggleButtonDefault.Small}" Margin="2,0,0,0">
@@ -95,17 +95,19 @@
 
             </ToolBar>
             <ToolBar Visibility="{Binding IsChecked,ElementName=edit,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
-                <Button  Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}">
+                <Button  Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
                     <iconPacks:PackIconPixelartIcons Kind="Save" />
                 </Button>
-                <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0">
+                <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0" ToolTip="编辑流程">
                     <iconPacks:PackIconPixelartIcons Kind="Edit" />
                 </Button>
+                <ToggleButton IsChecked="{Binding Model.ErrorStop}" ToolTip="错误后停止"  Style="{StaticResource ToggleButtonWarning.Small}">
+                    <iconPacks:PackIconPixelartIcons Kind="Alert" />
+                </ToggleButton>
                 <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
-                <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
-             
+          
                 <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
                 <Separator Margin="10,0"/>
 

@@ -418,6 +418,11 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<Unit, Unit> RemoveCommand { get; }
         public async Task Remove()
         {
+            var r = await _messageBoxManager.Conform.Handle(new ConformInfo("确定删除吗？"));
+            if (!r)
+            {
+                return;
+            }
             if (Model is not null && Model.Id.HasValue)
             {
                 await _flowManager.Stop(Model.Id.Value);
@@ -533,6 +538,11 @@ namespace FlowMaker.ViewModels
         public ReactiveCommand<Unit, Unit> StopCommand { get; }
         public async Task Stop()
         {
+            var r = await _messageBoxManager.Conform.Handle(new ConformInfo("确定停止吗？"));
+            if (!r)
+            {
+                return;
+            }
             if (Model is not null && Model.Id.HasValue)
             {
                 await _flowManager.Stop(Model.Id.Value);

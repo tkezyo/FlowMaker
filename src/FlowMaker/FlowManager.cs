@@ -2,42 +2,24 @@
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Polly;
 using Splat;
 using System.Collections.Concurrent;
-using System.Data;
-using System.Text.Encodings.Web;
-using System.Text.Json;
-using System.Text.Unicode;
 using System.Xml.Linq;
 
 namespace FlowMaker;
 
-public class FlowManager
+/// <summary>
+/// 管理所有的流程，包括流程的初始化，运行，停止，事件发送等
+/// </summary>
+/// <param name="serviceProvider"></param>
+/// <param name="flowProvider"></param>
+/// <param name="logger"></param>
+public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowProvider, ILogger<FlowManager> logger)
 {
-    private readonly JsonSerializerOptions _jsonSerializerOptions;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IFlowProvider _flowProvider;
-    private readonly ILogger<FlowManager> _logger;
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly FlowMakerOption _flowMakerOption;
-
-
-    public FlowManager(IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IFlowProvider flowProvider, ILogger<FlowManager> logger, ILoggerFactory loggerFactory)
-    {
-        _jsonSerializerOptions = new()
-        {
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All),
-            WriteIndented = true,
-            IncludeFields = false
-        };
-        _flowMakerOption = options.Value;
-        this._serviceProvider = serviceProvider;
-        this._flowProvider = flowProvider;
-        this._logger = logger;
-        this._loggerFactory = loggerFactory;
-    }
+    private readonly IServiceProvider _serviceProvider = serviceProvider;
+    private readonly IFlowProvider _flowProvider = flowProvider;
+    private readonly ILogger<FlowManager> _logger = logger;
 
     #region Run
     class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope)
@@ -49,7 +31,7 @@ public class FlowManager
 
         public CancellationTokenSource Cancel { get; set; } = new();
     }
-    public IEnumerable<FlowRunner> RunningFlows => _status.Values.Select(c => c.FlowRunner);
+ 
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
 
     public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
