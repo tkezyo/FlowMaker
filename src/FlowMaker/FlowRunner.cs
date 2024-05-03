@@ -698,7 +698,10 @@ public class FlowRunner : IDisposable
         }
         foreach (var item in SubFlowRunners)
         {
-            await item.Value.StopAsync();
+            if (item.Value is not null)
+            {
+                await item.Value.StopAsync();
+            }
         }
         if (!CancellationTokenSource.IsCancellationRequested)
         {
