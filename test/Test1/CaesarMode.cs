@@ -35,7 +35,7 @@ namespace Test1
                 await stepContext.Log("sdfw+2" + i);
             }
             await stepContext.Log("sdfw");
-            return 3;
+            return Random.Shared.Next(0, 100);
         }
     }
 

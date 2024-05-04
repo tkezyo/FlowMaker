@@ -198,7 +198,7 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
 
                     <DataGrid Grid.Column="0"
   Style="{StaticResource DataGrid.Small}"
-  ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single">
+  ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single" EnableRowVirtualization="True" >
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
                                 <Style.Triggers>

@@ -347,9 +347,9 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                                         <RadioButton Content="全局变量转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}" GroupName="{Binding Name}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
                                     </StackPanel>
 
-                                    <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.Globe}}"  Text="{Binding GlobeDataName}" />
+                                    <TextBox  Visibility="{Binding Mode,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.Globe}}"  Text="{Binding GlobeDataName}" />
 
-                                    <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}"  Text="{Binding GlobeDataName}" />
+                                    <TextBox  Visibility="{Binding Mode,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}"  Text="{Binding GlobeDataName}" />
 
                                     <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}" Orientation="Horizontal" HorizontalAlignment="Stretch">
 
