@@ -85,6 +85,8 @@
                     </ToggleButton.Style>
                 </ToggleButton>
 
+
+
             </ToolBar>
             <ToolBar Visibility="{Binding IsChecked,ElementName=event,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
                 <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}">
@@ -107,7 +109,7 @@
                 <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
                 <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
-          
+
                 <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
                 <Separator Margin="10,0"/>
 
@@ -188,42 +190,58 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
                 </TreeView>
-                <DataGrid Grid.Row="2"
-                           Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=log}"
-            Style="{StaticResource DataGrid.Small}"
-            ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single">
-                    <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding State}" Value="Error">
-                                    <Setter Property="Background" Value="Pink" />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding State}" Value="Complete">
-                                    <Setter Property="Background" Value="SpringGreen" />
-                                </DataTrigger>
-                                <!-- 失去焦点时的背景颜色触发器 -->
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                        <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="False"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter Property="Background" Value="#F5F5F5"/>
-                                </MultiDataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </DataGrid.RowStyle>
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
-                        <!--<DataGridTextColumn Header="状态" Binding="{Binding  State}"/>-->
-                        <DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
-                        <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
-                        <DataGridTextColumn Header="流程执行次数" Binding="{Binding  FlowCurrentIndex}"/>
-                        <DataGridTextColumn Header="步骤执行次数" Binding="{Binding  StepCurrentIndex}"/>
-                        <DataGridTextColumn Header="流程错误次数" Binding="{Binding  FlowErrorIndex}"/>
-                        <DataGridTextColumn Header="步骤错误次数" Binding="{Binding  StepErrorIndex}"/>
+                <Grid  Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=log}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    </DataGrid.Columns>
-                </DataGrid>
+                    <DataGrid Grid.Column="0"
+  Style="{StaticResource DataGrid.Small}"
+  ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding State}" Value="Error">
+                                        <Setter Property="Background" Value="Pink" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding State}" Value="Complete">
+                                        <Setter Property="Background" Value="SpringGreen" />
+                                    </DataTrigger>
+                                    <!-- 失去焦点时的背景颜色触发器 -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                            <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="False"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#F5F5F5"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
+                            <!--<DataGridTextColumn Header="状态" Binding="{Binding  State}"/>-->
+                            <DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+                            <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+                            <DataGridTextColumn Header="流程执行次数" Binding="{Binding  FlowCurrentIndex}"/>
+                            <DataGridTextColumn Header="步骤执行次数" Binding="{Binding  StepCurrentIndex}"/>
+                            <DataGridTextColumn Header="流程错误次数" Binding="{Binding  FlowErrorIndex}"/>
+                            <DataGridTextColumn Header="步骤错误次数" Binding="{Binding  StepErrorIndex}"/>
+
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <DataGrid Grid.Column="1" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
+                              Style="{StaticResource DataGrid.Small}" 
+                              AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
+                            <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+
             </StackPanel>
 
 

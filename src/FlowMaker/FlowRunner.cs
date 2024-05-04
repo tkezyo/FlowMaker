@@ -69,11 +69,12 @@ public class FlowRunner : IDisposable
                {
                    foreach (var item in steps)
                    {
-                       if (Context.StepState.TryGetValue(item, out var stepState))
+                       var stepState = Context.StepState.Lookup(item);
+                       if (stepState.HasValue)
                        {
-                           stepState.Waits.Remove(key);
+                           stepState.Value.Waits.Remove(key);
 
-                           if (stepState.Waits.Count == 0)
+                           if (stepState.Value.Waits.Count == 0)
                            {
                                var step = FlowDefinition.Steps.First(c => c.Id == item);
                                _ = Run(step, _cancellationToken);
@@ -82,9 +83,7 @@ public class FlowRunner : IDisposable
                    }
                }
 
-
-
-               if (Context.StepState.All(c => c.Value.EndTime.HasValue) && State == FlowState.Running)
+               if (Context.StepState.Items.All(c => c.EndTime.HasValue) && State == FlowState.Running)
                {
                    //全部完成
                    if (TaskCompletionSource is not null)
@@ -100,9 +99,10 @@ public class FlowRunner : IDisposable
                            {
                                continue;
                            }
-                           if (Context.Data.TryGetValue(item.Name, out var data))
+                           var data = Context.Data.Lookup(item.Name);
+                           if (data.HasValue)
                            {
-                               flowResult.Data.Add(new FlowResultData { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value });
+                               flowResult.Data.Add(new FlowResultData { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value.Value });
                            }
                        }
                        if (!Context.Finally)
@@ -258,7 +258,7 @@ public class FlowRunner : IDisposable
                 state.Waits.Add(key);
             }
             state.Waits = state.Waits.Distinct().ToList();
-            Context.StepState.TryAdd(item.Id, state);
+            Context.StepState.AddOrUpdate(state);
         }
     }
 
@@ -290,9 +290,10 @@ public class FlowRunner : IDisposable
             config.Middlewares = Context.Middlewares;
 
             FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex);
-            if (Context.StepState.TryGetValue(step.Id, out var stepState))
+            var stepState = Context.StepState.Lookup(step.Id);
+            if (stepState.HasValue)
             {
-                stepState.FlowContext = context;
+                stepState.Value.FlowContext = context;
             }
             var results = await flowRunner.Start(embeddedFlow, subFlowDefinition.Checkers, context, cancellationToken);
 
@@ -320,9 +321,10 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
             FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex);
-            if (Context.StepState.TryGetValue(step.Id, out var stepState))
+            var stepState = Context.StepState.Lookup(step.Id);
+            if (stepState.HasValue)
             {
-                stepState.FlowContext = context;
+                stepState.Value.FlowContext = context;
             }
             var results = await flowRunner.Start(subFlowDefinition, subFlowDefinition.Checkers, context, cancellationToken);
 
@@ -427,7 +429,7 @@ public class FlowRunner : IDisposable
                 var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value);
                 globeData.IsInput = item.IsInput;
                 globeData.IsOutput = item.IsOutput;
-                Context.Data.TryAdd(item.Name, globeData);
+                Context.Data.AddOrUpdate(globeData);
             }
 
 
@@ -512,12 +514,14 @@ public class FlowRunner : IDisposable
     /// <returns></returns>
     protected async Task Run(FlowStep step, CancellationToken cancellationToken)
     {
-        if (!Context.StepState.TryGetValue(step.Id, out var stepState))
+        var stepState = Context.StepState.Lookup(step.Id);
+        if (!stepState.HasValue)
         {
             throw new Exception("执行过程中，配置步骤错误");
         }
-        stepState.StartTime = DateTime.Now;
-        stepState.State = StepState.Start;
+        stepState.Value.StartTime = DateTime.Now;
+        stepState.Value.State = StepState.Start;
+        Context.StepState.AddOrUpdate(stepState.Value);
 
         try
         {
@@ -527,7 +531,7 @@ public class FlowRunner : IDisposable
                 {
                     return;
                 }
-                await item.OnExecuting(Context, step, stepState, CancellationTokenSource.Token);
+                await item.OnExecuting(Context, step, stepState.Value, CancellationTokenSource.Token);
             }
             var repeat = await IDataConverterInject.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
             var isFinally = await IDataConverterInject.GetValue(step.Finally, _serviceProvider, Context, s => bool.TryParse(s, out var r) ? r : false, cancellationToken);
@@ -564,7 +568,7 @@ public class FlowRunner : IDisposable
                     stepOnceStatus.Logs.Add(info);
                     foreach (var item in _logMiddlewares)
                     {
-                        await item.OnLog(Context, step, stepState, stepOnceStatus, info, CancellationTokenSource.Token);
+                        await item.OnLog(Context, step, stepState.Value, stepOnceStatus, info, CancellationTokenSource.Token);
                     }
                 }
                 if (skip)
@@ -573,13 +577,13 @@ public class FlowRunner : IDisposable
 
                     once.State = StepOnceState.Skip;
 
-                    stepState.OnceLogs.Add(once);
+                    stepState.Value.OnceLogs.AddOrUpdate(once);
 
                     await Log(once, "Skip Reason: " + skipReason);
 
                     foreach (var item in _stepOnceMiddlewares)
                     {
-                        await item.OnExecuting(Context, step, stepState, once, CancellationTokenSource.Token);
+                        await item.OnExecuting(Context, step, stepState.Value, once, CancellationTokenSource.Token);
                     }
                     break;
                 }
@@ -587,7 +591,6 @@ public class FlowRunner : IDisposable
                 {
                     StepOnceStatus once = new(i, errorIndex);
 
-                    stepState.OnceLogs.Add(once);
                     try
                     {
                         if (cancellationToken.IsCancellationRequested)
@@ -596,10 +599,11 @@ public class FlowRunner : IDisposable
                         }
                         once.StartTime = DateTime.Now;
                         once.State = StepOnceState.Start;
+                        stepState.Value.OnceLogs.AddOrUpdate(once);
                         var timeOut = await IDataConverterInject.GetValue(step.TimeOut, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
                         foreach (var item in _stepOnceMiddlewares)
                         {
-                            await item.OnExecuting(Context, step, stepState, once, CancellationTokenSource.Token);
+                            await item.OnExecuting(Context, step, stepState.Value, once, CancellationTokenSource.Token);
                         }
                         StepContext stepContext = new(step, Context, once, Log);
 
@@ -615,9 +619,11 @@ public class FlowRunner : IDisposable
                         }
                         once.EndTime = DateTime.Now;
                         once.State = StepOnceState.Complete;
+                        stepState.Value.OnceLogs.AddOrUpdate(once);
+
                         foreach (var item in _stepOnceMiddlewares)
                         {
-                            await item.OnExecuted(Context, step, stepState, once, null, CancellationTokenSource.Token);
+                            await item.OnExecuted(Context, step, stepState.Value, once, null, CancellationTokenSource.Token);
                         }
 
                         break;
@@ -629,10 +635,11 @@ public class FlowRunner : IDisposable
                         errorIndex++;
                         once.EndTime = DateTime.Now;
                         once.State = StepOnceState.Error;
+                        stepState.Value.OnceLogs.AddOrUpdate(once);
 
                         foreach (var item in _stepOnceMiddlewares)
                         {
-                            await item.OnExecuted(Context, step, stepState, once, e, CancellationTokenSource.Token);
+                            await item.OnExecuted(Context, step, stepState.Value, once, e, CancellationTokenSource.Token);
                         }
 
                         if (retry >= errorIndex)
@@ -650,11 +657,11 @@ public class FlowRunner : IDisposable
                                 Context.Finally = true;
                                 break;
                             case ErrorHandling.Terminate:
-                                stepState.State = StepState.Error;
-                                stepState.EndTime = DateTime.Now;
+                                stepState.Value.State = StepState.Error;
+                                stepState.Value.EndTime = DateTime.Now;
                                 foreach (var item in _stepMiddlewares)
                                 {
-                                    await item.OnExecuted(Context, step, stepState, null, CancellationTokenSource.Token);
+                                    await item.OnExecuted(Context, step, stepState.Value, null, CancellationTokenSource.Token);
                                 }
                                 TaskCompletionSource?.SetException(e);
                                 return;
@@ -666,22 +673,24 @@ public class FlowRunner : IDisposable
                     }
                 }
             }
-            stepState.EndTime = DateTime.Now;
+            stepState.Value.EndTime = DateTime.Now;
             if (success)
             {
-                stepState.State = StepState.Complete;
+                stepState.Value.State = StepState.Complete;
             }
             else
             {
-                stepState.State = StepState.Error;
+                stepState.Value.State = StepState.Error;
             }
+            Context.StepState.AddOrUpdate(stepState.Value);
+
             foreach (var item in _stepMiddlewares)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
                     return;
                 }
-                await item.OnExecuted(Context, step, stepState, null, CancellationTokenSource.Token);
+                await item.OnExecuted(Context, step, stepState.Value, null, CancellationTokenSource.Token);
             }
             if (cancellationToken.IsCancellationRequested)
             {

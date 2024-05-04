@@ -12,7 +12,6 @@ namespace FlowMaker.ViewModels;
 
 public partial class FlowMakerLogViewModel : ViewModelBase
 {
-    private readonly IFlowLogger _flowLogReader;
     private readonly FlowManager _flowManager;
 
     public static string Category => "Log";
@@ -24,9 +23,8 @@ public partial class FlowMakerLogViewModel : ViewModelBase
     public string? FlowCategory { get; set; }
     public string? FlowName { get; set; }
 
-    public FlowMakerLogViewModel(IFlowLogger flowLogReader, FlowManager flowManager)
+    public FlowMakerLogViewModel(FlowManager flowManager)
     {
-        this._flowLogReader = flowLogReader;
         this._flowManager = flowManager;
         this.WhenAnyValue(c => c.CurrentLog).WhereNotNull().Subscribe(c =>
         {

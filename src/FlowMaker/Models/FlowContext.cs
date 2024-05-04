@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using DynamicData;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace FlowMaker;
@@ -43,17 +44,17 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// <summary>
     /// 事件记录
     /// </summary>
-    public List<EventLog> EventLogs { get; set; } = [];
+    public SourceList<EventLog> EventLogs { get; set; } = new();
 
 
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
-    public ConcurrentDictionary<Guid, StepStatus> StepState { get; set; } = [];
+    public SourceCache<StepStatus, Guid> StepState { get; set; } = new(c => c.StepId);
     /// <summary>
     /// 所有的全局变量
     /// </summary>
-    public ConcurrentDictionary<string, FlowGlobeData> Data { get; set; } = [];
+    public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
 }
 
 public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus, Func<StepOnceStatus, string, LogLevel, Task> logAction)
@@ -98,7 +99,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// <summary>
     /// 日志
     /// </summary>
-    public List<LogInfo> Logs { get; set; } = [];
+    public SourceList<LogInfo> Logs { get; set; } = new();
 
     /// <summary>
     /// 附加属性
@@ -120,7 +121,7 @@ public class StepStatus
     /// 需要等待的事件
     /// </summary>
     public List<string> Waits { get; set; } = [];
-    public List<StepOnceStatus> OnceLogs { get; set; } = [];
+    public SourceCache<StepOnceStatus, string> OnceLogs { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 }
 
 
