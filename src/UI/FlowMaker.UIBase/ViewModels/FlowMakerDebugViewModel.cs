@@ -234,6 +234,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                     step.Repeat = c.StepStatus.Repeat;
                                     step.Retry = c.StepStatus.Retry;
                                     step.State = c.StepStatus.State;
+                                    step.Finally = c.StepStatus.Finally;
                                 }
 
                             }
@@ -564,6 +565,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             item.CurrentIndex = 0;
             item.Repeat = 0;
             item.Retry = 0;
+            item.Finally = false;
 
             Reset(item.Steps);
         }

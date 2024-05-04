@@ -194,7 +194,9 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
                                                 <DataTrigger Binding="{Binding State}" Value="Complete">
                                                     <Setter Property="Foreground" Value="ForestGreen"/>
                                                 </DataTrigger>
-
+                                                <DataTrigger Binding="{Binding State}" Value="Skip">
+                                                    <Setter Property="Foreground" Value="YellowGreen"/>
+                                                </DataTrigger>
 
                                             </Style.Triggers>
                                         </Style>
@@ -205,6 +207,7 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
                                 <TextBlock Text="{Binding Repeat,StringFormat={}|{0}}" VerticalAlignment="Center"/>
                                 <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Retry,StringFormat={}|{0}}" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Text="F" Visibility="{Binding Finally,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="Purple" VerticalAlignment="Center"/>
                             </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>

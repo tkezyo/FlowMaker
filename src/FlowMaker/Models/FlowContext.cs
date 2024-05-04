@@ -120,6 +120,7 @@ public class StepStatus
     public FlowContext? FlowContext { get; set; }
     public int Repeat { get; set; }
     public int Retry { get; set; }
+    public bool Finally { get; set; }
     /// <summary>
     /// 需要等待的事件
     /// </summary>
@@ -177,6 +178,7 @@ public enum StepState
     Start,
     Complete,
     Error,
+    Skip,
 }
 
 public enum StepOnceState

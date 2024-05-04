@@ -77,7 +77,7 @@ public class FlowRunner : IDisposable
                            if (stepState.Value.Waits.Count == 0)
                            {
                                var step = FlowDefinition.Steps.First(c => c.Id == item);
-                               _ = Run(step, _cancellationToken);
+                               _ = Task.Run(() => Run(step, _cancellationToken), _cancellationToken);//如果不用Task.Run，遇到同步的步骤会等待步骤执行完才会执行下一个步骤
                            }
                        }
                    }
@@ -523,8 +523,10 @@ public class FlowRunner : IDisposable
         stepState.Value.State = StepState.Start;
         var repeat = await IDataConverterInject.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
         var retry = await IDataConverterInject.GetValue(step.Retry, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
+        var isFinally = await IDataConverterInject.GetValue(step.Finally, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
         stepState.Value.Repeat = repeat;
         stepState.Value.Retry = retry;
+        stepState.Value.Finally = isFinally;
         Context.StepState.AddOrUpdate(stepState.Value);
 
         try
@@ -537,11 +539,9 @@ public class FlowRunner : IDisposable
                 }
                 await item.OnExecuting(Context, step, stepState.Value, CancellationTokenSource.Token);
             }
-
-            var isFinally = await IDataConverterInject.GetValue(step.Finally, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
+      
             int errorIndex = 0;
-            bool skip = false;
-            bool success = true;
+            StepState state = StepState.Start;
             for (int i = 1; i <= repeat; i++)//重复执行
             {
                 string? skipReason = null;
@@ -555,7 +555,7 @@ public class FlowRunner : IDisposable
                     if (result != item2.Value)
                     {
                         skipReason = reason;
-                        skip = true;
+                        state = StepState.Skip;
                         break;
                     }
                 }
@@ -564,7 +564,7 @@ public class FlowRunner : IDisposable
                 {
                     skipReason = "Finally";
 
-                    skip = true;
+                    state = StepState.Skip;
                 }
                 async Task Log(StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
                 {
@@ -575,7 +575,7 @@ public class FlowRunner : IDisposable
                         await item.OnLog(Context, step, stepState.Value, stepOnceStatus, info, CancellationTokenSource.Token);
                     }
                 }
-                if (skip)
+                if (state == StepState.Skip)
                 {
                     StepOnceStatus once = new(i, errorIndex);
 
@@ -629,13 +629,12 @@ public class FlowRunner : IDisposable
                         {
                             await item.OnExecuted(Context, step, stepState.Value, once, null, CancellationTokenSource.Token);
                         }
+                        state = StepState.Complete;
 
                         break;
                     }
                     catch (Exception e)
                     {
-
-
                         errorIndex++;
                         once.EndTime = DateTime.Now;
                         once.State = StepOnceState.Error;
@@ -652,7 +651,7 @@ public class FlowRunner : IDisposable
                         }
 
                         var errorHandling = await IDataConverterInject.GetValue(step.ErrorHandling, _serviceProvider, Context, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
-                        success = false;
+                        state = StepState.Error;
                         switch (errorHandling)
                         {
                             case ErrorHandling.Skip:
@@ -678,14 +677,7 @@ public class FlowRunner : IDisposable
                 }
             }
             stepState.Value.EndTime = DateTime.Now;
-            if (success)
-            {
-                stepState.Value.State = StepState.Complete;
-            }
-            else
-            {
-                stepState.Value.State = StepState.Error;
-            }
+            stepState.Value.State = state;
             Context.StepState.AddOrUpdate(stepState.Value);
 
             foreach (var item in _stepMiddlewares)
