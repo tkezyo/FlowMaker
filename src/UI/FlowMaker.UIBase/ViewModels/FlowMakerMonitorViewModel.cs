@@ -374,6 +374,8 @@ public class MonitorStepInfoViewModel : ReactiveObject
     [Reactive]
     public StepState State { get; set; }
     [Reactive]
+    public ErrorHandling ErrorHandling { get; set; }
+    [Reactive]
     public bool Finally { get; set; }
 
 

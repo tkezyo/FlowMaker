@@ -208,6 +208,22 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
                                 <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding Retry,StringFormat={}|{0}}" VerticalAlignment="Center"/>
                                 <TextBlock Margin="10,0,0,0" Text="F" Visibility="{Binding Finally,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="Purple" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Foreground="Red" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ErrorHandling}" Value="Finally">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Text" Value="E"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ErrorHandling}" Value="Terminate">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Text" Value="T"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
                             </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>

@@ -121,6 +121,7 @@ public class StepStatus
     public int Repeat { get; set; }
     public int Retry { get; set; }
     public bool Finally { get; set; }
+    public ErrorHandling ErrorHandling { get; set; }
     /// <summary>
     /// 需要等待的事件
     /// </summary>

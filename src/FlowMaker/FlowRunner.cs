@@ -524,9 +524,11 @@ public class FlowRunner : IDisposable
         var repeat = await IDataConverterInject.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
         var retry = await IDataConverterInject.GetValue(step.Retry, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
         var isFinally = await IDataConverterInject.GetValue(step.Finally, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
+        var errorHandling = await IDataConverterInject.GetValue(step.ErrorHandling, _serviceProvider, Context, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
         stepState.Value.Repeat = repeat;
         stepState.Value.Retry = retry;
         stepState.Value.Finally = isFinally;
+        stepState.Value.ErrorHandling = errorHandling;
         Context.StepState.AddOrUpdate(stepState.Value);
 
         try
@@ -539,7 +541,7 @@ public class FlowRunner : IDisposable
                 }
                 await item.OnExecuting(Context, step, stepState.Value, CancellationTokenSource.Token);
             }
-      
+
             int errorIndex = 0;
             StepState state = StepState.Start;
             for (int i = 1; i <= repeat; i++)//重复执行
@@ -650,7 +652,6 @@ public class FlowRunner : IDisposable
                             continue;
                         }
 
-                        var errorHandling = await IDataConverterInject.GetValue(step.ErrorHandling, _serviceProvider, Context, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
                         state = StepState.Error;
                         switch (errorHandling)
                         {
