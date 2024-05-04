@@ -87,6 +87,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     public DateTime? StartTime { get; set; }
 
     public DateTime? EndTime { get; set; }
+
     /// <summary>
     /// 输入
     /// </summary>
@@ -117,6 +118,8 @@ public class StepStatus
 
     public DateTime? EndTime { get; set; }
     public FlowContext? FlowContext { get; set; }
+    public int Repeat { get; set; }
+    public int Retry { get; set; }
     /// <summary>
     /// 需要等待的事件
     /// </summary>

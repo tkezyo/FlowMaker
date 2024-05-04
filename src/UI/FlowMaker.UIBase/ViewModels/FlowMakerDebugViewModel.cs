@@ -147,7 +147,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     flow.Repeat = c.Context.ConfigDefinition.Repeat;
                     flow.ErrorStop = c.Context.ConfigDefinition.ErrorStop;
                     DataDisplay = new DataDisplayViewModel(c.Context);
-                  
+
 
                     Reset(flow.Steps);
                     RxApp.MainThreadScheduler.Schedule(() =>
@@ -166,7 +166,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         {
                             RxApp.MainThreadScheduler.Schedule(() =>
                             {
-
                                 var log = StepOnceLogs.FirstOrDefault(v => v.FlowCurrentIndex == c.FlowContext.CurrentIndex && v.FlowErrorIndex == c.FlowContext.ErrorIndex && v.StepCurrentIndex == c.StepOnce.CurrentIndex && v.StepErrorIndex == c.StepOnce.ErrorIndex && c.Step.Id == v.StepId);
                                 if (log is null)
                                 {
@@ -212,6 +211,11 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                             var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
                             if (step is not null)
                             {
+                                step.ErrorIndex = c.StepOnce.ErrorIndex;
+                                step.CurrentIndex = c.StepOnce.CurrentIndex;
+                                step.Repeat = c.StepStatus.Repeat;
+                                step.Retry = c.StepStatus.Retry;
+
                                 if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
                                 {
                                     step.Start(c.StepOnce.StartTime.Value);
@@ -276,26 +280,31 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             foreach (var item in flowDefinition.Steps)
             {
+                var step = new MonitorStepInfoViewModel
+                {
+                    Category = item.Category,
+                    DisplayName = item.DisplayName,
+                    Name = item.Name,
+                    Id = item.Id,
+                };
                 if (item.Type == StepType.Normal)
                 {
                     Model.TotalCount++;
-                    models.Add(new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id });
+                    models.Add(step);
                 }
                 else if (item.Type == StepType.Embedded && flowDefinition is FlowDefinition fde)
                 {
                     var embedded = fde.EmbeddedFlows.First(c => c.StepId == item.Id);
-                    var sub = new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id };
-                    models.Add(sub);
-                    await SetFlowStepAsync(sub.Steps, embedded);
+                    models.Add(step);
+                    await SetFlowStepAsync(step.Steps, embedded);
                 }
                 else
                 {
                     var stepDefinition = await _flowProvider.GetStepDefinitionAsync(item.Category, item.Name);
                     if (stepDefinition is IFlowDefinition fd)
                     {
-                        var sub = new MonitorStepInfoViewModel { Category = item.Category, DisplayName = item.DisplayName, Name = item.Name, Id = item.Id };
-                        models.Add(sub);
-                        await SetFlowStepAsync(sub.Steps, fd);
+                        models.Add(step);
+                        await SetFlowStepAsync(step.Steps, fd);
                     }
                 }
             }
@@ -463,7 +472,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 if (string.IsNullOrEmpty(item.Value))
                 {
-                    throw new Exception($"{item.Name}未填写");
+                    RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.Name} 未填写")));
+                    return;
                 }
                 config.Data.Add(new NameValue(item.Name, item.Value));
             }
@@ -663,13 +673,13 @@ public class DataDisplayViewModel : ReactiveObject
 {
     public DataDisplayViewModel(FlowContext flowContext)
     {
-         flowContext.Data.Connect()
-                        .Transform(c => new FlowGlobeDataViewModel(c))
-                        .ObserveOn(RxApp.MainThreadScheduler)
-                      .Bind(out _data)
-                      .DisposeMany()
-                      .Subscribe()
-                      .DisposeWith(Disposables);
+        flowContext.Data.Connect()
+                       .Transform(c => new FlowGlobeDataViewModel(c))
+                       .ObserveOn(RxApp.MainThreadScheduler)
+                     .Bind(out _data)
+                     .DisposeMany()
+                     .Subscribe()
+                     .DisposeWith(Disposables);
     }
     public CompositeDisposable Disposables { get; set; } = [];
     public ReadOnlyObservableCollection<FlowGlobeDataViewModel> FlowGlobeData => _data;

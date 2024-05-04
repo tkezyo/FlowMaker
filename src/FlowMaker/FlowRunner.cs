@@ -521,6 +521,10 @@ public class FlowRunner : IDisposable
         }
         stepState.Value.StartTime = DateTime.Now;
         stepState.Value.State = StepState.Start;
+        var repeat = await IDataConverterInject.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
+        var retry = await IDataConverterInject.GetValue(step.Retry, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
+        stepState.Value.Repeat = repeat;
+        stepState.Value.Retry = retry;
         Context.StepState.AddOrUpdate(stepState.Value);
 
         try
@@ -533,8 +537,8 @@ public class FlowRunner : IDisposable
                 }
                 await item.OnExecuting(Context, step, stepState.Value, CancellationTokenSource.Token);
             }
-            var repeat = await IDataConverterInject.GetValue(step.Repeat, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
-            var isFinally = await IDataConverterInject.GetValue(step.Finally, _serviceProvider, Context, s => bool.TryParse(s, out var r) ? r : false, cancellationToken);
+
+            var isFinally = await IDataConverterInject.GetValue(step.Finally, _serviceProvider, Context, s => bool.TryParse(s, out var r) && r, cancellationToken);
             int errorIndex = 0;
             bool skip = false;
             bool success = true;
@@ -630,7 +634,7 @@ public class FlowRunner : IDisposable
                     }
                     catch (Exception e)
                     {
-                        var retry = await IDataConverterInject.GetValue(step.Retry, _serviceProvider, Context, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
+
 
                         errorIndex++;
                         once.EndTime = DateTime.Now;

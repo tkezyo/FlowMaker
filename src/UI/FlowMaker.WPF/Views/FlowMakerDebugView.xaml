@@ -186,6 +186,10 @@ Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
                                 </Button>
                                 <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
                                 <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Text="{Binding CurrentIndex}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Repeat,StringFormat={}|{0}}" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Retry,StringFormat={}|{0}}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.ItemTemplate>
