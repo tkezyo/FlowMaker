@@ -20,6 +20,7 @@ namespace FlowMaker
             hostApplicationBuilder.Services.AddScoped<MonitorMiddleware>();
             hostApplicationBuilder.Services.AddKeyedScoped<IStepOnceMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
             hostApplicationBuilder.Services.AddKeyedScoped<IFlowMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
+            hostApplicationBuilder.Services.AddKeyedScoped<IStepMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
 
        
             return Task.CompletedTask;

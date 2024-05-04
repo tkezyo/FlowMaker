@@ -9,7 +9,7 @@ using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
 
-public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepOnceMiddleware
+public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware
 {
     public int TotalCount { get; set; } = -1;
     public double CompleteCount { get; set; }
@@ -157,6 +157,18 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
         return Task.CompletedTask;
     }
+
+    public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken)
+    {
+        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
+        return Task.CompletedTask;
+    }
+
+    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception? exception, CancellationToken cancellationToken)
+    {
+        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
+        return Task.CompletedTask;
+    }
 }
 
 public class MonitorMessage(FlowContext context, FlowState runnerState, int totalCount)
@@ -165,11 +177,11 @@ public class MonitorMessage(FlowContext context, FlowState runnerState, int tota
     public FlowState RunnerState { get; set; } = runnerState;
     public int TotalCount { get; set; } = totalCount;
 }
-public class MonitorStepOnceMessage(FlowContext flowContext, StepStatus stepStatus, StepOnceStatus stepOnce, Guid[] flowIds, FlowStep step)
+public class MonitorStepOnceMessage(FlowContext flowContext, StepStatus stepStatus, StepOnceStatus? stepOnce, Guid[] flowIds, FlowStep step)
 {
     public FlowContext FlowContext { get; set; } = flowContext;
     public StepStatus StepStatus { get; } = stepStatus;
-    public StepOnceStatus StepOnce { get; set; } = stepOnce;
+    public StepOnceStatus? StepOnce { get; set; } = stepOnce;
     public Guid[] FlowIds { get; set; } = flowIds;
     public FlowStep Step { get; set; } = step;
 }

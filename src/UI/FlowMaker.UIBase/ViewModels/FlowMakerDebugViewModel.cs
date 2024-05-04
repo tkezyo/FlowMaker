@@ -164,36 +164,40 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         }).DisposeWith(flow.StepChange);
                         monitor.StepChange.Subscribe(c =>
                         {
-                            RxApp.MainThreadScheduler.Schedule(() =>
+                            if (c.StepOnce is not null)
                             {
-                                var log = StepOnceLogs.FirstOrDefault(v => v.FlowCurrentIndex == c.FlowContext.CurrentIndex && v.FlowErrorIndex == c.FlowContext.ErrorIndex && v.StepCurrentIndex == c.StepOnce.CurrentIndex && v.StepErrorIndex == c.StepOnce.ErrorIndex && c.Step.Id == v.StepId);
-                                if (log is null)
+                                RxApp.MainThreadScheduler.Schedule(() =>
                                 {
-                                    StepOnceLogs.Add(new StepLogViewModel
+                                    var log = StepOnceLogs.FirstOrDefault(v => v.FlowCurrentIndex == c.FlowContext.CurrentIndex && v.FlowErrorIndex == c.FlowContext.ErrorIndex && v.StepCurrentIndex == c.StepOnce.CurrentIndex && v.StepErrorIndex == c.StepOnce.ErrorIndex && c.Step.Id == v.StepId);
+                                    if (log is null)
                                     {
-                                        Logs = [],
-                                        StepId = c.Step.Id,
-                                        Name = c.Step.DisplayName,
-                                        State = c.StepOnce.State.ToString(),
-                                        StartTime = c.StepOnce.StartTime,
-                                        EndTime = c.StepOnce.EndTime,
-                                        Inputs = c.StepOnce.Inputs,
-                                        Outputs = c.StepOnce.Outputs,
-                                        StepCurrentIndex = c.StepOnce.CurrentIndex,
-                                        StepErrorIndex = c.StepOnce.ErrorIndex,
-                                        FlowCurrentIndex = c.FlowContext.CurrentIndex,
-                                        FlowErrorIndex = c.FlowContext.ErrorIndex,
-                                    });
-                                }
-                                else
-                                {
-                                    log.State = c.StepOnce.State.ToString();
-                                    log.StartTime = c.StepOnce.StartTime;
-                                    log.EndTime = c.StepOnce.EndTime;
-                                    log.Inputs = c.StepOnce.Inputs;
-                                    log.Outputs = c.StepOnce.Outputs;
-                                }
-                            });
+                                        StepOnceLogs.Add(new StepLogViewModel
+                                        {
+                                            Logs = [],
+                                            StepId = c.Step.Id,
+                                            Name = c.Step.DisplayName,
+                                            State = c.StepOnce.State.ToString(),
+                                            StartTime = c.StepOnce.StartTime,
+                                            EndTime = c.StepOnce.EndTime,
+                                            Inputs = c.StepOnce.Inputs,
+                                            Outputs = c.StepOnce.Outputs,
+                                            StepCurrentIndex = c.StepOnce.CurrentIndex,
+                                            StepErrorIndex = c.StepOnce.ErrorIndex,
+                                            FlowCurrentIndex = c.FlowContext.CurrentIndex,
+                                            FlowErrorIndex = c.FlowContext.ErrorIndex,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        log.State = c.StepOnce.State.ToString();
+                                        log.StartTime = c.StepOnce.StartTime;
+                                        log.EndTime = c.StepOnce.EndTime;
+                                        log.Inputs = c.StepOnce.Inputs;
+                                        log.Outputs = c.StepOnce.Outputs;
+                                    }
+
+                                });
+                            }
                             var steps = flow.Steps;
 
                             foreach (var item in c.FlowIds.Skip(1))
@@ -211,19 +215,27 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                             var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
                             if (step is not null)
                             {
-                                step.ErrorIndex = c.StepOnce.ErrorIndex;
-                                step.CurrentIndex = c.StepOnce.CurrentIndex;
-                                step.Repeat = c.StepStatus.Repeat;
-                                step.Retry = c.StepStatus.Retry;
+                                if (c.StepOnce is not null)
+                                {
+                                    step.ErrorIndex = c.StepOnce.ErrorIndex;
+                                    step.CurrentIndex = c.StepOnce.CurrentIndex;
 
-                                if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
-                                {
-                                    step.Start(c.StepOnce.StartTime.Value);
+                                    if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
+                                    {
+                                        step.Start(c.StepOnce.StartTime.Value);
+                                    }
+                                    if (c.StepOnce.EndTime.HasValue)
+                                    {
+                                        step.Stop(c.StepOnce.EndTime.Value);
+                                    }
                                 }
-                                if (c.StepOnce.EndTime.HasValue)
+                                else
                                 {
-                                    step.Stop(c.StepOnce.EndTime.Value);
+                                    step.Repeat = c.StepStatus.Repeat;
+                                    step.Retry = c.StepStatus.Retry;
+                                    step.State = c.StepStatus.State;
                                 }
+
                             }
                         }).DisposeWith(flow.StepChange);
                     }
@@ -547,6 +559,12 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             item.StartTime = null;
             item.UsedTime = null;
+            item.State = StepState.Wait;
+            item.ErrorIndex = 0;
+            item.CurrentIndex = 0;
+            item.Repeat = 0;
+            item.Retry = 0;
+
             Reset(item.Steps);
         }
     }
