@@ -87,7 +87,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
     public async Task OnExecuting(FlowContext flowContext, FlowState state, CancellationToken cancellationToken)
     {
-        if (TotalCount == -1)
+        if (flowContext.FlowIds.Length == 1)
         {
             var definition = await flowProvider.LoadFlowDefinitionAsync(flowContext.ConfigDefinition.Category, flowContext.ConfigDefinition.Name);
             if (definition is null)
