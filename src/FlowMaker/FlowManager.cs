@@ -6,6 +6,7 @@ using Polly;
 using Splat;
 using System.Collections.Concurrent;
 using System.Xml.Linq;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace FlowMaker;
 
@@ -22,12 +23,12 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     private readonly ILogger<FlowManager> _logger = logger;
 
     #region Run
-    class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope)
+    class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope)
     {
         public ConfigDefinition Config { get; set; } = config;
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
-        public FlowRunner FlowRunner { get; set; } = flowRunner;
+        public FlowRunner? FlowRunner { get; set; }
         public SourceCache<FlowContext, string> FlowContexts { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 
         public CancellationTokenSource Cancel { get; set; } = new();
@@ -52,9 +53,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async Task<Guid> Init(ConfigDefinition configDefinition)
     {
         var scope = _serviceProvider.CreateScope();
-        var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
         Guid id = Guid.NewGuid();
-        _status[id] = new RunnerStatus(configDefinition, runner, scope)
+        _status[id] = new RunnerStatus(configDefinition, scope)
         {
             Cancel = new CancellationTokenSource()
         };
@@ -65,7 +65,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
         var status = _status[id];
-        var runner = status.FlowRunner;
+        if (status.FlowRunner is not null)
+        {
+            status.FlowRunner.Dispose();
+        }
+     
         var testName = DateTime.Now.ToString("yyyyMMdd") + id;
 
         var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.Category, status.Config.Name);
@@ -96,6 +100,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 bool needBreak = false;
                 try
                 {
+                    var runner = status.ServiceScope.ServiceProvider.GetRequiredService<FlowRunner>();
+
+                    status.FlowRunner = runner;
                     FlowContext flowContext = new(status.Config, [id], i, errorTimes);
                     status.FlowContexts.AddOrUpdate(flowContext);
                     if (status.Config.Timeout > 0)
@@ -166,14 +173,20 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         if (_status.TryGetValue(id, out var status))
         {
-            await status.FlowRunner.SendEventAsync(eventName, eventData);
+            if (status.FlowRunner is not null)
+            {
+                await status.FlowRunner.SendEventAsync(eventName, eventData);
+            }
         }
     }
     public async Task Stop(Guid id)
     {
         if (_status.TryGetValue(id, out var status))
         {
-            await status.FlowRunner.StopAsync();
+            if (status.FlowRunner is not null)
+            {
+                await status.FlowRunner.StopAsync();
+            }
             status.Cancel.Cancel();
         }
     }
@@ -183,9 +196,12 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         if (_status.TryGetValue(id, out var status))
         {
             status.ServiceScope.Dispose();
-            while (status.FlowRunner.State == FlowState.Running)
+            if (status.FlowRunner is not null)
             {
-                await Task.Delay(300);
+                while (status.FlowRunner.State == FlowState.Running)
+                {
+                    await Task.Delay(300);
+                }
             }
             _status.Remove(id, out _);
         }

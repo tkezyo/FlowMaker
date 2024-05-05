@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
-using ReactiveUI;
-using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -235,6 +233,7 @@ public class FlowRunner : IDisposable
     public void InitState()
     {
         Context.StepState.Clear();
+        SubFlowRunners.Clear();
         foreach (var item in FlowDefinition.Steps)
         {
             var state = new StepStatus
@@ -385,6 +384,13 @@ public class FlowRunner : IDisposable
 
             InitExecuteStepIds();
             InitState();
+            Context.Middlewares.Clear();
+            _flowMiddlewares.Clear();
+            _eventMiddlewares.Clear();
+            _stepMiddlewares.Clear();
+            _stepOnceMiddlewares.Clear();
+            _logMiddlewares.Clear();
+
 
             foreach (var item in _flowMakerOption.DefaultMiddlewares)
             {
@@ -443,13 +449,11 @@ public class FlowRunner : IDisposable
                 Type = EventType.StartFlow,
             });
             var result = await TaskCompletionSource.Task;
-
+            Context.EndTime = DateTime.Now;
             foreach (var middleware in _flowMiddlewares)
             {
                 await middleware.OnExecuted(Context, State, null, CancellationTokenSource.Token);
             }
-            Context.EndTime = DateTime.Now;
-
             return result;
         }
         catch (Exception e)
@@ -462,6 +466,9 @@ public class FlowRunner : IDisposable
                 await middleware.OnExecuted(Context, State, e, CancellationTokenSource.Token);
             }
             throw;
+        }
+        finally
+        {
         }
     }
 
