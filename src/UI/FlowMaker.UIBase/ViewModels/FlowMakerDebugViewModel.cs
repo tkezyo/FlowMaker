@@ -81,6 +81,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
         RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
         EditFlowCommand = ReactiveCommand.CreateFromTask(EditFlow);
+        ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
+        ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
     }
 
     public CompositeDisposable? Disposables { get; set; }
@@ -154,7 +156,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     {
                         DataDisplay.Disposables.Dispose();
                     }
-                    DataDisplay = new DataDisplayViewModel(c.Context);
+                    DataDisplay = new DataDisplayViewModel(c.Context, StepId, Index);
 
 
                     Reset(flow.Steps);
@@ -431,7 +433,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                          return;
                      }
                      var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
-                     if (step is not null)
+                     if (step is not null && c.StepOnce is not null)
                      {
                          if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
                          {
@@ -694,6 +696,40 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             //LoadFlows();
         });
     }
+
+    [Reactive]
+    public Guid? StepId { get; set; }
+    [Reactive]
+    public string? Index { get; set; }
+
+    [Reactive]
+    public bool ShowLog { get; set; }
+    public ReactiveCommand<MonitorStepInfoViewModel, Unit> ShowStepLogCommand { get; }
+    public void ShowStepLog(MonitorStepInfoViewModel monitorStepInfoViewModel)
+    {
+        StepId = monitorStepInfoViewModel.Id;
+        Index = null;
+        if (DataDisplay is not null)
+        {
+            DataDisplay.StepId = monitorStepInfoViewModel.Id;
+            DataDisplay.Index = null;
+        }
+        ShowLog = true;
+    }
+    
+    public ReactiveCommand<StepLogViewModel, Unit> ShowStepOnceLogCommand { get; }
+    public void ShowStepOnceLog(StepLogViewModel monitorStepInfoViewModel)
+    {
+        StepId = monitorStepInfoViewModel.StepId;
+        Index = monitorStepInfoViewModel.Index;
+        if (DataDisplay is not null)
+        {
+            DataDisplay.StepId = monitorStepInfoViewModel.StepId;
+            DataDisplay.Index = monitorStepInfoViewModel.Index;
+        }
+        ShowLog = true;
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (Model is not null && Model.Id.HasValue)
@@ -705,8 +741,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
 public class DataDisplayViewModel : ReactiveObject
 {
-    public DataDisplayViewModel(FlowContext flowContext)
+    public DataDisplayViewModel(FlowContext flowContext, Guid? stepId, string? index)
     {
+        StepId = stepId;
+        Index = index;
         flowContext.Data.Connect()
                        .Transform(c => new FlowGlobeDataViewModel(c))
                        .ObserveOn(RxApp.MainThreadScheduler)
@@ -715,14 +753,40 @@ public class DataDisplayViewModel : ReactiveObject
                      .Subscribe()
                      .DisposeWith(Disposables);
 
+        var filter = this.WhenAnyValue(c => c.StepId, c => c.Index)
+               .Select(BuildFilter);
+
         flowContext.Logs.Connect()
+                    .Filter(filter)
                      .Transform(c => new LogInfoViewModel(c))
                      .ObserveOn(RxApp.MainThreadScheduler)
                    .Bind(out _log)
                    .DisposeMany()
                    .Subscribe()
                    .DisposeWith(Disposables);
+
     }
+
+    private Func<LogInfo, bool> BuildFilter((Guid?, string?) input)
+    {
+        if (StepId.HasValue && !string.IsNullOrEmpty(Index))
+        {
+            return log => (input.Item1 == log.StepId && input.Item2 == log.Index);
+        }
+        else if (StepId.HasValue)
+        {
+            return log => input.Item1 == log.StepId;
+        }
+        else if (!string.IsNullOrEmpty(Index))
+        {
+            return log => input.Item2 == log.Index;
+        }
+        return log => true;
+    }
+    [Reactive]
+    public Guid? StepId { get; set; }
+    [Reactive]
+    public string? Index { get; set; }
     public CompositeDisposable Disposables { get; set; } = [];
     public ReadOnlyObservableCollection<FlowGlobeDataViewModel> FlowGlobeData => _data;
     private readonly ReadOnlyObservableCollection<FlowGlobeDataViewModel> _data;

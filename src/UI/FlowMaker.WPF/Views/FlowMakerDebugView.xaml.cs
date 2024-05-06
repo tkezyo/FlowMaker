@@ -27,5 +27,18 @@ namespace FlowMaker.Views
             InitializeComponent();
             this.WhenActivated(d => { });
         }
+        private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var listBox = sender as ListBox;
+            if (listBox?.Items.Count > 0)
+            {
+                logListbox.ScrollIntoView(listBox.Items[listBox.Items.Count - 1]);
+            }
+        }
+
+        private void logListbox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            
+        }
     }
 }
