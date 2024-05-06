@@ -6,7 +6,6 @@ using Polly;
 using Splat;
 using System.Collections.Concurrent;
 using System.Xml.Linq;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace FlowMaker;
 
@@ -23,12 +22,12 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     private readonly ILogger<FlowManager> _logger = logger;
 
     #region Run
-    class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope)
+    class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope)
     {
         public ConfigDefinition Config { get; set; } = config;
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
-        public FlowRunner? FlowRunner { get; set; }
+        public FlowRunner FlowRunner { get; set; } = flowRunner;
         public SourceCache<FlowContext, string> FlowContexts { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 
         public CancellationTokenSource Cancel { get; set; } = new();
@@ -54,7 +53,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         var scope = _serviceProvider.CreateScope();
         Guid id = Guid.NewGuid();
-        _status[id] = new RunnerStatus(configDefinition, scope)
+        var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
+        _status[id] = new RunnerStatus(configDefinition, runner, scope)
         {
             Cancel = new CancellationTokenSource()
         };
@@ -65,11 +65,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
         var status = _status[id];
-        if (status.FlowRunner is not null)
-        {
-            status.FlowRunner.Dispose();
-        }
-     
+
+        var runner = status.FlowRunner;
         var testName = DateTime.Now.ToString("yyyyMMdd") + id;
 
         var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.Category, status.Config.Name);
@@ -82,7 +79,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         _logger.LogInformation("流程开始:{TestName}", testName);
         bool needThrow = false;
 
-        for (int i = 1; i <= status.Config.Repeat; i++)
+        for (int i = 1; i <= status.Config.Repeat || status.Config.Repeat <= 0; i++)
         {
             if (status.Cancel.IsCancellationRequested)
             {
@@ -100,10 +97,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 bool needBreak = false;
                 try
                 {
-                    var runner = status.ServiceScope.ServiceProvider.GetRequiredService<FlowRunner>();
-
-                    status.FlowRunner = runner;
-                    FlowContext flowContext = new(status.Config, [id], i, errorTimes);
+                    FlowContext flowContext = new(status.Config, [id], i, errorTimes, null, null);
                     status.FlowContexts.AddOrUpdate(flowContext);
                     if (status.Config.Timeout > 0)
                     {

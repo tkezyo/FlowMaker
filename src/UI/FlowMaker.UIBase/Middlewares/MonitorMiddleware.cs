@@ -23,33 +23,33 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    public IObservable<IChangeSet<LogInfo>> GetLog(Guid? stepId, int? currentIndex, int? errorIndex)
-    {
-        if (FlowContext == null) throw new ArgumentNullException(nameof(FlowContext));
+    //public IObservable<IChangeSet<LogInfo>> GetLog(Guid? stepId, int? currentIndex, int? errorIndex)
+    //{
+    //    if (FlowContext == null) throw new ArgumentNullException(nameof(FlowContext));
 
-        return Observable.Create<IChangeSet<LogInfo>>(observer =>
-        {
-            IObservableList<StepOnceStatus> sourceList = new SourceList<StepOnceStatus>();
+    //    //return Observable.Create<IChangeSet<LogInfo>>(observer =>
+    //    //{
+    //    //    IObservableList<StepOnceStatus> sourceList = new SourceList<StepOnceStatus>();
 
 
-            var toCache = FlowContext.StepState.Connect()
-            .Filter(c =>
-            {
-                if (stepId.HasValue)
-                {
-                    return c.StepId == stepId;
-                }
-                return true;
-            })
-            .TransformMany(c => c.OnceLogs, c => $"{c.CurrentIndex}.{c.ErrorIndex}")
-            .Filter(c => c.CurrentIndex == currentIndex && c.ErrorIndex == errorIndex)
-            .BindToObservableList(out sourceList).Subscribe();
+    //    //    var toCache = FlowContext.StepState.Connect()
+    //    //    .Filter(c =>
+    //    //    {
+    //    //        if (stepId.HasValue)
+    //    //        {
+    //    //            return c.StepId == stepId;
+    //    //        }
+    //    //        return true;
+    //    //    })
+    //    //    .TransformMany(c => c.OnceLogs, c => $"{c.CurrentIndex}.{c.ErrorIndex}")
+    //    //    .Filter(c => c.CurrentIndex == currentIndex && c.ErrorIndex == errorIndex)
+    //    //    .BindToObservableList(out sourceList).Subscribe();
 
-            var d = sourceList.Connect().TransformMany(c => c.Logs).SubscribeSafe(observer);
+    //    //    var d = sourceList.Connect().TransformMany(c => c.Logs).SubscribeSafe(observer);
 
-            return new CompositeDisposable(toCache, d);
-        });
-    }
+    //    //    return new CompositeDisposable(toCache, d);
+    //    //});
+    //}
 
     public IObservable<IChangeSet<FlowGlobeData, string>> GetData()
     {

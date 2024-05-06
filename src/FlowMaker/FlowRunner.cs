@@ -75,7 +75,7 @@ public class FlowRunner : IDisposable
                            if (stepState.Value.Waits.Count == 0)
                            {
                                var step = FlowDefinition.Steps.First(c => c.Id == item);
-                               _ = Task.Run(() => Run(step, _cancellationToken), _cancellationToken);//如果不用Task.Run，遇到同步的步骤会等待步骤执行完才会执行下一个步骤
+                               _ = Run(step, _cancellationToken);
                            }
                        }
                    }
@@ -288,7 +288,7 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex);
+            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs);
             var stepState = Context.StepState.Lookup(step.Id);
             if (stepState.HasValue)
             {
@@ -319,7 +319,7 @@ public class FlowRunner : IDisposable
             }
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
-            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex);
+            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs);
             var stepState = Context.StepState.Lookup(step.Id);
             if (stepState.HasValue)
             {
@@ -577,8 +577,8 @@ public class FlowRunner : IDisposable
                 }
                 async Task Log(StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
                 {
-                    var info = new LogInfo(log, logLevel, DateTime.Now);
-                    stepOnceStatus.Logs.Add(info);
+                    var info = new LogInfo(log, logLevel, DateTime.Now, step.Id, stepOnceStatus.Index);
+                    Context.Logs.Add(info);
                     foreach (var item in _logMiddlewares)
                     {
                         await item.OnLog(Context, step, stepState.Value, stepOnceStatus, info, CancellationTokenSource.Token);
@@ -586,7 +586,7 @@ public class FlowRunner : IDisposable
                 }
                 if (state == StepState.Skip)
                 {
-                    StepOnceStatus once = new(i, errorIndex);
+                    StepOnceStatus once = new(i, errorIndex, Context.Index);
 
                     once.State = StepOnceState.Skip;
 
@@ -602,7 +602,7 @@ public class FlowRunner : IDisposable
                 }
                 while (true)
                 {
-                    StepOnceStatus once = new(i, errorIndex);
+                    StepOnceStatus once = new(i, errorIndex, Context.Index);
 
                     try
                     {

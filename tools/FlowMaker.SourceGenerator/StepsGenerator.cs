@@ -426,8 +426,8 @@ namespace FlowMaker.SourceGenerator
                             """);
                         if (isInterface)
                         {
-                            
-                        extensionBuilder.AppendLine($$"""
+
+                            extensionBuilder.AppendLine($$"""
                                     serviceDescriptors.AddFlowOption<{{item.Option.Name}}InstanceProvider>();
                             """);
                         }
@@ -444,7 +444,7 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}({{item.Option.Na
 {{outputPropStringBuilder}}
     public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
-        {{(isVoid ? string.Empty : "var result = ")}}{{(isTask ? "await " : "")}}_service.{{methodSymbol.Name}}({{inputString}});
+       {{(isVoid ? string.Empty : "var result = ")}}{{(isTask ? "await " : "await Task.Run(() => ")}}_service.{{methodSymbol.Name}}({{inputString}}){{(!isTask ? ")" : "")}};
 {{outputString}}
         await Task.CompletedTask;
     }
@@ -492,7 +492,7 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}(IServiceProvider
         {
             _service = _serviceProvider.GetRequiredKeyedService<{{item.Option.Name}}>(InstanceProvider);
         }
-        {{(isVoid ? string.Empty : "var result = ")}}{{(isTask ? "await " : "")}}_service.{{methodSymbol.Name}}({{inputString}});
+        {{(isVoid ? string.Empty : "var result = ")}}{{(isTask ? "await " : "await Task.Run(() => ")}}_service.{{methodSymbol.Name}}({{inputString}}){{(!isTask ? ")" : "")}};
 {{outputString}}
         await Task.CompletedTask;
     }
@@ -520,7 +520,7 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}(IServiceProvider
 """);
                         }
 
-                      
+
 
                     }
                 }

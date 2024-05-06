@@ -2,6 +2,7 @@
 using FlowMaker.Middlewares;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -11,7 +12,6 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Xml.Linq;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -51,6 +51,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public ObservableCollection<string> CustomLogs { get; set; } = [];
     [Reactive]
     public MonitorInfoViewModel? Model { get; set; }
+
+    [Reactive]
+    public bool CanDebug { get; set; }
     public FlowMakerDebugViewModel(FlowManager flowManager, IFlowProvider flowProvider, IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IMessageBoxManager messageBoxManager)
     {
         this._flowManager = flowManager;
@@ -58,6 +61,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         this._serviceProvider = serviceProvider;
         this._messageBoxManager = messageBoxManager;
         this._flowMakerOption = options.Value;
+        CanDebug = _flowMakerOption.CanDebug;
 
         foreach (var item in _flowMakerOption.CustomLogViews)
         {
@@ -168,7 +172,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         }).DisposeWith(flow.StepChange);
                         monitor.StepChange.Subscribe(c =>
                         {
-                         
+
                             var steps = flow.Steps;
 
                             foreach (var item in c.FlowIds.Skip(1))
@@ -214,7 +218,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                             {
                                 RxApp.MainThreadScheduler.Schedule(() =>
                                 {
-                                    var log = StepOnceLogs.FirstOrDefault(v => v.FlowCurrentIndex == c.FlowContext.CurrentIndex && v.FlowErrorIndex == c.FlowContext.ErrorIndex && v.StepCurrentIndex == c.StepOnce.CurrentIndex && v.StepErrorIndex == c.StepOnce.ErrorIndex && c.Step.Id == v.StepId);
+                                    var log = StepOnceLogs.FirstOrDefault(v => v.Index == c.StepOnce.Index && c.Step.Id == v.StepId);
                                     if (log is null)
                                     {
                                         StepOnceLogs.Add(new StepLogViewModel
@@ -227,10 +231,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                             EndTime = c.StepOnce.EndTime,
                                             Inputs = c.StepOnce.Inputs,
                                             Outputs = c.StepOnce.Outputs,
-                                            StepCurrentIndex = c.StepOnce.CurrentIndex,
-                                            StepErrorIndex = c.StepOnce.ErrorIndex,
-                                            FlowCurrentIndex = c.FlowContext.CurrentIndex,
-                                            FlowErrorIndex = c.FlowContext.ErrorIndex,
+                                            Index = c.StepOnce.Index,
                                         });
                                     }
                                     else
@@ -690,7 +691,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         var title = "牛马编辑器" + " " + FlowCategory + " " + FlowName;
         _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
         {
-            // LoadFlows();
+            //LoadFlows();
         });
     }
     public async ValueTask DisposeAsync()
@@ -713,10 +714,20 @@ public class DataDisplayViewModel : ReactiveObject
                      .DisposeMany()
                      .Subscribe()
                      .DisposeWith(Disposables);
+
+        flowContext.Logs.Connect()
+                     .Transform(c => new LogInfoViewModel(c))
+                     .ObserveOn(RxApp.MainThreadScheduler)
+                   .Bind(out _log)
+                   .DisposeMany()
+                   .Subscribe()
+                   .DisposeWith(Disposables);
     }
     public CompositeDisposable Disposables { get; set; } = [];
     public ReadOnlyObservableCollection<FlowGlobeDataViewModel> FlowGlobeData => _data;
     private readonly ReadOnlyObservableCollection<FlowGlobeDataViewModel> _data;
+    public ReadOnlyObservableCollection<LogInfoViewModel> Log => _log;
+    private readonly ReadOnlyObservableCollection<LogInfoViewModel> _log;
 
 }
 
@@ -741,4 +752,18 @@ public class FlowGlobeDataViewModel(FlowGlobeData flowGlobeData) : ReactiveObjec
     /// </summary>
     [Reactive]
     public string? Value { get; set; } = flowGlobeData.Value;
+}
+
+public class LogInfoViewModel(LogInfo logInfo) : ReactiveObject
+{
+    [Reactive]
+    public string Log { get; set; } = logInfo.Log;
+    [Reactive]
+    public LogLevel Level { get; set; } = logInfo.LogLevel;
+    [Reactive]
+    public DateTime Time { get; set; } = logInfo.Time;
+    [Reactive]
+    public Guid StepId { get; set; } = logInfo.StepId;
+    [Reactive]
+    public string Index { get; set; } = logInfo.Index;
 }

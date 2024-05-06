@@ -1,5 +1,4 @@
 ﻿using FlowMaker.Middlewares;
-using FlowMaker.Persistence;
 using Microsoft.Extensions.Logging;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -14,14 +13,10 @@ public partial class FlowMakerLogViewModel : ViewModelBase
 {
     private readonly FlowManager _flowManager;
 
-    public static string Category => "Log";
-
-    public static string Name => "Log";
 
     public Guid? Id { get; set; }
 
-    public string? FlowCategory { get; set; }
-    public string? FlowName { get; set; }
+  
 
     public FlowMakerLogViewModel(FlowManager flowManager)
     {
@@ -112,14 +107,10 @@ public class StepLogViewModel : ReactiveObject
     public DateTime? StartTime { get; set; }
     [Reactive]
     public DateTime? EndTime { get; set; }
+   
     [Reactive]
-    public int FlowCurrentIndex { get; set; }
-    [Reactive]
-    public int FlowErrorIndex { get; set; }
-    [Reactive]
-    public int StepCurrentIndex { get; set; }
-    [Reactive]
-    public int StepErrorIndex { get; set; }
+    public required string Index { get; set; }
+
 
     public List<NameValue> Inputs { get; set; } = [];
     public List<NameValue> Outputs { get; set; } = [];
@@ -127,14 +118,3 @@ public class StepLogViewModel : ReactiveObject
     public required ObservableCollection<LogInfoViewModel> Logs { get; set; }
 }
 
-
-
-public class LogInfoViewModel(string log, LogLevel logLevel, DateTime time) : ReactiveObject
-{
-    [Reactive]
-    public string Log { get; set; } = log;
-    [Reactive]
-    public LogLevel Level { get; set; } = logLevel;
-    [Reactive]
-    public DateTime Time { get; set; } = time;
-}

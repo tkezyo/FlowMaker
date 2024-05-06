@@ -10,7 +10,14 @@ public class FlowMakerOption
     public string CustomPageRootDir { get; set; } = string.Empty;
     public string DebugPageRootDir { get; set; } = string.Empty;
     public string FlowRootDir { get; set; } = string.Empty;
+    /// <summary>
+    /// 程序启动时是否自动运行
+    /// </summary>
     public bool AutoRun { get; set; } = false;
+    /// <summary>
+    /// 是否可调试
+    /// </summary>
+    public bool CanDebug { get; set; } = true;
     /// <summary>
     /// 是否可编辑
     /// </summary>

@@ -148,139 +148,152 @@
             </rxui:RoutedViewHost.ViewLocator>
         </rxui:RoutedViewHost>
 
-        <ScrollViewer>
-            <StackPanel>
-                <TreeView ItemsSource="{Binding Model.Steps}"
-                          Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityReConverter},ElementName=log}">
-                    <TreeView.ItemTemplate>
-                        <HierarchicalDataTemplate
+        <Grid>
+            <TreeView ItemsSource="{Binding Model.Steps}"
+                       Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityReConverter},ElementName=log}" >
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate
                               ItemsSource="{Binding Steps}"
                               DataType="vms:MonitorStepInfoViewModel">
-                            <StackPanel Orientation="Horizontal">
-                                <Button 
-Width="15" Height="15" Margin="3" hc:BorderElement.CornerRadius="10" Content="">
-                                    <Button.CommandParameter>
-                                        <MultiBinding Converter="{StaticResource MonitorDebugConverter}">
-                                            <Binding Path="DataContext.Model" ElementName="page"/>
-                                            <Binding Path="."/>
-                                        </MultiBinding>
-                                    </Button.CommandParameter>
-                                    <Button.Style>
-                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Debugging}" Value="True">
-                                                    <Setter Property="Background" Value="Orange"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsDebug}" Value="True">
-                                                    <Setter Property="BorderBrush" Value="Red"/>
-                                                    <Setter Property="BorderThickness" Value="3"/>
-                                                    <Setter Property="Command" Value="{Binding DataContext.RemoveDebugCommand,ElementName=page}"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding IsDebug}" Value="False">
-                                                    <Setter Property="Command" Value="{Binding DataContext.AddDebugCommand,ElementName=page}"/>
-                                                </DataTrigger>
+                        <StackPanel Orientation="Horizontal">
+                            <Button 
+Width="15" Height="15" Margin="3" 
+                                    Visibility="{Binding DataContext.CanDebug,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}"
+                                    hc:BorderElement.CornerRadius="10" Content="">
+                                <Button.CommandParameter>
+                                    <MultiBinding Converter="{StaticResource MonitorDebugConverter}">
+                                        <Binding Path="DataContext.Model" ElementName="page"/>
+                                        <Binding Path="."/>
+                                    </MultiBinding>
+                                </Button.CommandParameter>
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Debugging}" Value="True">
+                                                <Setter Property="Background" Value="Orange"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDebug}" Value="True">
+                                                <Setter Property="BorderBrush" Value="Red"/>
+                                                <Setter Property="BorderThickness" Value="3"/>
+                                                <Setter Property="Command" Value="{Binding DataContext.RemoveDebugCommand,ElementName=page}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsDebug}" Value="False">
+                                                <Setter Property="Command" Value="{Binding DataContext.AddDebugCommand,ElementName=page}"/>
+                                            </DataTrigger>
 
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                                <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding State}" Value="Error">
-                                                    <Setter Property="Foreground" Value="OrangeRed"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding State}" Value="Complete">
-                                                    <Setter Property="Foreground" Value="ForestGreen"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding State}" Value="Skip">
-                                                    <Setter Property="Foreground" Value="YellowGreen"/>
-                                                </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding State}" Value="Error">
+                                                <Setter Property="Foreground" Value="OrangeRed"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding State}" Value="Complete">
+                                                <Setter Property="Foreground" Value="ForestGreen"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding State}" Value="Skip">
+                                                <Setter Property="Foreground" Value="YellowGreen"/>
+                                            </DataTrigger>
 
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
-                                <TextBlock Margin="10,0,0,0" Text="{Binding CurrentIndex}" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Repeat,StringFormat={}/{0}}" VerticalAlignment="Center"/>
-                                <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Retry,StringFormat={}/{0}}" VerticalAlignment="Center"/>
-                                <TextBlock Margin="10,0,0,0" Text="F" Visibility="{Binding Finally,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="Purple" VerticalAlignment="Center"/>
-                                <TextBlock Margin="10,0,0,0" Foreground="Red" VerticalAlignment="Center">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ErrorHandling}" Value="Finally">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Setter Property="Text" Value="E"/>
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding ErrorHandling}" Value="Terminate">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Setter Property="Text" Value="T"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                            </StackPanel>
-                        </HierarchicalDataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
-                <Grid  Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=log}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding CurrentIndex}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Repeat,StringFormat={}/{0}}" VerticalAlignment="Center"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding Retry,StringFormat={}/{0}}" VerticalAlignment="Center"/>
+                            <TextBlock Margin="10,0,0,0" Text="F" ToolTip="总是执行" Visibility="{Binding Finally,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="Purple" VerticalAlignment="Center"/>
+                            <TextBlock Margin="10,0,0,0" Foreground="Red" VerticalAlignment="Center">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ErrorHandling}" Value="Finally">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Setter Property="Text" Value="E"/>
+                                                <Setter Property="ToolTip" Value="错误后停止"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding ErrorHandling}" Value="Terminate">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Setter Property="Text" Value="T"/>
+                                                <Setter Property="ToolTip" Value="错误后立即退出"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+            <Grid 
+                    Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=log}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
-                    <DataGrid Grid.Column="0"
+                <DataGrid Grid.Column="0"
   Style="{StaticResource DataGrid.Small}"
   ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single" EnableRowVirtualization="True" >
-                        <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding State}" Value="Error">
-                                        <Setter Property="Background" Value="Pink" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding State}" Value="Complete">
-                                        <Setter Property="Background" Value="SpringGreen" />
-                                    </DataTrigger>
-                                    <!-- 失去焦点时的背景颜色触发器 -->
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
-                                            <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="False"/>
-                                        </MultiDataTrigger.Conditions>
-                                        <Setter Property="Background" Value="#F5F5F5"/>
-                                    </MultiDataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGrid.RowStyle>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
-                            <DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
-                            <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
-                            <DataGridTextColumn Header="流程执行次数" Binding="{Binding  FlowCurrentIndex}"/>
-                            <DataGridTextColumn Header="步骤执行次数" Binding="{Binding  StepCurrentIndex}"/>
-                            <DataGridTextColumn Header="流程错误次数" Binding="{Binding  FlowErrorIndex}"/>
-                            <DataGridTextColumn Header="步骤错误次数" Binding="{Binding  StepErrorIndex}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding State}" Value="Error">
+                                    <Setter Property="Background" Value="Pink" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding State}" Value="Complete">
+                                    <Setter Property="Background" Value="SpringGreen" />
+                                </DataTrigger>
+                                <!-- 失去焦点时的背景颜色触发器 -->
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsSelected, RelativeSource={RelativeSource Self}}" Value="True"/>
+                                        <Condition Binding="{Binding IsKeyboardFocusWithin, RelativeSource={RelativeSource AncestorType=DataGrid}}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter Property="Background" Value="#F5F5F5"/>
+                                </MultiDataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
+                        <DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+                        <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:HH:mm:ss}}"/>
+                        <DataGridTextColumn Header="执行次数" Binding="{Binding  Index}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
 
-                    <DataGrid Grid.Column="1" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
-                              Style="{StaticResource DataGrid.Small}" 
-                              AutoGenerateColumns="False">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
-                            <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
+                <DataGrid Grid.Column="1" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
+            Style="{StaticResource DataGrid.Small}" 
+            AutoGenerateColumns="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
+                        <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
+                    </DataGrid.Columns>
+                </DataGrid>
 
-            </StackPanel>
+                <ListBox Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding DataDisplay.Log}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Log}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+            </Grid>
+
+        </Grid>
 
 
-        </ScrollViewer>
     </DockPanel>
 </rxui:ReactiveUserControl>

@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace FlowMaker;
 
-public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex)
+public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null)
 {
     /// <summary>
     /// 流程Id
@@ -18,6 +18,7 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// 执行错误下标
     /// </summary>
     public int ErrorIndex { get; } = errorIndex;
+    public string Index { get; set; } = $"{(string.IsNullOrEmpty(parentIndex) ? null : parentIndex + ",")}{currentIndex}.{errorIndex}";
     /// <summary>
     /// 开始时间
     /// </summary>
@@ -55,11 +56,12 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// 所有的全局变量
     /// </summary>
     public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
+
+    public SourceList<LogInfo> Logs { get; set; } = logger ?? new();
 }
 
 public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus, Func<StepOnceStatus, string, LogLevel, Task> logAction)
 {
-
     public FlowStep Step { get; } = step;
     public FlowContext FlowContext { get; } = flowContext;
     public int CurrentIndex { get; } = stepOnceStatus.CurrentIndex;
@@ -73,7 +75,7 @@ public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus 
     }
 }
 
-public class StepOnceStatus(int currentIndex, int errorIndex)
+public class StepOnceStatus(int currentIndex, int errorIndex, string parentIndex)
 {
     /// <summary>
     /// 当前下标
@@ -83,6 +85,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// 执行错误下标
     /// </summary>
     public int ErrorIndex { get; } = errorIndex;
+    public string Index { get; set; } = $"{parentIndex}-{currentIndex}.{errorIndex}";
 
     public DateTime? StartTime { get; set; }
 
@@ -97,10 +100,6 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     /// </summary>
     public List<NameValue> Outputs { get; set; } = [];
     public StepOnceState State { get; set; }
-    /// <summary>
-    /// 日志
-    /// </summary>
-    public SourceList<LogInfo> Logs { get; set; } = new();
 
     /// <summary>
     /// 附加属性
@@ -108,7 +107,7 @@ public class StepOnceStatus(int currentIndex, int errorIndex)
     public Dictionary<string, object> ExtraData { get; set; } = [];
 }
 
-public record LogInfo(string Log, LogLevel LogLevel, DateTime Time);
+public record LogInfo(string Log, LogLevel LogLevel, DateTime Time, Guid StepId, string Index);
 public class StepStatus
 {
     public Guid StepId { get; set; }
