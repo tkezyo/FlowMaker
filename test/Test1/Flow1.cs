@@ -43,11 +43,10 @@ public partial class Flow1 : IStep
     /// 执行的命令
     /// </summary>
     /// <returns></returns>
-    public Task Run(StepContext stepContext, CancellationToken cancellationToken)
+    public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
         Prop3 = 100;
-        stepContext.Log("测试日志", LogLevel.Information);
-        return Task.CompletedTask;
+        await stepContext.Log("测试日志", LogLevel.Information);
     }
 
 }
@@ -73,6 +72,4 @@ public partial class ValueConverter : IDataConverter<int>
     {
         return Task.FromResult(Prop1 + Prop2);
     }
-
-
 }

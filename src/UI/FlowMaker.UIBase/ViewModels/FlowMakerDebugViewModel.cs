@@ -82,7 +82,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
         EditFlowCommand = ReactiveCommand.CreateFromTask(EditFlow);
         ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
-        ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
+
+        this.WhenAnyValue(c => c.SelectedStepOnce).WhereNotNull().Subscribe(ShowStepOnceLog);
     }
 
     public CompositeDisposable? Disposables { get; set; }
@@ -716,8 +717,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         }
         ShowLog = true;
     }
-    
-    public ReactiveCommand<StepLogViewModel, Unit> ShowStepOnceLogCommand { get; }
+    [Reactive]
+    public StepLogViewModel? SelectedStepOnce { get; set; }
     public void ShowStepOnceLog(StepLogViewModel monitorStepInfoViewModel)
     {
         StepId = monitorStepInfoViewModel.StepId;

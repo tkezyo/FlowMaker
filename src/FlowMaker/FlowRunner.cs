@@ -432,9 +432,11 @@ public class FlowRunner : IDisposable
             foreach (var item in flowInfo.Data)//写入 globe data
             {
                 var value = Context.ConfigDefinition.Data.FirstOrDefault(c => c.Name == item.Name);
-                var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value);
-                globeData.IsInput = item.IsInput;
-                globeData.IsOutput = item.IsOutput;
+                var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value)
+                {
+                    IsInput = item.IsInput,
+                    IsOutput = item.IsOutput
+                };
                 Context.Data.AddOrUpdate(globeData);
             }
 
