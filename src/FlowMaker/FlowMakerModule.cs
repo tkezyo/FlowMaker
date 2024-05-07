@@ -1,14 +1,16 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Autofac;
-using Volo.Abp.Modularity;
+﻿using FlowMaker.Persistence;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace FlowMaker;
 
-[DependsOn(typeof(AbpAutofacModule))]
-public class FlowMakerModule : AbpModule
+public class FlowMakerModule : Ty.ModuleBase
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
+    public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
     {
-        context.Services.AddSingleton<MainWindow>();
+        hostApplicationBuilder.Services.AddTransient<FlowRunner>();
+        hostApplicationBuilder.Services.AddSingleton<FlowManager>();
+        hostApplicationBuilder.Services.AddTransient<IFlowProvider, FileFlowProvider>();
+        return Task.CompletedTask;
     }
 }

@@ -1,0 +1,126 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+                 xmlns:rxui="http://reactiveui.net"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                          x:Name="page"
+        xmlns:app="clr-namespace:Ty;assembly=Ty.AvaloniaBase"
+             x:Class="FlowMaker.FlowMakerMainView">
+	<Grid>
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="Auto"/>
+			<ColumnDefinition Width="*"/>
+		</Grid.ColumnDefinitions>
+		<rxui:RoutedViewHost Router="{Binding Router}" Grid.ColumnSpan="5" Margin="0,0,0,0">
+			<rxui:RoutedViewHost.DefaultContent>
+				<TextBlock Text="载入中。。"
+		   HorizontalAlignment="Center"
+		   VerticalAlignment="Center" />
+			</rxui:RoutedViewHost.DefaultContent>
+			<rxui:RoutedViewHost.ViewLocator>
+				<app:AppViewLocator />
+			</rxui:RoutedViewHost.ViewLocator>
+		</rxui:RoutedViewHost>
+		<Expander  ExpandDirection="Up"  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom"  Grid.Column="0">
+			<Expander.Header>
+				<TextBlock Text="{Binding Runnings.Count,StringFormat=记录 ({0})}"/>
+			</Expander.Header>
+			<ScrollViewer  Padding="3,0" >
+				<ItemsControl  ItemsSource="{Binding Runnings}" VerticalAlignment="Bottom">
+					<ItemsControl.Background>
+						<SolidColorBrush Color="#CCCCCCCC"/>
+					</ItemsControl.Background>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<StackPanel Orientation="Vertical" Margin="2,4">
+								<Button Content="{Binding DisplayName}" Command="{Binding DataContext.ShowLogCommand, ElementName=page}" CommandParameter="{Binding .}"/>
+								<ProgressBar Value="{Binding Percent}" FontSize="9" Height="10"  />
+								<Separator/>
+							</StackPanel>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+		</Expander>
+		<Expander ExpandDirection="Up"
+                  MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom"  Grid.Column="1">
+			<Expander.Header>
+				<StackPanel Orientation="Horizontal">
+					<Button Content="+"   Padding="5,0"  FontSize="14" FontWeight="ExtraBold" Command="{Binding CreateCommand}"   >
+						<Button.Foreground>
+							<SolidColorBrush Color="Blue"/>
+						</Button.Foreground>
+					</Button>
+					<TextBlock Text="流程" VerticalAlignment="Center"/>
+				</StackPanel>
+			</Expander.Header>
+			<ScrollViewer  Padding="3,0" >
+				<ItemsControl ItemsSource="{Binding Categories}" >
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Expander Header="{Binding Category}">
+								<ItemsControl Padding="4" ItemsSource="{Binding Flows}">
+									<ItemsControl.Background>
+										<SolidColorBrush Color="#CCCCCCCC"/>
+									</ItemsControl.Background>
+									<ItemsControl.ItemTemplate>
+										<DataTemplate>
+											<StackPanel>
+												<StackPanel Orientation="Horizontal">
+													<Button Content="{Binding Name}"  Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+													<Button Padding="4,0"  
+															Content="编辑" BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
+														<Button.Foreground>
+															<SolidColorBrush Color="Blue"/>
+														</Button.Foreground>
+													</Button>
+													<Button  Padding="4,0"   Content="删除" BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
+														<Button.Foreground>
+															<SolidColorBrush Color="Red"/>
+														</Button.Foreground>
+													</Button>
+												</StackPanel>
+
+												<ItemsControl Margin="8" ItemsSource="{Binding Configs}">
+													<ItemsControl.ItemTemplate>
+														<DataTemplate>
+															<StackPanel Orientation="Horizontal">
+																<Button Content="{Binding ConfigName,StringFormat={}-{0}}"  Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+																<Button  Padding="4,0"  Content="删除" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
+																	<Button.Foreground>
+																		<SolidColorBrush Color="Red"/>
+																	</Button.Foreground>
+																</Button>
+															</StackPanel>
+														</DataTemplate>
+													</ItemsControl.ItemTemplate>
+												</ItemsControl>
+											</StackPanel>
+										</DataTemplate>
+									</ItemsControl.ItemTemplate>
+								</ItemsControl>
+							</Expander>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
+		</Expander>
+		<Button Content="{Binding PageName}" Grid.Column="2"  VerticalAlignment="Bottom" Command="{Binding ChangeViewCommand}" ></Button>
+		<ItemsControl ItemsSource="{Binding Menus}" Grid.Column="3"  VerticalAlignment="Bottom">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Horizontal"></StackPanel>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<Button Content="{Binding Name}" Command="{Binding Command}" CommandParameter="{Binding CommandParameter}"/>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+	</Grid>
+</UserControl>

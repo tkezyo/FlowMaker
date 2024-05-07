@@ -1,0 +1,70 @@
+﻿<UserControl x:Class="FlowMaker.Controls.FlowInputView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+                           xmlns:hc="https://handyorg.github.io/handycontrol"
+                    xmlns:models="clr-namespace:FlowMaker;assembly=FlowMaker"
+                    xmlns:converters="clr-namespace:FlowMaker.Converters"
+             xmlns:local="clr-namespace:FlowMaker.Controls"
+                    xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase" d:DataContext="{d:DesignInstance Type=vms:FlowStepInputViewModel}"
+             mc:Ignorable="d" 
+             x:Name="page"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend}"></Style>
+        <Style TargetType="TextBox" BasedOn="{StaticResource TextBoxExtend}">
+            <Setter Property="MinHeight" Value="20" />
+            <Setter Property="Padding" Value="6,2,6,1" />
+        </Style>
+        <Style TargetType="RadioButton" BasedOn="{StaticResource RadioButtonBaseStyle}">
+            <Setter Property="Margin" Value="0,0,10,0"/>
+            <Setter Property="VerticalAlignment" Value="Bottom"/>
+        </Style>
+        <Style TargetType="hc:NumericUpDown" BasedOn="{StaticResource NumericUpDownExtend}"></Style>
+        <converters:EqualToBoolConverter x:Key="EqualConverter" />
+        <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
+        <converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
+    </UserControl.Resources>
+    <StackPanel 
+                IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
+        <StackPanel Orientation="Horizontal">
+            <TextBlock Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityReConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" ToolTip="{Binding Type}" FontWeight="Bold"></TextBlock>
+            <TextBox Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称" ToolTip="{Binding Type}"></TextBox>
+            <RadioButton Content="普通" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
+            <RadioButton Content="选项" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Option}}" GroupName="{Binding Id}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+            <RadioButton Content="数组" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Array}}" GroupName="{Binding Id}" Visibility="{Binding IsArray,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+            <RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Globe}}" GroupName="{Binding Id}" Visibility="{Binding HasGlobe,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+            <RadioButton Content="转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Converter}}" GroupName="{Binding Id}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+            <RadioButton Content="事件" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Event}}" GroupName="{Binding Id}"></RadioButton>
+        </StackPanel>
+        <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Normal}}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" />
+        <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Event}}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" />
+
+        <ItemsControl ItemsSource="{Binding Dims}" Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Array}}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBox Text="{Binding Count,UpdateSourceTrigger=PropertyChanged}"  hc:InfoElement.Title="{Binding Name}" Style="{StaticResource TextBoxExtend.Small}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        
+        <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Option}}" ItemsSource="{Binding Options}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
+
+        <ComboBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Globe}}" ItemsSource="{Binding GlobeDatas}" SelectedValue="{Binding Value}" SelectedValuePath="Name" DisplayMemberPath="DisplayName" />
+
+        <StackPanel Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Converter}}" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="5,0,0,0">
+
+            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" ItemsSource="{Binding ConverterCategorys}" hc:InfoElement.Title="分组" hc:TitleElement.TitlePlacement="Left" SelectedItem="{Binding ConverterCategory}"></ComboBox>
+            <ComboBox Style="{StaticResource ComboBoxExtend.Small}" HorizontalContentAlignment="Stretch" ItemsSource="{Binding ConverterDefinitions}" hc:InfoElement.Title="名称"  hc:TitleElement.TitlePlacement="Left" SelectedValue="{Binding ConverterName}" SelectedValuePath="Name" DisplayMemberPath="Name"></ComboBox>
+        </StackPanel>
+
+        <ItemsControl ItemsSource="{Binding SubInputs}" Padding="10,0,0,0" BorderBrush="#88888888" BorderThickness="1,0,0,0">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <local:FlowInputView/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\..\..\common.props" />
+
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.17763</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<RootNamespace>FlowMaker</RootNamespace>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\..\README.md" Pack="true" PackagePath="\" />
+		<None Include="..\..\..\LICENSE" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="HandyControl" Version="3.5.1" />
+	  <PackageReference Include="MahApps.Metro.IconPacks.PixelartIcons" Version="4.11.0" />
+	  <PackageReference Include="Ty.WPFBase" Version="0.20.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\FlowMaker.UIBase\FlowMaker.UIBase.csproj" />
+	</ItemGroup>
+
+</Project>
