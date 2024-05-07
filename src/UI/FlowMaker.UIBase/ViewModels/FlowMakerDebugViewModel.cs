@@ -706,7 +706,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public string? Index { get; set; }
     [Reactive]
     public string LogName { get; set; } = "全部";
-
+    [Reactive]
+    public bool ShowLog { get; set; }
     public ReactiveCommand<MonitorStepInfoViewModel, Unit> ShowStepLogCommand { get; }
     public void ShowStepLog(MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
@@ -718,7 +719,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = monitorStepInfoViewModel.Id;
             DataDisplay.Index = null;
         }
-        PageType = PageType.Log;
+        ShowLog = true;
     }
     [Reactive]
     public StepLogViewModel? SelectedStepOnce { get; set; }
@@ -733,7 +734,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = monitorStepInfoViewModel.StepId;
             DataDisplay.Index = monitorStepInfoViewModel.Index;
         }
-        PageType = PageType.Log;
+        ShowLog = true;
     }
 
     public ReactiveCommand<Unit, Unit> ShowAllLogCommand { get; }
@@ -747,7 +748,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = null;
             DataDisplay.Index = null;
         }
-        PageType = PageType.Log;
+        ShowLog = true;
     }
 
     [Reactive]
@@ -867,6 +868,5 @@ public enum PageType
     Tree,
     List,
     Data,
-    Log,
     Setting
 }

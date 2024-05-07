@@ -46,7 +46,6 @@
                 <iconPacks:PackIconPixelartIcons Kind="Trash" />
             </Button>
 
-
         </StackPanel>
         <Grid Grid.Row="1">
             <Grid
@@ -199,19 +198,6 @@ AutoGenerateColumns="False" IsReadOnly="True">
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
-            <Grid
-                Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Log}}">
-                <Grid Grid.Row="1" Grid.ColumnSpan="2">
-                    <ListBox ItemsSource="{Binding DataDisplay.Log}" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Log}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <Button Content="{Binding LogName}" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ShowAllLogCommand}" />
-                </Grid>
-            </Grid>
             <Grid 
                 Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Setting}}">
                 <ScrollViewer>
@@ -280,7 +266,20 @@ AutoGenerateColumns="False" IsReadOnly="True">
             </rxui:RoutedViewHost.ViewLocator>
         </rxui:RoutedViewHost>
 
-
+        <hc:Drawer  MaskCanClose="True" IsOpen="{Binding ShowLog}">
+            <Border Background="{DynamicResource RegionBrush}" Width="300" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
+                <Grid Grid.Row="1" Grid.ColumnSpan="2">
+                    <ListBox ItemsSource="{Binding DataDisplay.Log}" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Log}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Content="{Binding LogName}" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ShowAllLogCommand}" />
+                </Grid>
+            </Border>
+        </hc:Drawer>
 
     </Grid>
 

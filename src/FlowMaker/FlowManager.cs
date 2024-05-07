@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Splat;
 using System.Collections.Concurrent;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace FlowMaker;
@@ -53,6 +54,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         var scope = _serviceProvider.CreateScope();
         Guid id = Guid.NewGuid();
+
         var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
         _status[id] = new RunnerStatus(configDefinition, runner, scope)
         {
