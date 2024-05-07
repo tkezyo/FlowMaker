@@ -856,22 +856,13 @@ namespace FlowMaker.ViewModels
                 return;
             }
             var id = await _flowManager.Init(config);
-            FlowResult? result = null;
             await foreach (var item in _flowManager.Run(id))
             {
-                if (result is null)
+                foreach (var output in action.Outputs)
                 {
-                    result = item;
+                    var data = item.Data.FirstOrDefault(c => c.Name == output.Name);
+                    output.Value = data?.Value;
                 }
-            }
-            if (result is null)
-            {
-                return;
-            }
-            foreach (var item in action.Outputs)
-            {
-                var data = result.Data.FirstOrDefault(c => c.Name == item.Name);
-                item.Value = data?.Value;
             }
         }
         #endregion
@@ -914,7 +905,7 @@ namespace FlowMaker.ViewModels
         public required string Category { get; set; }
         public required string Name { get; set; }
         public DefinitionType Type { get; set; }
-
+        public string? ConfigName { get; set; }
         public SpikeResizable ActionSize { get; set; } = new SpikeResizable();
 
 

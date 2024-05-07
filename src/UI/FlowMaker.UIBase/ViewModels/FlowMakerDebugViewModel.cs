@@ -82,6 +82,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
         EditFlowCommand = ReactiveCommand.CreateFromTask(EditFlow);
         ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
+        ShowAllLogCommand = ReactiveCommand.Create(ShowAllLog);
+        ChangePageTypeCommand = ReactiveCommand.Create(ChangePageType);
 
         this.WhenAnyValue(c => c.SelectedStepOnce).WhereNotNull().Subscribe(ShowStepOnceLog);
     }
@@ -702,20 +704,21 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public Guid? StepId { get; set; }
     [Reactive]
     public string? Index { get; set; }
-
     [Reactive]
-    public bool ShowLog { get; set; }
+    public string LogName { get; set; } = "全部";
+
     public ReactiveCommand<MonitorStepInfoViewModel, Unit> ShowStepLogCommand { get; }
     public void ShowStepLog(MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
         StepId = monitorStepInfoViewModel.Id;
+        LogName = monitorStepInfoViewModel.DisplayName;
         Index = null;
         if (DataDisplay is not null)
         {
             DataDisplay.StepId = monitorStepInfoViewModel.Id;
             DataDisplay.Index = null;
         }
-        ShowLog = true;
+        PageType = PageType.Log;
     }
     [Reactive]
     public StepLogViewModel? SelectedStepOnce { get; set; }
@@ -723,12 +726,38 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     {
         StepId = monitorStepInfoViewModel.StepId;
         Index = monitorStepInfoViewModel.Index;
+        LogName = monitorStepInfoViewModel.Name + monitorStepInfoViewModel.Index;
+
         if (DataDisplay is not null)
         {
             DataDisplay.StepId = monitorStepInfoViewModel.StepId;
             DataDisplay.Index = monitorStepInfoViewModel.Index;
         }
-        ShowLog = true;
+        PageType = PageType.Log;
+    }
+
+    public ReactiveCommand<Unit, Unit> ShowAllLogCommand { get; }
+    public void ShowAllLog()
+    {
+        StepId = null;
+        Index = null;
+        LogName = "全部";
+        if (DataDisplay is not null)
+        {
+            DataDisplay.StepId = null;
+            DataDisplay.Index = null;
+        }
+        PageType = PageType.Log;
+    }
+
+    [Reactive]
+    public PageType PageType { get; set; }
+
+    public ReactiveCommand<Unit, Unit> ChangePageTypeCommand { get; }
+    public void ChangePageType()
+    {
+        //切换下一个PageType
+        PageType = (PageType)(((int)PageType + 1) % Enum.GetValues<PageType>().Length);
     }
 
     public async ValueTask DisposeAsync()
@@ -831,4 +860,13 @@ public class LogInfoViewModel(LogInfo logInfo) : ReactiveObject
     public Guid StepId { get; set; } = logInfo.StepId;
     [Reactive]
     public string Index { get; set; } = logInfo.Index;
+}
+
+public enum PageType
+{
+    Tree,
+    List,
+    Data,
+    Log,
+    Setting
 }

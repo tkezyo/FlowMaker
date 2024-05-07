@@ -18,247 +18,139 @@
         <Style TargetType="ComboBox" BasedOn="{StaticResource ComboBoxExtend.Small}"></Style>
         <converters:CountToVisibilityReConverter x:Key="CountToVisibilityReConverter" />
         <converters:MonitorDebugConverter x:Key="MonitorDebugConverter" />
+        <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
     </UserControl.Resources>
-    <DockPanel>
-        <ToolBarTray DockPanel.Dock="Top" Orientation="Horizontal">
-            <ToolBar>
-                <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="20" Width="20" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}"></hc:CircleProgressBar>
-                <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" Style="{StaticResource TextBlockDefault}"/>
-                <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,0">
+            <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
+                <StackPanel Orientation="Horizontal">
                     <iconPacks:PackIconPixelartIcons Kind="Play" />
-                </Button>
-
-                <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="CloseBox" />
-                </Button>
-                <Button Margin="2,0,0,0" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="Trash" />
-                </Button>
-
-                <ToggleButton x:Name="edit" Style="{StaticResource ToggleButtonDefault.Small}" Margin="2,0,0,0">
-                    <iconPacks:PackIconPixelartIcons Kind="EditBox" />
-                </ToggleButton>
-
-                <ToggleButton x:Name="event" Margin="2,0,0,0">
-                    <ToggleButton.Style>
-                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonDefault.Small}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="True">
-                                    <Setter Property="Content">
-                                        <Setter.Value>
-                                            <iconPacks:PackIconPixelartIcons Kind="MailCheck" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="False">
-                                    <Setter Property="Content">
-                                        <Setter.Value>
-                                            <iconPacks:PackIconPixelartIcons Kind="Mail" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
-
-                <ToggleButton x:Name="log" Margin="2,0,0,0" IsChecked="{Binding ShowLog}">
-                    <ToggleButton.Style>
-                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonDefault.Small}">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="True">
-                                    <Setter Property="Content">
-                                        <Setter.Value>
-                                            <iconPacks:PackIconPixelartIcons Kind="BookOpen" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource Self}}" Value="False">
-                                    <Setter Property="Content">
-                                        <Setter.Value>
-                                            <iconPacks:PackIconPixelartIcons Kind="Book" />
-                                        </Setter.Value>
-                                    </Setter>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
+                    <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" />
+                </StackPanel>
+            </Button>
+            <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
+                <StackPanel Orientation="Horizontal">
+                    <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}"></hc:CircleProgressBar>
+                    <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" />
+                </StackPanel>
+            </Button>
+            <Button Margin="2,0,0,0" Command="{Binding ChangePageTypeCommand}"  Style="{StaticResource ButtonInfo.Small}" >
+                <iconPacks:PackIconPixelartIcons Kind="Reload" />
+            </Button>
+            <Button Margin="2,0,0,0" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
+                <iconPacks:PackIconPixelartIcons Kind="Trash" />
+            </Button>
 
 
+        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid
+                Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Tree}}">
+                <TreeView ItemsSource="{Binding Model.Steps}"
+               Style="{StaticResource TreeView.Small}">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate
+                       ItemsSource="{Binding Steps}"
+                       DataType="vms:MonitorStepInfoViewModel">
+                            <StackPanel Orientation="Horizontal">
+                                <Button 
+                             Width="15" Height="15" Margin="3" 
+                             Visibility="{Binding DataContext.CanDebug,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}"
+                             hc:BorderElement.CornerRadius="10" Content="">
+                                    <Button.CommandParameter>
+                                        <MultiBinding Converter="{StaticResource MonitorDebugConverter}">
+                                            <Binding Path="DataContext.Model" ElementName="page"/>
+                                            <Binding Path="."/>
+                                        </MultiBinding>
+                                    </Button.CommandParameter>
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Debugging}" Value="True">
+                                                    <Setter Property="Background" Value="Orange"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDebug}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="Red"/>
+                                                    <Setter Property="BorderThickness" Value="3"/>
+                                                    <Setter Property="Command" Value="{Binding DataContext.RemoveDebugCommand,ElementName=page}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDebug}" Value="False">
+                                                    <Setter Property="Command" Value="{Binding DataContext.AddDebugCommand,ElementName=page}"/>
+                                                </DataTrigger>
 
-            </ToolBar>
-            <ToolBar Visibility="{Binding IsChecked,ElementName=event,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
-                <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}">
-                    <iconPacks:PackIconPixelartIcons Kind="MailArrowRight" />
-                </Button>
-                <TextBox Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
-                <TextBox Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding State}" Value="Error">
+                                                    <Setter Property="Foreground" Value="OrangeRed"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding State}" Value="Complete">
+                                                    <Setter Property="Foreground" Value="ForestGreen"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding State}" Value="Skip">
+                                                    <Setter Property="Foreground" Value="YellowGreen"/>
+                                                </DataTrigger>
 
-            </ToolBar>
-            <ToolBar Visibility="{Binding IsChecked,ElementName=edit,Converter={StaticResource Boolean2VisibilityConverter}}" Band="2">
-                <Button  Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
-                    <iconPacks:PackIconPixelartIcons Kind="Save" />
-                </Button>
-                <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0" ToolTip="编辑流程">
-                    <iconPacks:PackIconPixelartIcons Kind="Edit" />
-                </Button>
-                <ToggleButton IsChecked="{Binding Model.ErrorStop}" ToolTip="错误后停止"  Style="{StaticResource ToggleButtonWarning.Small}">
-                    <iconPacks:PackIconPixelartIcons Kind="Alert" />
-                </ToggleButton>
-                <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
-                <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
-                <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
-
-                <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
-                <Separator Margin="10,0"/>
-
-                <ItemsControl ItemsSource="{Binding Model.Middlewares}" Grid.Row="5"  Grid.ColumnSpan="2" Margin="0,5">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Separator Margin="10,0"/>
-
-                <ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                                <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Text="{Binding CurrentIndex}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Repeat,StringFormat={}/{0}}" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Retry,StringFormat={}/{0}}" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Text="F" ToolTip="总是执行" Visibility="{Binding Finally,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="Purple" FontWeight="Bold" VerticalAlignment="Center"/>
+                                <TextBlock Margin="10,0,0,0" Foreground="Red" FontWeight="Bold" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ErrorHandling}" Value="Finally">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Text" Value="E"/>
+                                                    <Setter Property="ToolTip" Value="错误后停止"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding ErrorHandling}" Value="Terminate">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Setter Property="Text" Value="T"/>
+                                                    <Setter Property="ToolTip" Value="错误后立即退出"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <Button Content="日志" Margin="10,0,0,0" Foreground="White" Command="{Binding DataContext.ShowStepLogCommand,ElementName=page}" CommandParameter="{Binding .}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-
-            </ToolBar>
-        </ToolBarTray>
-
-        <rxui:RoutedViewHost DockPanel.Dock="Bottom" 
-   Visibility="{Binding Model.ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
-   Router="{Binding Model.Router}">
-            <rxui:RoutedViewHost.DefaultContent>
-                <WrapPanel>
-                </WrapPanel>
-            </rxui:RoutedViewHost.DefaultContent>
-            <rxui:RoutedViewHost.ViewLocator>
-                <app:AppViewLocator />
-            </rxui:RoutedViewHost.ViewLocator>
-        </rxui:RoutedViewHost>
-
-        <Grid>
-            <TreeView ItemsSource="{Binding Model.Steps}"
-                      Style="{StaticResource TreeView.Small}"
-                       Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityReConverter},ElementName=log}" >
-
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate
-                              ItemsSource="{Binding Steps}"
-                              DataType="vms:MonitorStepInfoViewModel">
-                        <StackPanel Orientation="Horizontal">
-                            <Button 
-                                    Width="15" Height="15" Margin="3" 
-                                    Visibility="{Binding DataContext.CanDebug,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}"
-                                    hc:BorderElement.CornerRadius="10" Content="">
-                                <Button.CommandParameter>
-                                    <MultiBinding Converter="{StaticResource MonitorDebugConverter}">
-                                        <Binding Path="DataContext.Model" ElementName="page"/>
-                                        <Binding Path="."/>
-                                    </MultiBinding>
-                                </Button.CommandParameter>
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonBaseStyle}">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding Debugging}" Value="True">
-                                                <Setter Property="Background" Value="Orange"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsDebug}" Value="True">
-                                                <Setter Property="BorderBrush" Value="Red"/>
-                                                <Setter Property="BorderThickness" Value="3"/>
-                                                <Setter Property="Command" Value="{Binding DataContext.RemoveDebugCommand,ElementName=page}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding IsDebug}" Value="False">
-                                                <Setter Property="Command" Value="{Binding DataContext.AddDebugCommand,ElementName=page}"/>
-                                            </DataTrigger>
-
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                            <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding State}" Value="Error">
-                                                <Setter Property="Foreground" Value="OrangeRed"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding State}" Value="Complete">
-                                                <Setter Property="Foreground" Value="ForestGreen"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding State}" Value="Skip">
-                                                <Setter Property="Foreground" Value="YellowGreen"/>
-                                            </DataTrigger>
-
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
-                            <TextBlock Margin="10,0,0,0" Text="{Binding CurrentIndex}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Repeat,StringFormat={}/{0}}" VerticalAlignment="Center"/>
-                            <TextBlock Margin="10,0,0,0" Text="{Binding ErrorIndex}" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding Retry,StringFormat={}/{0}}" VerticalAlignment="Center"/>
-                            <TextBlock Margin="10,0,0,0" Text="F" ToolTip="总是执行" Visibility="{Binding Finally,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="Purple" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock Margin="10,0,0,0" Foreground="Red" FontWeight="Bold" VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ErrorHandling}" Value="Finally">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Setter Property="Text" Value="E"/>
-                                                <Setter Property="ToolTip" Value="错误后停止"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding ErrorHandling}" Value="Terminate">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                                <Setter Property="Text" Value="T"/>
-                                                <Setter Property="ToolTip" Value="错误后立即退出"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <Button Content="日志" Margin="10,0,0,0" Foreground="White" Command="{Binding DataContext.ShowStepLogCommand,ElementName=page}" CommandParameter="{Binding .}">
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
-            <Grid 
-                    Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=log}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </Grid>
+            <Grid
+                Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.List}}">
                 <DataGrid Grid.Column="0"
-  Style="{StaticResource DataGrid.Small}"
-  ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single"  SelectedItem="{Binding SelectedStepOnce}">
+Style="{StaticResource DataGrid.Small}"
+ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single"  SelectedItem="{Binding SelectedStepOnce}">
                     <DataGrid.RowStyle>
                         <Style TargetType="DataGridRow">
                             <Style.Triggers>
@@ -295,28 +187,101 @@
                         <DataGridTextColumn Header="执行次数" Binding="{Binding  Index}"/>
                     </DataGrid.Columns>
                 </DataGrid>
-
+            </Grid>
+            <Grid
+                Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Data}}">
                 <DataGrid Grid.Column="1" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
-            Style="{StaticResource DataGrid.Small}" 
-            AutoGenerateColumns="False" IsReadOnly="True">
+Style="{StaticResource DataGrid.Small}" 
+AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="键" Binding="{Binding  Name}" />
                         <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
                     </DataGrid.Columns>
                 </DataGrid>
-
-                <ListBox Grid.Row="1" Grid.ColumnSpan="2" ItemsSource="{Binding DataDisplay.Log}" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Log}" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
             </Grid>
+            <Grid
+                Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Log}}">
+                <Grid Grid.Row="1" Grid.ColumnSpan="2">
+                    <ListBox ItemsSource="{Binding DataDisplay.Log}" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Log}" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <Button Content="{Binding LogName}" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ShowAllLogCommand}" />
+                </Grid>
+            </Grid>
+            <Grid 
+                Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Setting}}">
+                <ScrollViewer>
+                    <StackPanel Margin="10">
+                        <WrapPanel  HorizontalAlignment="Left" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,4">
+                            <Button  Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
+                                <iconPacks:PackIconPixelartIcons Kind="Save" />
+                            </Button>
+                            <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0" ToolTip="编辑流程">
+                                <iconPacks:PackIconPixelartIcons Kind="Edit" />
+                            </Button>
+                            <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
+                            <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
+                            <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
+                            <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
+                            <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
+                        </WrapPanel>
+                        <ItemsControl ItemsSource="{Binding Model.Middlewares}"  VerticalAlignment="Center" Margin="0,4">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel></WrapPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center" Margin="0,4">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel></WrapPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                                        <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
 
+                        <WrapPanel  Grid.Row="1" HorizontalAlignment="Left" Margin="0,4">
+                            <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}" HorizontalAlignment="Left">
+                                <iconPacks:PackIconPixelartIcons Kind="MailArrowRight" />
+                            </Button>
+                            <TextBox Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
+                            <TextBox Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
         </Grid>
+        <rxui:RoutedViewHost Grid.Row="2" 
+   Visibility="{Binding Model.ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
+   Router="{Binding Model.Router}">
+            <rxui:RoutedViewHost.DefaultContent>
+                <WrapPanel>
+                </WrapPanel>
+            </rxui:RoutedViewHost.DefaultContent>
+            <rxui:RoutedViewHost.ViewLocator>
+                <app:AppViewLocator />
+            </rxui:RoutedViewHost.ViewLocator>
+        </rxui:RoutedViewHost>
 
 
-    </DockPanel>
+
+    </Grid>
+
 </rxui:ReactiveUserControl>

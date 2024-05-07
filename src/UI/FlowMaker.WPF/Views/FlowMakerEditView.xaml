@@ -84,24 +84,13 @@
                 </Button.CommandParameter>
                 <iconPacks:PackIconPixelartIcons Kind="AddBox" />
             </Button>
-            <Button  Margin="4,0" Command="{Binding CreateCommand}"   Foreground="SkyBlue" Style="{StaticResource ButtonCustom}">
+            <Button  Margin="4,0" Command="{Binding CreateCommand}"   Foreground="SkyBlue" Style="{StaticResource ButtonCustom}" Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <Button.CommandParameter>
                     <s:Boolean>True</s:Boolean>
                 </Button.CommandParameter>
                 <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
             </Button>
-            <Button  Margin="4,0" Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}"  Foreground="LimeGreen" Style="{StaticResource ButtonCustom}">
-                <Button.CommandParameter>
-                    <s:Boolean>False</s:Boolean>
-                </Button.CommandParameter>
-                <iconPacks:PackIconPixelartIcons Kind="AddBox" />
-            </Button>
-            <Button  Margin="4,0" Command="{Binding CreateEmbeddedCommand}" Visibility="{Binding FlowStep.IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="LimeGreen" Style="{StaticResource ButtonCustom}">
-                <Button.CommandParameter>
-                    <s:Boolean>True</s:Boolean>
-                </Button.CommandParameter>
-                <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
-            </Button>
+         
 
             <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonCustom}" Foreground="OrangeRed">
                 <iconPacks:PackIconPixelartIcons Kind="RemoveBox" />
@@ -125,10 +114,10 @@
             <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100" Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
         </ToolBar>
         <ScrollViewer x:Name="viewer"
+                      Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
                       Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Auto">
             <Grid  Margin="2">
                 <ItemsControl ItemsSource="{Binding Steps}"
-                               Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
                               x:Name="gantee"  VerticalAlignment="Top" AlternationCount="{Binding Steps.Count}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -170,7 +159,6 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
                 <ItemsControl ItemsSource="{Binding DateAxis}"
-                               Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
                     Margin="30,0,0,0"  VerticalAlignment="Stretch" >
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -192,52 +180,76 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TreeView ItemsSource="{Binding Steps}" x:Name="tree"  Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource TreeView.Small}">
-                    <TreeView.ItemTemplate>
-                        <HierarchicalDataTemplate
-                              ItemsSource="{Binding Steps}"
-                              DataType="vms:FlowStepViewModel">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                                <StackPanel.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="添加" 
-                  Command="{Binding Path=PlacementTarget.DataContext.MainViewModel.CreateEmbeddedCommand, 
-                                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
-                  CommandParameter="{Binding Path=PlacementTarget.DataContext, 
-                                             RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
-                                    </ContextMenu>
-                                </StackPanel.ContextMenu>
-                                <ToggleButton IsChecked="{Binding Parallel}" FontFamily="Segoe UI Emoji" FontWeight="Bold" FontSize="20" Width="30">
-                                    <ToggleButton.Style>
-                                        <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonCustom}">
-                                            <Style.Triggers>
-                                                <Trigger Property="IsChecked" Value="True">
-                                                    <Setter Property="Content" >
-                                                        <Setter.Value>
-                                                            <iconPacks:PackIconPixelartIcons Kind="ArrowRight" />
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Setter Property="Foreground" Value="Green" />
-                                                </Trigger>
-                                                <Trigger Property="IsChecked" Value="False">
-                                                    <Setter Property="Content" >
-                                                        <Setter.Value>
-                                                            <iconPacks:PackIconPixelartIcons Kind="ArrowDown" />
-                                                        </Setter.Value>
-                                                    </Setter>
-                                                    <Setter Property="Foreground" Value="LightBlue" />
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </ToggleButton.Style>
-                                </ToggleButton>
-                                <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </HierarchicalDataTemplate>
-                    </TreeView.ItemTemplate>
-                </TreeView>
             </Grid>
         </ScrollViewer>
+        <TreeView ItemsSource="{Binding Steps}"
+                  Grid.Column="0"  Grid.Row="1"
+          x:Name="tree"  Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource TreeView.Small}">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate
+              ItemsSource="{Binding Steps}"
+              DataType="vms:FlowStepViewModel">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
+                        <StackPanel.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="添加" 
+  Command="{Binding Path=PlacementTarget.DataContext.MainViewModel.CreateEmbeddedCommand, 
+                    RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+  CommandParameter="{Binding Path=PlacementTarget.DataContext, 
+                             RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                            </ContextMenu>
+                        </StackPanel.ContextMenu>
+                        <ToggleButton IsChecked="{Binding Parallel}" FontFamily="Segoe UI Emoji" FontWeight="Bold" FontSize="20" Width="30">
+                            <ToggleButton.Style>
+                                <Style TargetType="ToggleButton" BasedOn="{StaticResource ToggleButtonCustom}">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Content" >
+                                                <Setter.Value>
+                                                    <iconPacks:PackIconPixelartIcons Kind="ArrowRight" />
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Setter Property="Foreground" Value="Green" />
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="False">
+                                            <Setter Property="Content" >
+                                                <Setter.Value>
+                                                    <iconPacks:PackIconPixelartIcons Kind="ArrowDown" />
+                                                </Setter.Value>
+                                            </Setter>
+                                            <Setter Property="Foreground" Value="LightBlue" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ToggleButton.Style>
+                        </ToggleButton>
+                        <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel" >
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=TreeViewItem}}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+                            <Button  Margin="4,0" Command="{Binding DataContext.CreateEmbeddedSubStepCommand,ElementName=page}" Visibility="{Binding IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}"  Foreground="LightGreen" Style="{StaticResource ButtonCustom}" CommandParameter="{Binding .}" ToolTip="子步骤">
+
+                                <iconPacks:PackIconPixelartIcons Kind="AddBox" />
+                            </Button>
+                            <Button  Margin="4,0" Command="{Binding DataContext.CreateEmbeddedSubEmbeddedCommand,ElementName=page}" Visibility="{Binding IsEmbeddedFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Foreground="LightGreen" Style="{StaticResource ButtonCustom}" CommandParameter="{Binding .}"  ToolTip="子组">
+
+                                <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
+                            </Button>
+                        </StackPanel>
+
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+
         <ScrollViewer  Grid.Column="2" Grid.Row="1" Margin="10,5" 
                        Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showChecker}" >
             <ItemsControl ItemsSource="{Binding Checkers}">

@@ -25,7 +25,8 @@ public class FlowMakerEditViewModel : ViewModelBase
     {
         _flowMakerOption = options.Value;
         CreateCommand = ReactiveCommand.CreateFromTask<bool>(Create);
-        CreateEmbeddedCommand = ReactiveCommand.Create<bool>(CreateEmbedded);
+        CreateEmbeddedSubEmbeddedCommand = ReactiveCommand.Create<FlowStepViewModel>(CreateEmbeddedSubEmbedded);
+        CreateEmbeddedSubStepCommand = ReactiveCommand.Create<FlowStepViewModel>(CreateEmbeddedSubStep);
         CreateGlobeDataCommand = ReactiveCommand.Create(CreateGlobeData);
         ChangeScaleCommand = ReactiveCommand.Create<int>(ChangeScale);
         ChangePreCommand = ReactiveCommand.Create<FlowStepViewModel>(ChangePre);
@@ -511,7 +512,8 @@ public class FlowMakerEditViewModel : ViewModelBase
     [Reactive]
     public bool ShowEdit { get; set; }
     public ReactiveCommand<bool, Unit> CreateCommand { get; }
-    public ReactiveCommand<bool, Unit> CreateEmbeddedCommand { get; }
+    public ReactiveCommand<FlowStepViewModel, Unit> CreateEmbeddedSubEmbeddedCommand { get; }
+    public ReactiveCommand<FlowStepViewModel, Unit> CreateEmbeddedSubStepCommand { get; }
     public ObservableCollection<FlowStepViewModel> Steps { get; set; } = [];
     public async Task Create(bool embedded)
     {
@@ -543,17 +545,27 @@ public class FlowMakerEditViewModel : ViewModelBase
         await Task.CompletedTask;
     }
 
-    public void CreateEmbedded(bool embedded)
+    public void CreateEmbeddedSubEmbedded(FlowStepViewModel flowStepViewModel)
     {
-        if (FlowStep is not null && FlowStep.Type == StepType.Embedded)
+        if (flowStepViewModel is not null && flowStepViewModel.Type == StepType.Embedded)
         {
-            var model = new FlowStepViewModel(this, embedded ? StepType.Embedded : StepType.Normal);
+            var model = new FlowStepViewModel(this, StepType.Embedded);
 
             model.Init();
-            FlowStep.Steps.Add(model);
+            flowStepViewModel.Steps.Add(model);
         }
     }
 
+    public void CreateEmbeddedSubStep(FlowStepViewModel flowStepViewModel)
+    {
+        if (flowStepViewModel is not null && flowStepViewModel.Type == StepType.Embedded)
+        {
+            var model = new FlowStepViewModel(this, StepType.Normal);
+
+            model.Init();
+            flowStepViewModel.Steps.Add(model);
+        }
+    }
     private ObservableCollection<FlowStepViewModel>? GetParent(FlowStepViewModel flowStepViewModel, ObservableCollection<FlowStepViewModel> all)
     {
         //从steps中找到这个元素,那么返回steps,如果找不到,那么递归找
