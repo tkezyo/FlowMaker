@@ -148,9 +148,14 @@
                                 </Button>
                                 <TextBlock Margin="8,0" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>
                                 <ItemsControl ItemsSource="{Binding Ifs}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"></StackPanel>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding IsTrue}" Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                            <CheckBox Content="{Binding DisplayName}" Margin="2,0" IsChecked="{Binding IsTrue}" Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" />
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
@@ -244,7 +249,18 @@
                                 <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
                             </Button>
                         </StackPanel>
-
+                        <ItemsControl ItemsSource="{Binding Ifs}" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" Margin="2,0" IsChecked="{Binding IsTrue}" Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>

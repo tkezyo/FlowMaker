@@ -111,6 +111,10 @@ public class FlowMakerEditViewModel : ViewModelBase
         this.WhenAnyValue(c => c.FlowStep).WhereNotNull().Subscribe(c =>
         {
             ShowEdit = c is not null;
+            if (c is not null)
+            {
+                LoadIf(c);
+            }
         });
     }
     [Reactive]

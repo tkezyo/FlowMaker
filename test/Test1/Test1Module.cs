@@ -23,6 +23,7 @@ namespace Test1
             hostApplicationBuilder.Services.AddFlowStep<MyClass>();
             hostApplicationBuilder.Services.AddFlowStep<TestFlow1>();
             hostApplicationBuilder.Services.AddFlowConverter<ValueConverter>();
+            hostApplicationBuilder.Services.AddFlowConverter<BoolConverter>();
             hostApplicationBuilder.Services.AddFlowOption<PortProvider>();
             hostApplicationBuilder.Services.AddCaesarModeFlowStep();
             hostApplicationBuilder.Services.AddScoped<CaesarMode>();

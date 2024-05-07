@@ -73,3 +73,16 @@ public partial class ValueConverter : IDataConverter<int>
         return Task.FromResult(Prop1 + Prop2);
     }
 }
+
+public partial class BoolConverter : IDataConverter<bool>
+{
+    public static string Category => "Test1";
+
+    public static string Name => "Bool";
+
+
+    public Task<bool> Convert(FlowContext? context, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(true);
+    }
+}
