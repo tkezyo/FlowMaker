@@ -90,7 +90,7 @@
                 </Button.CommandParameter>
                 <iconPacks:PackIconPixelartIcons Kind="AddBoxMultiple" />
             </Button>
-         
+
 
             <Button Margin="4,0" Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"  Command="{Binding DeleteActionCommand}" Style="{StaticResource ButtonCustom}" Foreground="OrangeRed">
                 <iconPacks:PackIconPixelartIcons Kind="RemoveBox" />
@@ -148,6 +148,18 @@
                                 </Button>
                                 <TextBlock Margin="8,0" VerticalAlignment="Center" Text="{Binding Name}"></TextBlock>
                                 <ItemsControl ItemsSource="{Binding Ifs}" VerticalAlignment="Center">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal"></StackPanel>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding DisplayName}" Margin="2,0" IsChecked="{Binding IsTrue}" Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <ItemsControl ItemsSource="{Binding AdditionalConditions}" VerticalAlignment="Center">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <StackPanel Orientation="Horizontal"></StackPanel>
@@ -261,6 +273,18 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding AdditionalConditions}" VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" Margin="2,0" IsChecked="{Binding IsTrue}" Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </StackPanel>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
@@ -312,7 +336,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
-                                                    <TextBox Text="{Binding Name}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
+                                                    <TextBox Text="{Binding Name}" hc:TitleElement.Title="值" Style="{StaticResource TextBoxExtend.Small}"/>
                                                     <Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -434,6 +458,23 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                         </ItemsControl>
                     </StackPanel>
                 </GroupBox>
+                <GroupBox Header="附加条件">
+                    <StackPanel>
+                        <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                            <iconPacks:PackIconPixelartIcons Kind="Reload" />
+                        </Button>
+                        <ItemsControl ItemsSource="{Binding FlowStep.AdditionalConditions}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}" Margin="5,10"></CheckBox>
+                                        <CheckBox Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </GroupBox>
                 <GroupBox Header="等待事件">
                     <StackPanel>
                         <Button Command="{Binding AddWaitEventCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
@@ -446,7 +487,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                                         <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource ButtonDanger.Small}" Padding="1">
                                             <iconPacks:PackIconPixelartIcons Kind="Minus" />
                                         </Button>
-                                        <TextBox Text="{Binding .}" hc:TitleElement.Title="名称" />
+                                        <TextBox Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="名称" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>

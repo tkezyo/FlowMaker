@@ -357,7 +357,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         var options = await pp.GetOptions();
                         foreach (var option in options)
                         {
-                            data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
                         }
                     }
                 }
@@ -365,7 +365,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 {
                     foreach (var option in item.Options)
                     {
-                        data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                        data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
                     }
                 }
 
@@ -784,6 +784,14 @@ public class DataDisplayViewModel : ReactiveObject
                      .Subscribe()
                      .DisposeWith(Disposables);
 
+        flowContext.WaitEvents.Connect()
+                     .Transform(c => new WaitEventViewModel(c))
+                     .ObserveOn(RxApp.MainThreadScheduler)
+                   .Bind(out _waitEvents)
+                   .DisposeMany()
+                   .Subscribe()
+                   .DisposeWith(Disposables);
+
         var filter = this.WhenAnyValue(c => c.StepId, c => c.Index)
                .Select(BuildFilter);
 
@@ -823,7 +831,17 @@ public class DataDisplayViewModel : ReactiveObject
     private readonly ReadOnlyObservableCollection<FlowGlobeDataViewModel> _data;
     public ReadOnlyObservableCollection<LogInfoViewModel> Log => _log;
     private readonly ReadOnlyObservableCollection<LogInfoViewModel> _log;
+    public ReadOnlyObservableCollection<WaitEventViewModel> WaitEvents => _waitEvents;
+    private readonly ReadOnlyObservableCollection<WaitEventViewModel> _waitEvents;
 
+}
+
+public class WaitEventViewModel(WaitEvent waitEvent) : ReactiveObject
+{
+    [Reactive]
+    public string Name { get; set; } = waitEvent.Name;
+    [Reactive]
+    public bool NeedData { get; set; } = waitEvent.NeedData;
 }
 
 public class FlowGlobeDataViewModel(FlowGlobeData flowGlobeData) : ReactiveObject
@@ -867,6 +885,4 @@ public enum PageType
 {
     Tree,
     List,
-    Data,
-    Setting
 }

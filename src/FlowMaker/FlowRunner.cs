@@ -166,13 +166,18 @@ public class FlowRunner : IDisposable
             {
                 if (flowInput.Mode == InputMode.Event)
                 {
-                    var key = flowInput.Mode + flowInput.Value;
+                    if (string.IsNullOrEmpty(flowInput.Value))
+                    {
+                        return;
+                    }
+                    var key = EventType.Event + flowInput.Value;
                     waitEvent.Add(key);
                     if (!ExecuteStepIds.TryGetValue(key, out var list))
                     {
                         list = [];
                         ExecuteStepIds.Add(key, list);
                     }
+                    Context.WaitEvents.AddOrUpdate(new WaitEvent(flowInput.Value, true));
                     list.Add(item.Id);
                     foreach (var subInput in flowInput.Inputs)
                     {
@@ -181,6 +186,15 @@ public class FlowRunner : IDisposable
                 }
             }
             foreach (var wait in item.Ifs)
+            {
+                var checker = Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
+                if (checker is null)
+                {
+                    continue;
+                }
+                Register(checker);
+            }
+            foreach (var wait in item.AdditionalConditions)
             {
                 var checker = Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
                 if (checker is null)
@@ -198,15 +212,24 @@ public class FlowRunner : IDisposable
 
             foreach (var wait in item.WaitEvents)
             {
+                if (wait.Type == EventType.Event)
+                {
+                    if (string.IsNullOrEmpty(wait.EventName))
+                    {
+                        continue;
+                    }
+                    Context.WaitEvents.AddOrUpdate(new WaitEvent(wait.EventName, false));
+                }
+
                 var key = wait.Type + wait.Type switch
                 {
                     EventType.PreStep => wait.StepId?.ToString(),
                     EventType.Event => wait.EventName,
-                    EventType.StartFlow => "",
-                    _ => ""
+                    EventType.StartFlow => string.Empty,
+                    _ => string.Empty
                 };
                 waitEvent.Add(key);
-
+             
                 if (!ExecuteStepIds.TryGetValue(key, out var list))
                 {
                     list = [];
@@ -288,7 +311,7 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs);
+            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs, Context.WaitEvents);
             var stepState = Context.StepState.Lookup(step.Id);
             if (stepState.HasValue)
             {
@@ -319,7 +342,7 @@ public class FlowRunner : IDisposable
             }
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
-            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs);
+            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs, Context.WaitEvents);
             var stepState = Context.StepState.Lookup(step.Id);
             if (stepState.HasValue)
             {
@@ -503,6 +526,8 @@ public class FlowRunner : IDisposable
             EventName = eventName
         });
 
+        Context.WaitEvents.RemoveKey(eventName);
+
         Context.EventLogs.Add(new EventLog
         {
             EventName = eventName,
@@ -605,6 +630,21 @@ public class FlowRunner : IDisposable
                 while (true)
                 {
                     StepOnceStatus once = new(i, errorIndex, Context.Index);
+
+                    List<string> additionalConditions = [];
+                    once.ExtraData.Add("AdditionalConditions", additionalConditions);
+                    foreach (var item2 in step.AdditionalConditions)
+                    {
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            return;
+                        }
+                        (bool result, string reason) = await CheckStep(step, item2.Key, cancellationToken);
+                        if (result == item2.Value)
+                        {
+                            additionalConditions.Add(reason);
+                        }
+                    }
 
                     try
                     {

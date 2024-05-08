@@ -76,6 +76,10 @@ public class FlowStep
     /// </summary>
     public Dictionary<Guid, bool> Ifs { get; set; } = [];
     /// <summary>
+    /// 附加条件,不是用来判断是否执行的，而是添加到附加属性中的
+    /// </summary>
+    public Dictionary<Guid, bool> AdditionalConditions { get; set; } = [];
+    /// <summary>
     /// 用于Ifs的判断
     /// </summary>
     public List<FlowInput> Checkers { get; set; } = [];
@@ -192,7 +196,7 @@ public class FlowResultData
 {
     public required string Name { get; set; }
     public required string DisplayName { get; set; }
-    public  string? Value { get; set; }
+    public string? Value { get; set; }
     public required string Type { get; set; }
 }
 [Flags]

@@ -423,7 +423,7 @@ namespace FlowMaker.ViewModels
                                             var options = await pp.GetOptions();
                                             foreach (var option in options)
                                             {
-                                                data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                                                data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
                                             }
                                         }
                                     }
@@ -431,7 +431,7 @@ namespace FlowMaker.ViewModels
                                     {
                                         foreach (var option in item.Options)
                                         {
-                                            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                                            data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
                                         }
                                     }
 
@@ -736,7 +736,7 @@ namespace FlowMaker.ViewModels
                                         var options = await pp.GetOptions();
                                         foreach (var option in options)
                                         {
-                                            data.Options.Add(new FlowStepOptionViewModel(option.Value, option.Name));
+                                            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
                                         }
                                     }
                                 }
@@ -744,7 +744,7 @@ namespace FlowMaker.ViewModels
                                 {
                                     foreach (var option in item.Options)
                                     {
-                                        data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                                        data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
                                     }
                                 }
 

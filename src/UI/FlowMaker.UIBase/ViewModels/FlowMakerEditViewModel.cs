@@ -42,7 +42,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         RemoveCheckerCommand = ReactiveCommand.Create<FlowStepInputViewModel>(RemoveChecker);
         LoadIfCommand = ReactiveCommand.Create<FlowStepViewModel>(LoadIf);
         AddWaitEventCommand = ReactiveCommand.Create(AddWaitEvent);
-        RemoveWaitEventCommand = ReactiveCommand.Create<string>(RemoveWaitEvent);
+        RemoveWaitEventCommand = ReactiveCommand.Create<EventViewModel>(RemoveWaitEvent);
 
         ShowSubFlowCommand = ReactiveCommand.CreateFromTask<FlowStepViewModel>(ShowSubFlowAsync);
 
@@ -196,12 +196,23 @@ public class FlowMakerEditViewModel : ViewModelBase
                     f.Ifs.Add(ifItem.Id, ifItem.IsTrue);
                 }
             }
+            foreach (var ifItem in item.AdditionalConditions)
+            {
+                if (ifItem.Enable)
+                {
+                    f.AdditionalConditions.Add(ifItem.Id, ifItem.IsTrue);
+                }
+            }
             foreach (var wait in item.WaitEvents)
             {
+                if (string.IsNullOrEmpty(wait.Name))
+                {
+                    continue;
+                }
                 f.WaitEvents.Add(new FlowEvent
                 {
                     Type = EventType.Event,
-                    EventName = wait
+                    EventName = wait.Name
                 });
             }
             foreach (var preStep in item.PreSteps)
@@ -322,7 +333,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             };
             foreach (var option in item.Options)
             {
-                data.Options.Add(new FlowStepOptionViewModel(option.Name, option.DisplayName));
+                data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
             }
             GlobeDatas.Add(data);
             data.Type = item.Type;//data添加到GlobeDatas后,再赋值Type可以初始化选项集
@@ -378,7 +389,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                         flowStepViewModel.PreSteps.Add(wait.StepId.Value);
                         break;
                     case EventType.Event when !string.IsNullOrEmpty(wait.EventName):
-                        flowStepViewModel.WaitEvents.Add(wait.EventName);
+                        flowStepViewModel.WaitEvents.Add(new EventViewModel { Name = wait.EventName });
                         break;
                     case EventType.StartFlow:
                         break;
@@ -410,7 +421,15 @@ public class FlowMakerEditViewModel : ViewModelBase
                     entity.IsTrue = ifItem.Value;
                 }
             }
-
+            foreach (var ifItem in flowStepItem.AdditionalConditions)
+            {
+                var entity = flowStepViewModel.AdditionalConditions.FirstOrDefault(c => c.Id == ifItem.Key);
+                if (entity is not null)
+                {
+                    entity.Enable = true;
+                    entity.IsTrue = ifItem.Value;
+                }
+            }
 
             return flowStepViewModel;
         }
@@ -454,6 +473,21 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 r.DisplayName = item.DisplayName;
             }
+
+            var r2 = flowStepViewModel.AdditionalConditions.FirstOrDefault(c => c.Id == item.Id);
+            if (r2 is null)
+            {
+                flowStepViewModel.AdditionalConditions.Add(new FlowIfViewModel
+                {
+                    Id = item.Id,
+                    IsTrue = true,
+                    DisplayName = item.DisplayName,
+                });
+            }
+            else
+            {
+                r2.DisplayName = item.DisplayName;
+            }
         }
         foreach (var item in flowStepViewModel.Checkers)
         {
@@ -471,6 +505,21 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 r.DisplayName = item.DisplayName;
             }
+
+            var r2 = flowStepViewModel.AdditionalConditions.FirstOrDefault(c => c.Id == item.Id);
+            if (r2 is null)
+            {
+                flowStepViewModel.AdditionalConditions.Add(new FlowIfViewModel
+                {
+                    Id = item.Id,
+                    IsTrue = true,
+                    DisplayName = item.DisplayName,
+                });
+            }
+            else
+            {
+                r2.DisplayName = item.DisplayName;
+            }
         }
     }
 
@@ -481,10 +530,10 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             return;
         }
-        FlowStep.WaitEvents.Add("");
+        FlowStep.WaitEvents.Add(new EventViewModel());
     }
-    public ReactiveCommand<string, Unit> RemoveWaitEventCommand { get; }
-    public void RemoveWaitEvent(string eventName)
+    public ReactiveCommand<EventViewModel, Unit> RemoveWaitEventCommand { get; }
+    public void RemoveWaitEvent(EventViewModel eventName)
     {
         if (FlowStep is null)
         {
@@ -603,7 +652,7 @@ public class FlowMakerEditViewModel : ViewModelBase
         var deletes = GlobeDatas.Where(c => c.FromStepId == temp.Id);
 
         GlobeDatas.RemoveMany(deletes);
-        var steps = GetParent(FlowStep, Steps);
+        var steps = GetParent(temp, Steps);
         if (steps is not null)
         {
             steps.Remove(temp);
@@ -1517,7 +1566,7 @@ public class DimViewModel : ReactiveObject
     [Reactive]
     public int Count { get; set; }
 }
-public class FlowStepOptionViewModel(string name, string displayName) : ReactiveObject
+public class FlowStepOptionViewModel(string displayName, string name) : ReactiveObject
 {
     [Reactive]
     public string Name { get; set; } = name;
@@ -1617,7 +1666,7 @@ public class FlowStepViewModel : ReactiveObject
             Value = "Skip",
             Id = Guid.NewGuid(),
             Mode = InputMode.Option,
-            Options = [new FlowStepOptionViewModel("Skip", "跳过"), new FlowStepOptionViewModel("Finally", "停止"), new FlowStepOptionViewModel("Terminate", "立即停止")],
+            Options = [new FlowStepOptionViewModel("跳过", "Skip"), new FlowStepOptionViewModel("停止", "Finally"), new FlowStepOptionViewModel("立即停止", "Terminate")],
             HasOption = true,
         };
         Repeat = new FlowStepInputViewModel("Repeat", "重复", "int", 0, _flowMakerEditViewModel)
@@ -1643,7 +1692,7 @@ public class FlowStepViewModel : ReactiveObject
             Value = "false",
             Mode = InputMode.Option,
             Id = Guid.NewGuid(),
-            Options = [new FlowStepOptionViewModel("true", "是"), new FlowStepOptionViewModel("false", "否")],
+            Options = [new FlowStepOptionViewModel("是", "true"), new FlowStepOptionViewModel("否", "false")],
             HasOption = true,
         };
     }
@@ -1834,12 +1883,14 @@ public class FlowStepViewModel : ReactiveObject
 
     [Reactive]
     public ObservableCollection<FlowIfViewModel> Ifs { get; set; } = [];
+    [Reactive]
+    public ObservableCollection<FlowIfViewModel> AdditionalConditions { get; set; } = [];
 
     [Reactive]
     public ObservableCollection<FlowStepInputViewModel> Checkers { get; set; } = [];
 
     [Reactive]
-    public ObservableCollection<string> WaitEvents { get; set; } = [];
+    public ObservableCollection<EventViewModel> WaitEvents { get; set; } = [];
 
 
     /// <summary>
@@ -1856,6 +1907,11 @@ public class FlowStepViewModel : ReactiveObject
     [Reactive]
     public TimeSpan PreTime { get; set; }
 
+}
+
+public class EventViewModel : ReactiveObject
+{
+    public string? Name { get; set; }
 }
 
 public enum StepStatus

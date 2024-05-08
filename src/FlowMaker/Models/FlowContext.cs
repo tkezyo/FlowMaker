@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace FlowMaker;
 
-public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null)
+public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null)
 {
     /// <summary>
     /// 流程Id
@@ -46,8 +46,10 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// 事件记录
     /// </summary>
     public SourceList<EventLog> EventLogs { get; set; } = new();
-
-
+    /// <summary>
+    /// 等待中的事件
+    /// </summary>
+    public SourceCache<WaitEvent, string> WaitEvents { get; set; } = waitEvents ?? new(c => c.Name);
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
@@ -159,6 +161,8 @@ public class EventLog
     public required string EventName { get; set; }
     public string? EventData { get; set; }
 }
+
+public record WaitEvent(string Name, bool NeedData);
 
 
 /// <summary>

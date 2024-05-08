@@ -1,8 +1,14 @@
-﻿using FlowMaker.ViewModels;
+﻿using DynamicData;
+using DynamicData.Binding;
+using FlowMaker.ViewModels;
 using ReactiveUI;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,20 +31,90 @@ namespace FlowMaker.Views
         public FlowMakerDebugView()
         {
             InitializeComponent();
-            this.WhenActivated(d => { });
-        }
-        private void OnSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var listBox = sender as ListBox;
-            if (listBox?.Items.Count > 0)
+            this.WhenActivated(d =>
             {
-                logListbox.ScrollIntoView(listBox.Items[listBox.Items.Count - 1]);
-            }
+                ViewModel = (FlowMakerDebugViewModel)DataContext;
+                ViewModel.WhenAnyValue(c => c.DataDisplay).Subscribe(data =>
+                {
+                    if (data is null)
+                    {
+                        return;
+                    }
+                    // 将FlowDocument设置为rtb的Document
+                    RxApp.MainThreadScheduler.Schedule(() =>
+                    {
+                        FlowDocument doc = new FlowDocument();
+                        doc.LineHeight = 10;
+                        doc.LineStackingStrategy = LineStackingStrategy.BlockLineHeight;
+                        // 创建一个新的FlowDocument
+                        // 订阅data.Log的变化
+                        data.Log.ToObservableChangeSet().ObserveOn(RxApp.MainThreadScheduler).Subscribe(changeSet =>
+                        {
+                            // 对于每个变化，创建一个新的Paragraph，并将其添加到FlowDocument中
+                            foreach (var change in changeSet)
+                            {
+                                if (change.Reason == ListChangeReason.Clear)
+                                {
+                                    doc = new FlowDocument();
+                                    doc.LineHeight = 10;
+                                    doc.LineStackingStrategy = LineStackingStrategy.BlockLineHeight;
+                                    rtb.Document = doc;
+                                }
+                                if (change.Reason == ListChangeReason.Add || change.Reason == ListChangeReason.AddRange)
+                                {
+                                    if (change.Type == ChangeType.Item)
+                                    {
+                                        if (change.Item.Current.Level > Microsoft.Extensions.Logging.LogLevel.Warning)
+                                        {
+                                            Paragraph para = new Paragraph(new Run(change.Item.Current.Log) { Foreground = new SolidColorBrush(Colors.Red) });
+                                            doc.Blocks.Add(para);
+                                        }
+                                        else
+                                        {
+                                            Paragraph para = new Paragraph(new Run(change.Item.Current.Log) { });
+                                            doc.Blocks.Add(para);
+                                        }
+                                        rtb.Document = doc;
+                                        // 将光标移动到文档的末尾
+                                        rtb.CaretPosition = rtb.Document.ContentEnd;
+                                    }
+                                    else if (change.Type == ChangeType.Range)
+                                    {
+                                        foreach (var item in change.Range)
+                                        {
+                                            if (item.Level > Microsoft.Extensions.Logging.LogLevel.Warning)
+                                            {
+                                                Paragraph para = new Paragraph(new Run(item.Log) { Foreground = new SolidColorBrush(Colors.Red) });
+                                                doc.Blocks.Add(para);
+                                            }
+                                            else
+                                            {
+                                                Paragraph para = new Paragraph(new Run(item.Log) { });
+                                                doc.Blocks.Add(para);
+                                            }
+                                        }
+                                        rtb.Document = doc;
+                                        rtb.Focus();
+
+                                        // 将光标移动到文档的末尾
+                                        rtb.CaretPosition = rtb.Document.ContentEnd;
+                                    }
+                                }
+
+                            }
+
+                        }).DisposeWith(d);
+
+
+                    });
+
+
+
+                }).DisposeWith(d);
+            });
         }
 
-        private void logListbox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            
-        }
+
+
     }
 }
