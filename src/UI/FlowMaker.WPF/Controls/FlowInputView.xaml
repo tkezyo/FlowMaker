@@ -26,17 +26,12 @@
         <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
         <converters:StartWithToVisibilityConverter x:Key="StartWithToVisibilityConverter" />
     </UserControl.Resources>
-    <StackPanel 
+    <StackPanel MinWidth="200" 
                 IsEnabled="{Binding Disable,Converter={StaticResource Boolean2BooleanReConverter}}">
         <StackPanel Orientation="Horizontal">
             <TextBlock Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityReConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" ToolTip="{Binding Type}" FontWeight="Bold"></TextBlock>
             <TextBox Visibility="{Binding EditMode,ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="名称" ToolTip="{Binding Type}"></TextBox>
-            <RadioButton Content="普通" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Normal}}" GroupName="{Binding Id}"></RadioButton>
-            <RadioButton Content="选项" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Option}}" GroupName="{Binding Id}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
-            <RadioButton Content="数组" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Array}}" GroupName="{Binding Id}" Visibility="{Binding IsArray,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
-            <RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Globe}}" GroupName="{Binding Id}" Visibility="{Binding HasGlobe,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
-            <RadioButton Content="转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Converter}}" GroupName="{Binding Id}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
-            <RadioButton Content="事件" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:InputMode.Event}}" GroupName="{Binding Id}"></RadioButton>
+            <Button Content="{Binding ModelName}" Command="{Binding ChangeModeCommand}" Style="{StaticResource ButtonCustom}" Foreground="DodgerBlue" VerticalAlignment="Bottom" />
         </StackPanel>
         <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Normal}}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" />
         <TextBox  Visibility="{Binding Mode,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:InputMode.Event}}" Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" />

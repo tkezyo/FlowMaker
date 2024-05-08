@@ -40,14 +40,14 @@ namespace FlowMaker.Views
                     {
                         return;
                     }
-                    // 将FlowDocument设置为rtb的Document
+                    // 将FlowDocument设置为 rtb的Document
                     RxApp.MainThreadScheduler.Schedule(() =>
                     {
                         FlowDocument doc = new FlowDocument();
                         doc.LineHeight = 10;
                         doc.LineStackingStrategy = LineStackingStrategy.BlockLineHeight;
                         // 创建一个新的FlowDocument
-                        // 订阅data.Log的变化
+                        // 订阅 data.Log的变化
                         data.Log.ToObservableChangeSet().ObserveOn(RxApp.MainThreadScheduler).Subscribe(changeSet =>
                         {
                             // 对于每个变化，创建一个新的Paragraph，并将其添加到FlowDocument中

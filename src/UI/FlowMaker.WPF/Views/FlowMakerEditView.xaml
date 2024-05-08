@@ -299,7 +299,9 @@
                             <StackPanel Margin="5">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBox hc:TitleElement.Title="显示名称" Text="{Binding DisplayName}" Style="{StaticResource TextBoxExtend.Small}"/>
-                                    <Button  Command="{Binding DataContext.RemoveFlowCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}" VerticalAlignment="Bottom">删除</Button>
+                                    <Button  Command="{Binding DataContext.RemoveFlowCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}" VerticalAlignment="Bottom">
+                                        <iconPacks:PackIconPixelartIcons Kind="Trash" Width="10"/>
+                                    </Button>
                                 </StackPanel>
                                 <controls:FlowInputView EditMode="True"></controls:FlowInputView>
                             </StackPanel>
@@ -320,7 +322,10 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                                     <TextBox Text="{Binding Name}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="名称" Style="{StaticResource TextBoxExtend.Small}"/>
                                     <TextBox Text="{Binding Type}" IsReadOnly="{Binding IsStepOutput}" hc:TitleElement.Title="类型" Style="{StaticResource TextBoxExtend.Small}"/>
 
-                                    <Button VerticalAlignment="Bottom" Content="删除" Command="{Binding DataContext.RemoveGlobeDataCommand,RelativeSource={RelativeSource AncestorType=ItemsControl,Mode=FindAncestor}}" Visibility="{Binding IsStepOutput,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}"/>
+                                    <Button VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveGlobeDataCommand,RelativeSource={RelativeSource AncestorType=ItemsControl,Mode=FindAncestor}}" Visibility="{Binding IsStepOutput,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}">
+                                        <iconPacks:PackIconPixelartIcons Kind="Trash" Width="10"/>
+
+                                    </Button>
                                 </StackPanel>
                                 <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
                                 <StackPanel Orientation="Horizontal">
@@ -337,7 +342,9 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                                                 <StackPanel Orientation="Horizontal">
                                                     <TextBox Text="{Binding DisplayName}" hc:TitleElement.Title="显示名称" Style="{StaticResource TextBoxExtend.Small}"/>
                                                     <TextBox Text="{Binding Name}" hc:TitleElement.Title="值" Style="{StaticResource TextBoxExtend.Small}"/>
-                                                    <Button  Content="删除" VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}"/>
+                                                    <Button   VerticalAlignment="Bottom" Command="{Binding DataContext.RemoveOptionCommand,RelativeSource={RelativeSource AncestorType=ItemsControl, Mode=FindAncestor}}" Style="{StaticResource ButtonDanger.Small}" CommandParameter="{Binding .}">
+                                                        <iconPacks:PackIconPixelartIcons Kind="Trash" Width="10"/>
+                                                    </Button>
                                                 </StackPanel>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -484,7 +491,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
-                                        <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource ButtonDanger.Small}" Padding="1">
+                                        <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource ButtonDanger.Small}" Padding="1" >
                                             <iconPacks:PackIconPixelartIcons Kind="Minus" />
                                         </Button>
                                         <TextBox Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="名称" />

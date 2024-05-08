@@ -1448,6 +1448,7 @@ public class FlowStepInputViewModel : ReactiveObject
         DisplayName = displayName;
         Type = type;
         _flowStepEditViewModel = flowStepEditViewModel;
+        ChangeModeCommand = ReactiveCommand.Create(ChangeMode);
         Rank = rank;
         for (int i = 0; i < rank; i++)
         {
@@ -1489,6 +1490,20 @@ public class FlowStepInputViewModel : ReactiveObject
             });
         }).Subscribe();
 
+        this.WhenAnyValue(c => c.Mode).Subscribe(c =>
+        {
+            ModelName = c switch
+            {
+                InputMode.Normal => "普通",
+                InputMode.Option => "选项",
+                InputMode.Converter => "转换",
+                InputMode.Globe => "全局变量",
+                InputMode.Array => "数组",
+                InputMode.Event => "事件",
+                _ => null
+            };
+        });
+
     }
 
 
@@ -1511,6 +1526,52 @@ public class FlowStepInputViewModel : ReactiveObject
 
     [Reactive]
     public bool IsArray { get; set; }
+
+    public ReactiveCommand<Unit, Unit> ChangeModeCommand { get; }
+
+    [Reactive]
+    public string? ModelName { get; set; }
+    public void ChangeMode()
+    {
+        //每次进入时都改变模式
+        List<InputMode> modes = new List<InputMode>();
+        if (HasOption)
+        {
+            modes.Add(InputMode.Option);
+        }
+        modes.Add(InputMode.Normal);
+        if (HasConverter)
+        {
+            modes.Add(InputMode.Converter);
+        }
+        if (HasGlobe)
+        {
+            modes.Add(InputMode.Globe);
+        }
+        if (IsArray)
+        {
+            modes.Add(InputMode.Array);
+        }
+        modes.Add(InputMode.Event);
+
+        //从当前模式开始，找到下一个模式
+        var index = modes.IndexOf(Mode);
+        if (index == -1)
+        {
+            Mode = modes[0];
+        }
+        else
+        {
+            if (index == modes.Count - 1)
+            {
+                Mode = modes[0];
+            }
+            else
+            {
+                Mode = modes[index + 1];
+            }
+        }
+    }
 
     [Reactive]
     public string? SubType { get; set; }

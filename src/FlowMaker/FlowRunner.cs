@@ -185,29 +185,25 @@ public class FlowRunner : IDisposable
                     }
                 }
             }
-            foreach (var wait in item.Ifs)
+            foreach (var wait in item.Ifs.Keys.Union(item.AdditionalConditions.Keys))
             {
-                var checker = Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
+                var checker = Checkers.FirstOrDefault(c => c.Id == wait) ?? item.Checkers.FirstOrDefault(c => c.Id == wait);
                 if (checker is null)
                 {
                     continue;
                 }
                 Register(checker);
             }
-            foreach (var wait in item.AdditionalConditions)
-            {
-                var checker = Checkers.FirstOrDefault(c => c.Id == wait.Key) ?? item.Checkers.FirstOrDefault(c => c.Id == wait.Key);
-                if (checker is null)
-                {
-                    continue;
-                }
-                Register(checker);
-            }
+
             foreach (var input in item.Inputs)
             {
                 Register(input);
             }
-
+            Register(item.TimeOut);
+            Register(item.Repeat);
+            Register(item.Retry);
+            Register(item.ErrorHandling);
+            Register(item.Finally);
 
 
             foreach (var wait in item.WaitEvents)
@@ -229,7 +225,7 @@ public class FlowRunner : IDisposable
                     _ => string.Empty
                 };
                 waitEvent.Add(key);
-             
+
                 if (!ExecuteStepIds.TryGetValue(key, out var list))
                 {
                     list = [];
