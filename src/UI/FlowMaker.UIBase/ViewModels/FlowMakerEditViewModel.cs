@@ -457,7 +457,8 @@ public class FlowMakerEditViewModel : ViewModelBase
     public ReactiveCommand<FlowStepViewModel, Unit> LoadIfCommand { get; }
     public void LoadIf(FlowStepViewModel flowStepViewModel)
     {
-        foreach (var item in Checkers)
+        var allChecker = Checkers.Union(flowStepViewModel.Checkers);
+        foreach (var item in allChecker)
         {
             var r = flowStepViewModel.Ifs.FirstOrDefault(c => c.Id == item.Id);
             if (r is null)
@@ -489,38 +490,19 @@ public class FlowMakerEditViewModel : ViewModelBase
                 r2.DisplayName = item.DisplayName;
             }
         }
-        foreach (var item in flowStepViewModel.Checkers)
-        {
-            var r = flowStepViewModel.Ifs.FirstOrDefault(c => c.Id == item.Id);
-            if (r is null)
-            {
-                flowStepViewModel.Ifs.Add(new FlowIfViewModel
-                {
-                    Id = item.Id,
-                    IsTrue = true,
-                    DisplayName = item.DisplayName,
-                });
-            }
-            else
-            {
-                r.DisplayName = item.DisplayName;
-            }
 
-            var r2 = flowStepViewModel.AdditionalConditions.FirstOrDefault(c => c.Id == item.Id);
-            if (r2 is null)
+        for (var i = 0; i < flowStepViewModel.Ifs.Count; i++)
+        {
+            var item = flowStepViewModel.Ifs[i];
+            if (!allChecker.Any(c => c.Id == item.Id))
             {
-                flowStepViewModel.AdditionalConditions.Add(new FlowIfViewModel
-                {
-                    Id = item.Id,
-                    IsTrue = true,
-                    DisplayName = item.DisplayName,
-                });
-            }
-            else
-            {
-                r2.DisplayName = item.DisplayName;
+                flowStepViewModel.Ifs.Remove(item);
+                flowStepViewModel.AdditionalConditions.Remove(item);
+                i--;
             }
         }
+
+
     }
 
     public ReactiveCommand<Unit, Unit> AddWaitEventCommand { get; }
