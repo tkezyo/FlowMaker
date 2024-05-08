@@ -9,7 +9,7 @@ using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
 
-public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware
+public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware, IDisposable
 {
     public int TotalCount { get; set; } = -1;
     public double CompleteCount { get; set; }
@@ -23,51 +23,15 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    //public IObservable<IChangeSet<LogInfo>> GetLog(Guid? stepId, int? currentIndex, int? errorIndex)
-    //{
-    //    if (FlowContext == null) throw new ArgumentNullException(nameof(FlowContext));
-
-    //    //return Observable.Create<IChangeSet<LogInfo>>(observer =>
-    //    //{
-    //    //    IObservableList<StepOnceStatus> sourceList = new SourceList<StepOnceStatus>();
-
-
-    //    //    var toCache = FlowContext.StepState.Connect()
-    //    //    .Filter(c =>
-    //    //    {
-    //    //        if (stepId.HasValue)
-    //    //        {
-    //    //            return c.StepId == stepId;
-    //    //        }
-    //    //        return true;
-    //    //    })
-    //    //    .TransformMany(c => c.OnceLogs, c => $"{c.CurrentIndex}.{c.ErrorIndex}")
-    //    //    .Filter(c => c.CurrentIndex == currentIndex && c.ErrorIndex == errorIndex)
-    //    //    .BindToObservableList(out sourceList).Subscribe();
-
-    //    //    var d = sourceList.Connect().TransformMany(c => c.Logs).SubscribeSafe(observer);
-
-    //    //    return new CompositeDisposable(toCache, d);
-    //    //});
-    //}
-
-    public IObservable<IChangeSet<FlowGlobeData, string>> GetData()
-    {
-        if (FlowContext == null) throw new ArgumentNullException(nameof(FlowContext));
-
-        return FlowContext.Data.Connect();
-    }
-
-
-    public FlowContext? FlowContext { get; set; }
     public Task OnExecuted(FlowContext flowContext, FlowState state, Exception? exception, CancellationToken cancellationToken)
     {
-        if (flowContext.FlowIds.Length == 1)
-        {
-            FlowContext = flowContext;
-        }
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
 
+        //清除StepChange中的数据
+        StepChange.OnCompleted();
+        StepChange.Dispose();
+        PercentChange.OnCompleted();
+        PercentChange.Dispose();
         return Task.CompletedTask;
     }
 
@@ -168,6 +132,12 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     {
         StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
         return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        StepChange.Dispose();
+        PercentChange.Dispose();
     }
 }
 

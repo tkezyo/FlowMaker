@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace FlowMaker;
 
-public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null)
+public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null) : IDisposable
 {
     /// <summary>
     /// 流程Id
@@ -60,24 +60,48 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
 
     public SourceList<LogInfo> Logs { get; set; } = logger ?? new();
+
+    public void Dispose()
+    {
+        EventLogs.Clear();
+        EventLogs.Dispose();
+        WaitEvents.Clear();
+        WaitEvents.Dispose();
+
+        foreach (var item in StepState.Items)
+        {
+            if (item.FlowContext is not null)
+            {
+                item.FlowContext.Dispose();
+            }
+            item.OnceLogs.Clear();
+            item.OnceLogs.Dispose();
+        }
+
+        StepState.Clear();
+        StepState.Dispose();
+        Data.Clear();
+        Data.Dispose();
+        Logs.Clear();
+        Logs.Dispose();
+    }
 }
 
-public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus, Func<StepOnceStatus, string, LogLevel, Task> logAction)
+public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus)
 {
     public FlowStep Step { get; } = step;
     public FlowContext FlowContext { get; } = flowContext;
     public int CurrentIndex { get; } = stepOnceStatus.CurrentIndex;
     public int ErrorIndex { get; } = stepOnceStatus.ErrorIndex;
     public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
-    protected Func<StepOnceStatus, string, LogLevel, Task> LogAction { get; set; } = logAction;
 
     public async Task Log(string log, LogLevel logLevel = LogLevel.Information)
     {
-        await LogAction.Invoke(StepOnceStatus, log, logLevel);
+        await StepOnceStatus.Log(log, logLevel);
     }
 }
 
-public class StepOnceStatus(int currentIndex, int errorIndex, string parentIndex)
+public class StepOnceStatus(int currentIndex, int errorIndex, string parentIndex, Func<StepOnceStatus, string, LogLevel, Task> logAction)
 {
     /// <summary>
     /// 当前下标
@@ -107,6 +131,14 @@ public class StepOnceStatus(int currentIndex, int errorIndex, string parentIndex
     /// 附加属性
     /// </summary>
     public Dictionary<string, object> ExtraData { get; set; } = [];
+    protected Func<StepOnceStatus, string, LogLevel, Task> LogAction { get; set; } = logAction;
+
+    public async Task Log(string log, LogLevel logLevel = LogLevel.Information)
+    {
+        await LogAction.Invoke(this, log, logLevel);
+    }
+
+    public const string AdditionalConditions = "AdditionalConditions";
 }
 
 public record LogInfo(string Log, LogLevel LogLevel, DateTime Time, Guid StepId, string Index);

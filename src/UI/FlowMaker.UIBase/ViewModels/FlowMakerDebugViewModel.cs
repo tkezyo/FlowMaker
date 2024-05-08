@@ -157,16 +157,13 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     flow.ErrorStop = c.Context.ConfigDefinition.ErrorStop;
                     if (DataDisplay is not null)
                     {
-                        DataDisplay.Disposables.Dispose();
+                        DataDisplay.Dispose();
                     }
                     DataDisplay = new DataDisplayViewModel(c.Context, StepId, Index);
 
 
                     Reset(flow.Steps);
-                    RxApp.MainThreadScheduler.Schedule(() =>
-                    {
-                        StepOnceLogs.Clear();
-                    });
+
 
                     var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
                     if (mid is MonitorMiddleware monitor)
@@ -221,34 +218,20 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
                             if (c.StepOnce is not null)
                             {
-                                RxApp.MainThreadScheduler.Schedule(() =>
+                                var stepLog = new StepLogViewModel
                                 {
-                                    var log = StepOnceLogs.FirstOrDefault(v => v.Index == c.StepOnce.Index && c.Step.Id == v.StepId);
-                                    if (log is null)
-                                    {
-                                        StepOnceLogs.Add(new StepLogViewModel
-                                        {
-                                            Logs = [],
-                                            StepId = c.Step.Id,
-                                            Name = c.Step.DisplayName,
-                                            State = c.StepOnce.State.ToString(),
-                                            StartTime = c.StepOnce.StartTime,
-                                            EndTime = c.StepOnce.EndTime,
-                                            Inputs = c.StepOnce.Inputs,
-                                            Outputs = c.StepOnce.Outputs,
-                                            Index = c.StepOnce.Index,
-                                        });
-                                    }
-                                    else
-                                    {
-                                        log.State = c.StepOnce.State.ToString();
-                                        log.StartTime = c.StepOnce.StartTime;
-                                        log.EndTime = c.StepOnce.EndTime;
-                                        log.Inputs = c.StepOnce.Inputs;
-                                        log.Outputs = c.StepOnce.Outputs;
-                                    }
+                                    Logs = [],
+                                    StepId = c.Step.Id,
+                                    Name = c.Step.DisplayName,
+                                    State = c.StepOnce.State.ToString(),
+                                    StartTime = c.StepOnce.StartTime,
+                                    EndTime = c.StepOnce.EndTime,
+                                    Inputs = c.StepOnce.Inputs,
+                                    Outputs = c.StepOnce.Outputs,
+                                    Index = c.StepOnce.Index,
+                                };
 
-                                });
+                                DataDisplay.StepLogsCache.AddOrUpdate(stepLog);
                             }
                         }).DisposeWith(flow.StepChange);
                     }
@@ -460,8 +443,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     [Reactive]
     public DataDisplayViewModel? DataDisplay { get; set; }
 
-    [Reactive]
-    public ObservableCollection<StepLogViewModel> StepOnceLogs { get; set; } = [];
     public ReactiveCommand<Unit, Unit> RemoveCommand { get; }
     public async Task Remove()
     {
@@ -770,7 +751,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     }
 }
 
-public class DataDisplayViewModel : ReactiveObject
+public class DataDisplayViewModel : ReactiveObject, IDisposable
 {
     public DataDisplayViewModel(FlowContext flowContext, Guid? stepId, string? index)
     {
@@ -804,6 +785,13 @@ public class DataDisplayViewModel : ReactiveObject
                    .Subscribe()
                    .DisposeWith(Disposables);
 
+        StepLogsCache.Connect()
+                     .ObserveOn(RxApp.MainThreadScheduler)
+                   .Bind(out _stepLogs)
+                   .DisposeMany()
+                   .Subscribe()
+                   .DisposeWith(Disposables);
+
     }
 
     private Func<LogInfo, bool> BuildFilter((Guid?, string?) input)
@@ -822,6 +810,14 @@ public class DataDisplayViewModel : ReactiveObject
         }
         return log => true;
     }
+
+    public void Dispose()
+    {
+        StepLogsCache.Clear();
+        StepLogsCache.Dispose();
+        Disposables.Dispose();
+    }
+
     [Reactive]
     public Guid? StepId { get; set; }
     [Reactive]
@@ -833,6 +829,9 @@ public class DataDisplayViewModel : ReactiveObject
     private readonly ReadOnlyObservableCollection<LogInfoViewModel> _log;
     public ReadOnlyObservableCollection<WaitEventViewModel> WaitEvents => _waitEvents;
     private readonly ReadOnlyObservableCollection<WaitEventViewModel> _waitEvents;
+    public ReadOnlyObservableCollection<StepLogViewModel> StepLogs => _stepLogs;
+    private readonly ReadOnlyObservableCollection<StepLogViewModel> _stepLogs;
+    public SourceCache<StepLogViewModel, string> StepLogsCache = new SourceCache<StepLogViewModel, string>(c => c.StepId + "." + c.Index);
 
 }
 

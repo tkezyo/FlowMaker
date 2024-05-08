@@ -16,8 +16,6 @@ namespace Test1
         {
             for (int i = 0; i < 10; i++)
             {
-
-                await Task.Delay(200);
                 await stepContext.Log("sdfw+1" + i);
             }
             await stepContext.Log("sdfw");
@@ -31,7 +29,7 @@ namespace Test1
         {
             for (int i = 0; i < 30; i++)
             {
-                await Task.Delay(100);
+                await Task.Delay(1);
                 await stepContext.Log("sdfw+2" + i);
             }
             await stepContext.Log("sdfw");
@@ -87,7 +85,7 @@ namespace Test1
 
         public void Error(StepContext stepContext)
         {
-            Thread.Sleep(1000);
+            Thread.Sleep(1);
 
             throw new Exception("错误了");
         }

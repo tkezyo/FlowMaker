@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
+using System.Collections.Concurrent;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
+using System.Xml.Linq;
 
 namespace FlowMaker.Persistence
 {
@@ -54,12 +56,20 @@ namespace FlowMaker.Persistence
             return dirs;
         }
 
+        public ConcurrentDictionary<string, ConfigDefinition> ConfigDefinitions { get; set; } = [];
+
         public async Task<ConfigDefinition?> LoadConfigDefinitionAsync(string? category, string? name, string configName)
         {
             if (string.IsNullOrEmpty(category) || string.IsNullOrEmpty(name))
             {
                 return null;
             }
+
+            if (ConfigDefinitions.TryGetValue(category + "." + name + "." + configName, out var configDefinition))
+            {
+                return configDefinition;
+            }
+
             var file = Path.Combine(FlowDir, category, name, $"{configName}" + ".json");
             if (!File.Exists(file))
             {
@@ -70,12 +80,19 @@ namespace FlowMaker.Persistence
             return JsonSerializer.Deserialize<ConfigDefinition>(json);
         }
 
+        public ConcurrentDictionary<string, FlowDefinition> FlowDefinitions { get; set; } = [];
         public async Task<FlowDefinition> LoadFlowDefinitionAsync(string? category, string? name)
         {
             if (string.IsNullOrEmpty(category) || string.IsNullOrEmpty(name))
             {
                 throw new Exception($"步骤信息错误:{category},{name}");
             }
+
+            if (FlowDefinitions.TryGetValue(category + "." + name, out var flowDefinition))
+            {
+                return flowDefinition;
+            }
+
             var file = Path.Combine(FlowDir, category, name + ".json");
             if (!File.Exists(file))
             {
@@ -88,6 +105,9 @@ namespace FlowMaker.Persistence
             {
                 throw new Exception($"步骤文件错误:{category},{name}");
             }
+
+            FlowDefinitions[category + "." + name] = df;
+
             return df;
         }
 
@@ -157,6 +177,8 @@ namespace FlowMaker.Persistence
                 Directory.CreateDirectory(dir);
             }
 
+            ConfigDefinitions.TryRemove(configDefinition.Category + "." + configDefinition.Name + "." + configDefinition.ConfigName, out _);
+
             await File.WriteAllTextAsync(Path.Combine(dir, configDefinition.ConfigName + ".json"), JsonSerializer.Serialize(configDefinition, options: _jsonSerializerOptions));
         }
 
@@ -166,6 +188,9 @@ namespace FlowMaker.Persistence
             {
                 Directory.CreateDirectory(Path.Combine(FlowDir, flowDefinition.Category));
             }
+
+
+            FlowDefinitions.TryRemove(flowDefinition.Category + "." + flowDefinition.Name, out _);
 
             await File.WriteAllTextAsync(Path.Combine(FlowDir, flowDefinition.Category, flowDefinition.Name + ".json"), JsonSerializer.Serialize(flowDefinition, options: _jsonSerializerOptions));
         }

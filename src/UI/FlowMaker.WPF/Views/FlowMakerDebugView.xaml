@@ -249,7 +249,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid
                           Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.List}}"
 Style="{StaticResource DataGrid.Small}"
-ItemsSource="{Binding StepOnceLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single"  SelectedItem="{Binding SelectedStepOnce}">
+ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single"  SelectedItem="{Binding SelectedStepOnce}">
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">
                         <Style.Triggers>

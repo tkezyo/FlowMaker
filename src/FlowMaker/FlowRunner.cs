@@ -609,7 +609,7 @@ public class FlowRunner : IDisposable
                 }
                 if (state == StepState.Skip)
                 {
-                    StepOnceStatus once = new(i, errorIndex, Context.Index);
+                    StepOnceStatus once = new(i, errorIndex, Context.Index, Log);
 
                     once.State = StepOnceState.Skip;
 
@@ -625,10 +625,10 @@ public class FlowRunner : IDisposable
                 }
                 while (true)
                 {
-                    StepOnceStatus once = new(i, errorIndex, Context.Index);
+                    StepOnceStatus once = new(i, errorIndex, Context.Index, Log);
 
                     List<string> additionalConditions = [];
-                    once.ExtraData.Add("AdditionalConditions", additionalConditions);
+                    once.ExtraData.Add(StepOnceStatus.AdditionalConditions, additionalConditions);
                     foreach (var item2 in step.AdditionalConditions)
                     {
                         if (cancellationToken.IsCancellationRequested)
@@ -656,7 +656,7 @@ public class FlowRunner : IDisposable
                         {
                             await item.OnExecuting(Context, step, stepState.Value, once, CancellationTokenSource.Token);
                         }
-                        StepContext stepContext = new(step, Context, once, Log);
+                        StepContext stepContext = new(step, Context, once);
 
                         //超时策略
                         if (timeOut > 0)

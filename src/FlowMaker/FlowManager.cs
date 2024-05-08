@@ -23,7 +23,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     private readonly ILogger<FlowManager> _logger = logger;
 
     #region Run
-    class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope)
+    class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope) : IDisposable
     {
         public ConfigDefinition Config { get; set; } = config;
 
@@ -32,6 +32,18 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         public SourceCache<FlowContext, string> FlowContexts { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 
         public CancellationTokenSource Cancel { get; set; } = new();
+
+        public void Dispose()
+        {
+            foreach (var item in FlowContexts.Items)
+            {
+                item.Dispose();
+            }
+            FlowContexts.Dispose();
+            FlowRunner.Dispose();
+            Cancel.Dispose();
+            ServiceScope.Dispose();
+        }
     }
 
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
@@ -97,9 +109,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             {
                 FlowResult? flowResult = null;
                 bool needBreak = false;
+                FlowContext flowContext = new(status.Config, [id], i, errorTimes, null, null);
                 try
                 {
-                    FlowContext flowContext = new(status.Config, [id], i, errorTimes, null, null);
                     status.FlowContexts.AddOrUpdate(flowContext);
                     if (status.Config.Timeout > 0)
                     {
@@ -152,6 +164,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                         needBreak = true;
                     }
                 }
+                finally
+                {
+                    status.FlowContexts.Remove(flowContext);
+                    flowContext.Dispose();
+                }
                 if (flowResult is not null)
                 {
                     yield return flowResult;
@@ -191,7 +208,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         if (_status.TryGetValue(id, out var status))
         {
-            status.ServiceScope.Dispose();
+            status.Dispose();
             if (status.FlowRunner is not null)
             {
                 while (status.FlowRunner.State == FlowState.Running)
