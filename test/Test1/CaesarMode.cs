@@ -51,8 +51,9 @@ namespace Test1
     [Steps("CaesarModeKK")]
     public class CaesarMode
     {
-        public (int, string) Test(int ss = 3, CancellationToken cancellationToken = default)
+        public (int, string) Test(StepContext stepContext, int ss = 3, CancellationToken cancellationToken = default)
         {
+            _ = stepContext.Log(ss.ToString());
             return (ss, "ss");
         }
 

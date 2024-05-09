@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Splat;
 using System.Collections.Concurrent;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace FlowMaker;
@@ -29,17 +28,15 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
         public FlowRunner FlowRunner { get; set; } = flowRunner;
-        public SourceCache<FlowContext, string> FlowContexts { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
+
 
         public CancellationTokenSource Cancel { get; set; } = new();
 
+        public bool Disposed { get; set; }
         public void Dispose()
         {
-            foreach (var item in FlowContexts.Items)
-            {
-                item.Dispose();
-            }
-            FlowContexts.Dispose();
+            Disposed = true;
+
             FlowRunner.Dispose();
             Cancel.Dispose();
             ServiceScope.Dispose();
@@ -112,7 +109,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 FlowContext flowContext = new(status.Config, [id], i, errorTimes, null, null);
                 try
                 {
-                    status.FlowContexts.AddOrUpdate(flowContext);
                     if (status.Config.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(status.Config.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
@@ -166,7 +162,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 }
                 finally
                 {
-                    status.FlowContexts.Remove(flowContext);
                     flowContext.Dispose();
                 }
                 if (flowResult is not null)
@@ -222,8 +217,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public T? GetRunnerService<T>(Guid id, string? key = null)
     {
-        if (_status.TryGetValue(id, out var status))
+        if (_status.TryGetValue(id, out var status) && !status.Disposed)
         {
+
             if (string.IsNullOrEmpty(key))
             {
                 return status.ServiceScope.ServiceProvider.GetService<T>();

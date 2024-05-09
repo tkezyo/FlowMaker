@@ -71,6 +71,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <Separator/>
                 <ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center" Margin="0,4">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -107,13 +108,13 @@
             </ToolBar>
         </ToolBarTray>
 
-     
+
         <rxui:RoutedViewHost  DockPanel.Dock="Bottom"
    Visibility="{Binding Model.ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
    Router="{Binding Model.Router}">
             <rxui:RoutedViewHost.DefaultContent>
-                <WrapPanel>
-                </WrapPanel>
+                <Grid>
+                </Grid>
             </rxui:RoutedViewHost.DefaultContent>
             <rxui:RoutedViewHost.ViewLocator>
                 <app:AppViewLocator />
@@ -125,16 +126,16 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition MaxWidth="400"/>
+                        <ColumnDefinition MaxWidth="400" MinWidth="200"/>
                     </Grid.ColumnDefinitions>
-                    <!--<ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="1" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
+                    <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="1" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Log}" />
                             </DataTemplate>
                         </ListBox.ItemTemplate>
-                    </ListBox>-->
-                    <RichTextBox Padding="3" x:Name="rtb" Grid.Column="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>
+                    </ListBox>
+                    <!--<RichTextBox Padding="3" x:Name="rtb" Grid.Column="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>-->
                     <DataGrid Grid.Column="0" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
 Style="{StaticResource DataGrid.Small}" 
 AutoGenerateColumns="False" IsReadOnly="True">
@@ -148,7 +149,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
                 </Grid>
             </Border>
         </hc:Drawer>
-        <StackPanel  >
+        <Grid  >
             <TreeView ItemsSource="{Binding Model.Steps}"
                            Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Tree}}"
                           HorizontalAlignment="Stretch"
@@ -286,7 +287,7 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
                     <DataGridTextColumn Header="执行次数" Binding="{Binding  Index}"/>
                 </DataGrid.Columns>
             </DataGrid>
-        </StackPanel>
+        </Grid>
     </DockPanel>
 
 </rxui:ReactiveUserControl>

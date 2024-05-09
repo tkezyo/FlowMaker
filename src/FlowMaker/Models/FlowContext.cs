@@ -63,9 +63,9 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
 
     public void Dispose()
     {
-        EventLogs.Clear();
+        //EventLogs.Clear();
         EventLogs.Dispose();
-        WaitEvents.Clear();
+        //WaitEvents.Clear();
         WaitEvents.Dispose();
 
         foreach (var item in StepState.Items)
@@ -74,15 +74,15 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
             {
                 item.FlowContext.Dispose();
             }
-            item.OnceLogs.Clear();
+            //item.OnceLogs.Clear();
             item.OnceLogs.Dispose();
         }
 
-        StepState.Clear();
+        //StepState.Clear();
         StepState.Dispose();
-        Data.Clear();
+        //Data.Clear();
         Data.Dispose();
-        Logs.Clear();
+        //Logs.Clear();
         Logs.Dispose();
     }
 }

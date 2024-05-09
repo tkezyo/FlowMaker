@@ -399,11 +399,8 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                             <DataTemplate>
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" FontWeight="Bold"></TextBlock>
-                                        <TextBlock Text="{Binding Type,StringFormat=({0})}" Margin="0,0,10,0" VerticalAlignment="Center"></TextBlock>
-                                        <RadioButton Content="丢弃" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.Drop}}" GroupName="{Binding Name}"></RadioButton>
-                                        <RadioButton Content="全局变量" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.Globe}}" GroupName="{Binding Name}" ></RadioButton>
-                                        <RadioButton Content="全局变量转换器" IsChecked="{Binding Mode,Converter={StaticResource EqualConverter},ConverterParameter={x:Static models:OutputMode.GlobeWithConverter}}" GroupName="{Binding Name}" Visibility="{Binding HasConverter,Converter={StaticResource Boolean2VisibilityConverter}}"></RadioButton>
+                                        <TextBlock Text="{Binding DisplayName}" Margin="0,0,10,0" VerticalAlignment="Center" FontWeight="Bold" ToolTip="{Binding Type}"></TextBlock>
+                                        <Button Content="{Binding ModelName}" Command="{Binding ChangeModeCommand}" Style="{StaticResource ButtonCustom}" Foreground="DodgerBlue" VerticalAlignment="Bottom" />
                                     </StackPanel>
 
                                     <TextBox  Visibility="{Binding Mode,UpdateSourceTrigger=PropertyChanged,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static models:OutputMode.Globe}}"  Text="{Binding GlobeDataName}" />

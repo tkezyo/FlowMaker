@@ -1658,12 +1658,58 @@ public class FlowStepOutputViewModel : ReactiveObject
                 }
             }
         });
+
+        ChangeModeCommand = ReactiveCommand.Create(ChangeMode);
+        this.WhenAnyValue(c => c.Mode).Subscribe(c =>
+        {
+            ModelName = c switch
+            {
+                OutputMode.Drop => "丢弃",
+                OutputMode.Globe => "全局变量",
+                OutputMode.GlobeWithConverter => "全局变量转换器",
+                _ => null
+            };
+        });
     }
 
     [Reactive]
     public string Name { get; set; }
     [Reactive]
     public OutputMode Mode { get; set; }
+
+    public ReactiveCommand<Unit, Unit> ChangeModeCommand { get; }
+
+    [Reactive]
+    public string? ModelName { get; set; }
+    public void ChangeMode()
+    {
+        //每次进入时都改变模式
+        List<OutputMode> modes = new List<OutputMode>();
+        modes.Add(OutputMode.Drop);
+        modes.Add(OutputMode.Globe);
+        if (HasConverter)
+        {
+            modes.Add(OutputMode.GlobeWithConverter);
+        }
+
+        //从当前模式开始，找到下一个模式
+        var index = modes.IndexOf(Mode);
+        if (index == -1)
+        {
+            Mode = modes[0];
+        }
+        else
+        {
+            if (index == modes.Count - 1)
+            {
+                Mode = modes[0];
+            }
+            else
+            {
+                Mode = modes[index + 1];
+            }
+        }
+    }
     /// <summary>
     /// 显示名称，描述
     /// </summary>
