@@ -2,6 +2,7 @@
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Polly;
 using Splat;
 using System.Collections.Concurrent;
@@ -64,7 +65,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         var scope = _serviceProvider.CreateScope();
         Guid id = Guid.NewGuid();
 
-        var runner = scope.ServiceProvider.GetRequiredService<FlowRunner>();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
+        var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
+        var runner = new FlowRunner(scope.ServiceProvider, options.Value, flowProvider);
         _status[id] = new RunnerStatus(configDefinition, runner, scope)
         {
             Cancel = new CancellationTokenSource()
@@ -217,18 +220,27 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public T? GetRunnerService<T>(Guid id, string? key = null)
     {
-        if (_status.TryGetValue(id, out var status) && !status.Disposed)
+        try
         {
+            if (_status.TryGetValue(id, out var status) && !status.Disposed)
+            {
 
-            if (string.IsNullOrEmpty(key))
-            {
-                return status.ServiceScope.ServiceProvider.GetService<T>();
-            }
-            else
-            {
-                return status.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
+                if (string.IsNullOrEmpty(key))
+                {
+                    return status.ServiceScope.ServiceProvider.GetService<T>();
+                }
+                else
+                {
+                    return status.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
+                }
             }
         }
+        catch (Exception e)
+        {
+
+            
+        }
+    
         return default;
     }
     #endregion

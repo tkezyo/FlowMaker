@@ -49,9 +49,9 @@ public class FlowRunner : IDisposable
     /// </summary>
     public Dictionary<string, List<Guid>> ExecuteStepIds { get; } = [];
 
-    public FlowRunner(IServiceProvider serviceProvider, IOptions<FlowMakerOption> option, IFlowProvider flowProvider)
+    public FlowRunner(IServiceProvider serviceProvider, FlowMakerOption option, IFlowProvider flowProvider)
     {
-        _flowMakerOption = option.Value;
+        _flowMakerOption = option;
         this._serviceProvider = serviceProvider;
         this._flowProvider = flowProvider;
         ExecuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
@@ -301,7 +301,7 @@ public class FlowRunner : IDisposable
         {
             var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.Category, step.Name);
             var embeddedFlow = subFlowDefinition.EmbeddedFlows.First(c => c.StepId == step.Id);
-            var flowRunner = _serviceProvider.GetRequiredService<FlowRunner>();
+            var flowRunner = new FlowRunner(_serviceProvider, _flowMakerOption, _flowProvider);
 
             var config = new ConfigDefinition { ConfigName = null, Category = step.Category, Name = step.Name };
             SubFlowRunners.Add(step.Id, flowRunner);
@@ -319,11 +319,13 @@ public class FlowRunner : IDisposable
             {
                 await IDataConverterInject.SetValue(step.Outputs.First(v => v.Name == item.Name), item.Value, _serviceProvider, Context, cancellationToken);
             }
+            SubFlowRunners.Remove(step.Id);
+            flowRunner.Dispose();
         }
         else
         {
             var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.Category, step.Name);
-            var flowRunner = _serviceProvider.GetRequiredService<FlowRunner>();
+            var flowRunner = new FlowRunner(_serviceProvider, _flowMakerOption, _flowProvider);
 
             var config = new ConfigDefinition { ConfigName = null, Category = step.Category, Name = step.Name };
             foreach (var item in subFlowDefinition.Data)
@@ -350,6 +352,8 @@ public class FlowRunner : IDisposable
             {
                 await IDataConverterInject.SetValue(step.Outputs.First(v => v.Name == item.Name), item.Value, _serviceProvider, Context, cancellationToken);
             }
+            SubFlowRunners.Remove(step.Id);
+            flowRunner.Dispose();
         }
     }
     /// <summary>
@@ -786,6 +790,11 @@ public class FlowRunner : IDisposable
         if (!CancellationTokenSource.IsCancellationRequested)
         {
             CancellationTokenSource.Cancel();
+        }
+
+        foreach (var item in SubFlowRunners)
+        {
+            item.Value.Dispose();
         }
 
         CancellationTokenSource.Dispose();

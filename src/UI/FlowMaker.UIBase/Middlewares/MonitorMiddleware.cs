@@ -28,9 +28,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
 
         //清除StepChange中的数据
-        StepChange.OnCompleted();
         StepChange.Dispose();
-        PercentChange.OnCompleted();
         PercentChange.Dispose();
         return Task.CompletedTask;
     }
@@ -43,8 +41,14 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             CompleteCount += 0.5;
             Percent = (double)CompleteCount / TotalCount * 100;
         }
-        PercentChange.OnNext(Percent);
-        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, stepOnceStatus, flowContext.FlowIds, flowStep));
+        if (!PercentChange.IsDisposed)
+        {
+            PercentChange.OnNext(Percent);
+        }
+        if (!StepChange.IsDisposed)
+        {
+            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, stepOnceStatus, flowContext.FlowIds, flowStep));
+        }
 
         return Task.CompletedTask;
     }
@@ -115,22 +119,33 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             CompleteCount += 1;
             Percent = (double)CompleteCount / TotalCount * 100;
         }
-        PercentChange.OnNext(Percent);
 
-        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, stepOnceStatus, flowContext.FlowIds, flowStep));
-
+        if (!PercentChange.IsDisposed)
+        {
+            PercentChange.OnNext(Percent);
+        }
+        if (!StepChange.IsDisposed)
+        {
+            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, stepOnceStatus, flowContext.FlowIds, flowStep));
+        }
         return Task.CompletedTask;
     }
 
     public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken)
     {
-        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
+        if (!StepChange.IsDisposed)
+        {
+            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
+        }
         return Task.CompletedTask;
     }
 
     public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception? exception, CancellationToken cancellationToken)
     {
-        StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
+        if (!StepChange.IsDisposed)
+        {
+            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
+        }
         return Task.CompletedTask;
     }
 
