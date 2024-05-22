@@ -29,9 +29,9 @@
 			<ColumnDefinition Width="Auto"/>
 		</Grid.ColumnDefinitions>
 		<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4" Orientation="Horizontal">
-			<Button Content="保存" Command="{Binding SaveCommand}"/>
+			<Button Content="保存" Command="{Binding SaveCommand}" Classes="Success"/>
 			<Separator Margin="10,0" />
-			<TextBlock Text="类别:"/>
+			<TextBlock Text="分组:"/>
 			<TextBox Text="{Binding Category}"  MinWidth="80"/>
 			<TextBlock Text="名称:"/>
 			<TextBox Text="{Binding Name}" MinWidth="80"/>
@@ -193,17 +193,17 @@ IsVisible="{Binding IsChecked,ElementName=showData}">
 			</ItemsControl>
 		</ScrollViewer>
 		<ScrollViewer Grid.Row="1" Grid.Column="1"  Margin="10,5"
-IsVisible="{Binding ShowEdit}">
+				IsVisible="{Binding ShowEdit}">
 			<StackPanel>
-				<HeaderedContentControl Header="基本信息">
+				<HeaderedContentControl Header="基本信息" Theme="{DynamicResource GroupBox}">
 					<StackPanel>
 						<TextBlock Text="显示名称"/>
 						<TextBox Text="{Binding FlowStep.DisplayName}"  />
 						<StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
 							<TextBlock Text="分组"/>
-							<ComboBox  ItemsSource="{Binding StepGroups}"  SelectedItem="{Binding FlowStep.Category}"></ComboBox>
+							<ComboBox  ItemsSource="{Binding StepGroups}"  SelectedItem="{Binding FlowStep.Category}" Classes="Small"></ComboBox>
 							<TextBlock Text="名称"/>
-							<ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}"  SelectedItem="{Binding FlowStep.Name}"></ComboBox>
+							<ComboBox HorizontalContentAlignment="Stretch" ItemsSource="{Binding FlowStep.StepDefinitions}"  SelectedItem="{Binding FlowStep.Name}" Classes="Small"></ComboBox>
 							<Button IsVisible="{Binding FlowStep.IsSubFlow}" Content="详情" Command="{Binding ShowSubFlowCommand}" CommandParameter="{Binding FlowStep}" VerticalAlignment="Bottom"/>
 						</StackPanel>
 
@@ -214,10 +214,7 @@ IsVisible="{Binding ShowEdit}">
 
 						<TextBlock Text="显示时间"/>
 						<TextBox Text="{Binding FlowStep.Time}" />
-						<!--<TextBox Text="{Binding FlowStep.Repeat}" hc:InfoElement.Title="重复次数" />
-                        <TextBox Text="{Binding FlowStep.Retry}" hc:InfoElement.Title="错误重试次数" />-->
-
-						<!--<ComboBox ItemsSource="{Binding ErrorHandlings}" hc:InfoElement.Title="错误处理方式" SelectedItem="{Binding FlowStep.ErrorHandling}"></ComboBox>-->
+						
 					</StackPanel>
 				</HeaderedContentControl>
 				<HeaderedContentControl Header="输入">
