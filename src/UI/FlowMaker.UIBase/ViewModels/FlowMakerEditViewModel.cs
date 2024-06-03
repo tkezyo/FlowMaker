@@ -8,6 +8,7 @@ using ReactiveUI.Fody.Helpers;
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
+using Ty;
 using Ty.Services;
 using Ty.ViewModels;
 

@@ -12,8 +12,11 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Ty;
+using Ty.Module.Configs;
 using Ty.Services;
 using Ty.ViewModels;
+using Ty.ViewModels.CustomPages;
 
 namespace FlowMaker.ViewModels;
 
@@ -331,32 +334,32 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             if (item.IsInput)
             {
-                var data = new SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
-                if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
-                {
-                    var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
-                    if (pp is not null)
-                    {
-                        var options = await pp.GetOptions();
-                        foreach (var option in options)
-                        {
-                            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (var option in item.Options)
-                    {
-                        data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
-                    }
-                }
+                //var data = new SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                //if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
+                //{
+                //    var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
+                //    if (pp is not null)
+                //    {
+                //        var options = await pp.GetOptions();
+                //        foreach (var option in options)
+                //        {
+                //            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                //    foreach (var option in item.Options)
+                //    {
+                //        data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
+                //    }
+                //}
 
-                if (data.Options.Count != 0)
-                {
-                    data.HasOption = true;
-                }
-                Model.Data.Add(data);
+                //if (data.Options.Count != 0)
+                //{
+                //    data.HasOption = true;
+                //}
+                //Model.Data.Add(data);
             }
         }
 
@@ -376,7 +379,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 Model.Repeat = config.Repeat;
                 Model.ErrorStop = config.ErrorStop;
                 Model.LogView = config.LogView;
-                foreach (var item in Model.Data)
+                foreach (var item in Model.Data.GetNameValues())
                 {
                     var data = config.Data.FirstOrDefault(c => c.Name == item.Name);
                     item.Value = data?.Value;
@@ -480,7 +483,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 Repeat = monitorInfoViewModel.Repeat,
                 Retry = monitorInfoViewModel.Retry,
             };
-            foreach (var item in monitorInfoViewModel.Data)
+            foreach (var item in monitorInfoViewModel.Data.GetNameValues())
             {
                 if (string.IsNullOrEmpty(item.Value))
                 {
@@ -651,7 +654,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             Repeat = model.Repeat,
             Retry = model.Retry,
         };
-        foreach (var item in model.Data)
+        foreach (var item in model.Data.GetNameValues())
         {
             if (string.IsNullOrEmpty(item.Value))
             {

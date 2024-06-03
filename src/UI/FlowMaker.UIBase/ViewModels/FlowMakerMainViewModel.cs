@@ -102,19 +102,6 @@ namespace FlowMaker.ViewModels
                     }
                     break;
                 default:
-                    {
-                        if (string.IsNullOrEmpty(_flowMakerOption.Section))
-                        {
-                            return;
-                        }
-                        var vm = _serviceProvider.GetRequiredService<FlowMakerCustomPageViewModel>();
-                        vm.SetScreen(this);
-                        await Router.NavigateAndReset.Execute(vm);
-                        await vm.LoadTabs();
-                        vm.ReloadMenuCommand = ReloadMenuCommand;
-                        Menus.Add(vm.InitMenu());
-                        PageName = "测试";
-                    }
                     break;
             }
         }

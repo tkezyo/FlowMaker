@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Windows.Input;
 using Ty.Services;
 using Ty.ViewModels;
+using Ty.ViewModels.Configs;
 
 namespace FlowMaker.ViewModels;
 
@@ -295,7 +296,7 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     [Reactive]
     public bool ErrorStop { get; set; }
     [Reactive]
-    public ObservableCollection<SpikeInputViewModel> Data { get; set; } = [];
+    public ConfigEditViewModel? Data { get; set; }
     [Reactive]
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];
     [Reactive]
@@ -455,7 +456,7 @@ public class ConfigDefinitionViewModel : ReactiveObject
     [Reactive]
     public ErrorHandling ErrorHandling { get; set; }
     [Reactive]
-    public ObservableCollection<SpikeInputViewModel> Data { get; set; } = [];
+    public ConfigEditViewModel? Data { get; set; }
 }
 
 //public class InputDataViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject

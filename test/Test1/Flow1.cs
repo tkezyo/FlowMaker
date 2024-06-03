@@ -1,6 +1,7 @@
 ﻿using FlowMaker;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
+using Ty.Module.Configs;
 
 namespace Test1;
 
@@ -23,7 +24,7 @@ public partial class Flow1 : IStep
     public static string Name => "Flow1";
 
     [Input]
-    [OptionProvider<PortProvider>]
+    [OptionProvider(PortProvider.FullName)]
     public int Prop1 { get; set; }
 
     [Input]

@@ -377,6 +377,8 @@ public partial class {item.Option.MetadataName}
 
                     string baseStr = $@"using FlowMaker;
 using System.Text.Json;
+using Ty;
+using Ty.Module.Configs;
 
 namespace {item.Option.ContainingNamespace};
 

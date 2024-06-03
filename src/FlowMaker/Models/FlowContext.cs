@@ -1,6 +1,7 @@
 ﻿using DynamicData;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using Ty;
 
 namespace FlowMaker;
 
@@ -163,11 +164,6 @@ public class StepStatus
 }
 
 
-public class NameValue(string name, string value)
-{
-    public string Name { get; set; } = name;
-    public string Value { get; set; } = value;
-}
 
 public class FlowGlobeData(string name, string type, string? value = null)
 {

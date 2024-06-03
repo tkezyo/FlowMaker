@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
+using Ty;
 
 namespace FlowMaker;
 
@@ -262,4 +263,21 @@ public interface IEventMiddleware
 public interface ILogMiddleware
 {
     Task OnLog(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, LogInfo logInfo, CancellationToken cancellationToken);
+}
+
+
+[System.AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = false, AllowMultiple = false)]
+public sealed class StepsAttribute : Attribute
+{
+    readonly string category;
+
+    public StepsAttribute(string category)
+    {
+        this.category = category;
+    }
+
+    public string Category
+    {
+        get { return category; }
+    }
 }

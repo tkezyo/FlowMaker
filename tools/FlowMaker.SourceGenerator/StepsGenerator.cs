@@ -532,6 +532,8 @@ using System.Text.Json;
 using System.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Ty.Module.Configs;
+using Ty;
 
 namespace {{item.Option.ContainingNamespace}};
 

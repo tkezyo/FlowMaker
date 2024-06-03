@@ -1,4 +1,6 @@
-﻿namespace FlowMaker;
+﻿using Ty;
+
+namespace FlowMaker;
 
 public interface IStepDefinition
 {
@@ -46,15 +48,7 @@ public class StepDefinition : IStepDefinition
     public required string Name { get; set; }
     public List<DataDefinition> Data { get; set; } = [];
 }
-public class CustomViewDefinition
-{
-    public required string Category { get; set; }
-    /// <summary>
-    /// 名称
-    /// </summary>
-    public required string Name { get; set; }
-    public List<DataDefinition> Data { get; set; } = [];
-}
+
 
 public class ConverterDefinition
 {

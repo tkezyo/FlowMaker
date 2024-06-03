@@ -1,13 +1,10 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Ty;
 
 namespace FlowMaker;
 
 public class FlowMakerOption
 {
-    /// <summary>
-    /// 文件的目录
-    /// </summary>
-    public string CustomPageRootDir { get; set; } = string.Empty;
     public string DebugPageRootDir { get; set; } = string.Empty;
     public string FlowRootDir { get; set; } = string.Empty;
     /// <summary>
@@ -91,7 +88,6 @@ public class FlowMakerOptionGroup
 {
     public List<StepDefinition> StepDefinitions { get; set; } = [];
     public List<ConverterDefinition> ConverterDefinitions { get; set; } = [];
-    public List<CustomViewDefinition> CustomPageViewDefinitions { get; set; } = [];
 }
 
 public static partial class FlowMakerExtension
