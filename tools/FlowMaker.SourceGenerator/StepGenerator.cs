@@ -37,10 +37,6 @@ namespace FlowMaker.SourceGenerator
                         {
                             return true;
                         }
-                        if (ff.Identifier.Text == "IOptionProvider" && ff.TypeArgumentList.Arguments.Any())
-                        {
-                            return true;
-                        }
                     }
 
                     return false;
@@ -75,7 +71,6 @@ namespace FlowMaker.SourceGenerator
                 var attires = item.Option.GetAttributes();
                 var flowStep = item.Option.Interfaces.Any(c => c.Name == "IStep");
                 var flowConverter = item.Option.Interfaces.Any(c => c.Name == "IDataConverter");
-                var optionProvider = item.Option.Interfaces.Any(c => c.Name == "IOptionProvider");
 
                 if (flowStep)
                 {
@@ -416,32 +411,7 @@ partial class {item.Option.MetadataName}
 
                     c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));
                 }
-                if (optionProvider)
-                {
-                    var type = item.Option.AllInterfaces.FirstOrDefault(c => c.Name == "IOptionProvider");
-                    if (type.TypeArguments.Any())
-                    {
-                        type = type.TypeArguments[0] as INamedTypeSymbol;
-                    }
-
-                    string baseStr = $@"
-
-namespace {item.Option.ContainingNamespace};
-
-#nullable enable
-
-    public partial class {item.Option.MetadataName}
-    {{
-        public const string FullName = ""{type.ToDisplayString()}"" + "":"" + nameof({item.Option.ContainingNamespace}) + ""."" + nameof({item.Option.MetadataName});
-        public static string Name => typeof({item.Option.MetadataName}).FullName ?? string.Empty;
-
-        public static string Type => ""{type.ToDisplayString()}"";
-    }}
-#nullable restore
-";
-
-                    c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));
-                }
+               
             });
 
         }

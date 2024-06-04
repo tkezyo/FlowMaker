@@ -223,22 +223,9 @@ public interface IDataConverter<T> : IDataConverter
     Task<T> WrapAsync(FlowContext? context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
 }
 
-public interface IOptionProvider<T> : IOptionProvider
-{
-}
-public interface IOptionProvider : IOptionProviderInject
-{
-    /// <summary>
-    /// 名称
-    /// </summary>
-    static abstract string DisplayName { get; }
-    static abstract string Name { get; }
-    static abstract string Type { get; }
-}
-public interface IOptionProviderInject
-{
-    Task<IEnumerable<NameValue>> GetOptions();
-}
+
+
+
 
 public interface IFlowMiddleware
 {

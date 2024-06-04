@@ -62,11 +62,10 @@ namespace FlowMaker.SourceGenerator
 
                 StringBuilder stringBuilder = new();
                 StringBuilder extensionBuilder = new();
+                //item.Option是否为接口
+                var isInterface = item.Option.TypeKind == TypeKind.Interface;
                 foreach (var member in item.Option.GetMembers())
                 {
-                    //item.Option是否为接口
-                    var isInterface = item.Option.TypeKind == TypeKind.Interface;
-
                     if (member is IMethodSymbol methodSymbol)
                     {
                         //确保是 public
@@ -217,7 +216,7 @@ namespace FlowMaker.SourceGenerator
                         if (isInterface)
                         {
                             inputPropStringBuilder.AppendLine("    [Input]");
-                            inputPropStringBuilder.AppendLine($"    [OptionProvider<{item.Option.Name}InstanceProvider>]");
+                            inputPropStringBuilder.AppendLine($"    [OptionProvider({item.Option.Name}InstanceProvider.FullName)]");
                             inputPropStringBuilder.AppendLine($"    public string InstanceProvider {{ get; set; }}");
                             defStringBuilder.AppendLine($$"""
         var InstanceProviderProp = new DataDefinition("InstanceProvider", "实例", "string", "");
@@ -424,13 +423,7 @@ namespace FlowMaker.SourceGenerator
                         extensionBuilder.AppendLine($$"""
                                     serviceDescriptors.AddFlowStep<{{item.Option.Name}}_{{methodSymbol.Name}}>();
                             """);
-                        if (isInterface)
-                        {
-
-                            extensionBuilder.AppendLine($$"""
-                                    serviceDescriptors.AddFlowOption<{{item.Option.Name}}InstanceProvider>();
-                            """);
-                        }
+                       
 
                         if (!isInterface)
                         {
@@ -524,6 +517,39 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}(IServiceProvider
 
                     }
                 }
+                string optionString = null;
+                if (isInterface)
+                {
+
+                    extensionBuilder.AppendLine($$"""
+                                    serviceDescriptors.AddConfigOptionProvider<{{item.Option.Name}}InstanceProvider>();
+                            """);
+                }
+                if (isInterface)
+                {
+                    optionString = $$"""
+                public class {{item.Option.Name}}InstanceOption
+                {
+                    public List<NameValue> Instances { get; set; } = [];
+                }
+                public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option.Name}}InstanceOption> {{item.Option.Name}}InstanceOption) : IOptionProvider<string>
+                {
+                    public static string DisplayName => "{{category}}";
+                
+                    public const string FullName = "string:{{item.Option.ContainingNamespace}}.{{item.Option.Name}}InstanceProvider";
+                    public static string Name => typeof({{item.Option.Name}}InstanceProvider).FullName ?? string.Empty;
+                    public static string Type => "string";
+                
+                    public async Task<IEnumerable<NameValue>> GetOptions()
+                    {
+                        await Task.CompletedTask;
+                        return {{item.Option.Name}}InstanceOption.Value.Instances;
+                    }
+                }
+                """;
+                }
+             
+                
 
                 var source = new StringBuilder();
                 source.AppendLine($$"""
@@ -550,24 +576,8 @@ public static partial class FlowMakerExtension
     }
 }
 
-public class {{item.Option.Name}}InstanceOption
-{
-    public List<NameValue> Instances { get; set; } = [];
-}
-public partial class {{item.Option.Name}}InstanceProvider(IOptions<{{item.Option.Name}}InstanceOption> {{item.Option.Name}}InstanceOption) : IOptionProvider<string>
-{
-    public static string DisplayName => "{{category}}";
+{{optionString}}
 
-    public const string FullName = "string" + ":" + nameof({{item.Option.ContainingNamespace}}) + "." + nameof({{item.Option.Name}}InstanceProvider);
-    public static string Name => typeof({{item.Option.Name}}InstanceProvider).FullName ?? string.Empty;
-    public static string Type => "string";
-
-    public async Task<IEnumerable<NameValue>> GetOptions()
-    {
-        await Task.CompletedTask;
-        return {{item.Option.Name}}InstanceOption.Value.Instances;
-    }
-}
 #nullable restore
 """);
 

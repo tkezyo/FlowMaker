@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ty;
+using Ty.Module.Configs;
 
 namespace Test1
 {
@@ -24,7 +25,7 @@ namespace Test1
             hostApplicationBuilder.Services.AddFlowStep<TestFlow1>();
             hostApplicationBuilder.Services.AddFlowConverter<ValueConverter>();
             hostApplicationBuilder.Services.AddFlowConverter<BoolConverter>();
-            hostApplicationBuilder.Services.AddFlowOption<PortProvider>();
+            hostApplicationBuilder.Services.AddConfigOptionProvider<PortProvider>();
             hostApplicationBuilder.Services.AddCaesarModeFlowStep();
             hostApplicationBuilder.Services.AddScoped<CaesarMode>();
             hostApplicationBuilder.Services.AddICaesarModeFlowStep();
@@ -35,8 +36,8 @@ namespace Test1
 
             hostApplicationBuilder.Services.Configure<ITestStepInstanceOption>(c =>
             {
-                c.Instances.Add(new FlowMaker.NameValue("Test1", "Test1"));
-                c.Instances.Add(new FlowMaker.NameValue("Test2", "Test2"));
+                c.Instances.Add(new NameValue("Test1", "Test1"));
+                c.Instances.Add(new NameValue("Test2", "Test2"));
             });
 
             return Task.CompletedTask;

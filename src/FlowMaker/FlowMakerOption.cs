@@ -115,15 +115,4 @@ public static partial class FlowMakerExtension
             group.ConverterDefinitions.Add(T.GetDefinition());
         });
     }
-    public static void AddFlowOption<T>(this IServiceCollection serviceDescriptors)
-        where T : class, IOptionProvider
-    {
-        serviceDescriptors.AddKeyedTransient<IOptionProviderInject, T>(T.Type + ":" + T.Name);
-        serviceDescriptors.Configure<FlowMakerOption>(c =>
-        {
-            var group = c.GetOrAddType(T.Type);
-
-            group.Add(new NameValue(T.DisplayName, T.Name));
-        });
-    }
 }

@@ -7,6 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <PackageReference Include="Ty.SourceGenerator" Version="0.25.0-preview1" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\..\src\FlowMaker\FlowMaker.csproj" />
 		<ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj" />
 	</ItemGroup>
