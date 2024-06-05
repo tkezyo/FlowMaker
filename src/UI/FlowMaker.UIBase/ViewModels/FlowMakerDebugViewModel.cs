@@ -387,7 +387,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         item.Value = data?.Value;
                     }
                 }
-             
+
                 foreach (var item in Model.Middlewares)
                 {
                     item.Selected = config.Middlewares.Contains(item.Value);
@@ -487,15 +487,19 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 Repeat = monitorInfoViewModel.Repeat,
                 Retry = monitorInfoViewModel.Retry,
             };
-            foreach (var item in monitorInfoViewModel.Data.GetNameValues())
+            if (monitorInfoViewModel.Data is not null)
             {
-                if (string.IsNullOrEmpty(item.Value))
+                foreach (var item in monitorInfoViewModel.Data.GetNameValues())
                 {
-                    RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.Name} 未填写")));
-                    return;
+                    if (string.IsNullOrEmpty(item.Value))
+                    {
+                        RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.Name} 未填写")));
+                        return;
+                    }
+                    config.Data.Add(new NameValue(item.Name, item.Value));
                 }
-                config.Data.Add(new NameValue(item.Name, item.Value));
             }
+         
             foreach (var item in monitorInfoViewModel.Middlewares)
             {
                 if (item.Selected)

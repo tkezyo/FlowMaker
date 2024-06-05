@@ -124,18 +124,5 @@
                 </ItemsControl>
             </ScrollViewer>
         </Expander>
-        <Button Content="{Binding PageName}" Grid.Column="2"  VerticalAlignment="Bottom" Command="{Binding ChangeViewCommand}" Style="{StaticResource ButtonDefault.Small}"></Button>
-        <ItemsControl ItemsSource="{Binding Menus}" Grid.Column="3"  VerticalAlignment="Bottom">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"></StackPanel>
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Button Content="{Binding Name}" Command="{Binding Command}" CommandParameter="{Binding CommandParameter}" Style="{StaticResource ButtonDefault.Small}"/>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
     </Grid>
 </rxui:ReactiveUserControl>

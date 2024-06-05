@@ -30,7 +30,6 @@ namespace FlowMaker.ViewModels
             _flowManager = flowManager;
             this._messageBoxManager = messageBoxManager;
             this._flowProvider = flowProvider;
-            ChangeViewCommand = ReactiveCommand.Create(ChangeView);
             ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
             ReloadMenuCommand = ReactiveCommand.Create<IList<MenuItemViewModel>>(c =>
             {
@@ -53,8 +52,10 @@ namespace FlowMaker.ViewModels
 
         public override async Task Activate()
         {
-            ChangeView();
-
+            var vm = _serviceProvider.GetRequiredService<FlowMakerMonitorViewModel>();
+            vm.SetScreen(this);
+            Menus.Add(vm.InitMenu());
+            await Router.NavigateAndReset.Execute(vm);
             await LoadFlows();
 
             MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
@@ -82,29 +83,7 @@ namespace FlowMaker.ViewModels
             }).DisposeWith(Disposables);
 
         }
-   
-        [Reactive]
-        public string PageName { get; set; } = "测试";
-        public ReactiveCommand<Unit, Unit> ChangeViewCommand { get; set; }
-        public async void ChangeView()
-        {
-            Menus.Clear();
-            switch (PageName)
-            {
-                case "测试":
-                    {
-                        var vm = _serviceProvider.GetRequiredService<FlowMakerMonitorViewModel>();
-                        vm.SetScreen(this);
-                        Menus.Add(vm.InitMenu());
 
-                        await Router.NavigateAndReset.Execute(vm);
-                        PageName = "自定义";
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
         public ReactiveCommand<IList<MenuItemViewModel>, Unit> ReloadMenuCommand { get; }
 
         public ReactiveCommand<MonitorRunningViewModel, Unit> ShowLogCommand { get; }
