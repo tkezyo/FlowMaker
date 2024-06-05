@@ -296,7 +296,7 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     [Reactive]
     public bool ErrorStop { get; set; }
     [Reactive]
-    public ConfigEditViewModel? Data { get; set; }
+    public ObservableCollection<FlowConfigDataInputViewModel> Data { get; set; } = [];
     [Reactive]
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];
     [Reactive]

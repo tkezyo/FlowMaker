@@ -12,10 +12,13 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using Ty;
 using Ty.Module.Configs;
 using Ty.Services;
+using Ty.Services.Configs;
 using Ty.ViewModels;
+using Ty.ViewModels.Configs;
 using Ty.ViewModels.CustomPages;
 
 namespace FlowMaker.ViewModels;
@@ -329,39 +332,38 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
 
         await SetFlowStepAsync(Model.Steps, definition);
-
         foreach (var item in definition.Data)
         {
             if (item.IsInput)
             {
-                //var data = new SpikeInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
-                //if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
-                //{
-                //    var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
-                //    if (pp is not null)
-                //    {
-                //        var options = await pp.GetOptions();
-                //        foreach (var option in options)
-                //        {
-                //            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
-                //        }
-                //    }
-                //}
-                //else
-                //{
-                //    foreach (var option in item.Options)
-                //    {
-                //        data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
-                //    }
-                //}
+                var data = new FlowConfigDataInputViewModel(item.Name, item.DisplayName, item.Type, item.DefaultValue);
+                if (!string.IsNullOrWhiteSpace(item.OptionProviderName))
+                {
+                    var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
+                    if (pp is not null)
+                    {
+                      await  foreach (var option in pp.GetOptions())
+                        {
+                            data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var option in item.Options)
+                    {
+                        data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
+                    }
+                }
 
-                //if (data.Options.Count != 0)
-                //{
-                //    data.HasOption = true;
-                //}
-                //Model.Data.Add(data);
+                if (data.Options.Count != 0)
+                {
+                    data.HasOption = true;
+                }
+                Model.Data.Add(data);
             }
         }
+   
 
         foreach (var item in _flowMakerOption.Middlewares)
         {
@@ -381,7 +383,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 Model.LogView = config.LogView;
                 if (Model.Data is not null)
                 {
-                    foreach (var item in Model.Data.GetNameValues())
+                    foreach (var item in Model.Data)
                     {
                         var data = config.Data.FirstOrDefault(c => c.Name == item.Name);
                         item.Value = data?.Value;
@@ -489,7 +491,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             };
             if (monitorInfoViewModel.Data is not null)
             {
-                foreach (var item in monitorInfoViewModel.Data.GetNameValues())
+                foreach (var item in monitorInfoViewModel.Data)
                 {
                     if (string.IsNullOrEmpty(item.Value))
                     {
@@ -499,7 +501,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     config.Data.Add(new NameValue(item.Name, item.Value));
                 }
             }
-         
+
             foreach (var item in monitorInfoViewModel.Middlewares)
             {
                 if (item.Selected)
@@ -662,7 +664,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             Repeat = model.Repeat,
             Retry = model.Retry,
         };
-        foreach (var item in model.Data.GetNameValues())
+        foreach (var item in model.Data)
         {
             if (string.IsNullOrEmpty(item.Value))
             {
@@ -895,4 +897,23 @@ public enum PageType
 {
     Tree,
     List,
+}
+
+public class FlowConfigDataInputViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
+{
+    [Reactive]
+    public string Type { get; set; } = type;
+    [Reactive]
+    public string Name { get; set; } = name;
+    /// <summary>
+    /// 显示名称，描述
+    /// </summary>
+    [Reactive]
+    public string DisplayName { get; set; } = displayName;
+
+    [Reactive]
+    public string? Value { get; set; } = value;
+    [Reactive]
+    public bool HasOption { get; set; }
+    public ObservableCollection<FlowStepOptionViewModel> Options { get; set; } = [];
 }
