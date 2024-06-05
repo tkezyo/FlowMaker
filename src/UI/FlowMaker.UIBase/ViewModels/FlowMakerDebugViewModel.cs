@@ -379,11 +379,15 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 Model.Repeat = config.Repeat;
                 Model.ErrorStop = config.ErrorStop;
                 Model.LogView = config.LogView;
-                foreach (var item in Model.Data.GetNameValues())
+                if (Model.Data is not null)
                 {
-                    var data = config.Data.FirstOrDefault(c => c.Name == item.Name);
-                    item.Value = data?.Value;
+                    foreach (var item in Model.Data.GetNameValues())
+                    {
+                        var data = config.Data.FirstOrDefault(c => c.Name == item.Name);
+                        item.Value = data?.Value;
+                    }
                 }
+             
                 foreach (var item in Model.Middlewares)
                 {
                     item.Selected = config.Middlewares.Contains(item.Value);

@@ -1,5 +1,6 @@
 ﻿using FlowMaker;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Ty;
 using Ty.Module.Configs;
 
@@ -24,10 +25,11 @@ namespace Test1
     {
         public static string DisplayName => "串口";
 
-        public async Task<IEnumerable<NameValue>> GetOptions()
+        public async IAsyncEnumerable<NameValue> GetOptions()
         {
             await Task.CompletedTask;
-            return [new("oo", "22"), new("oo22", "2211")];
+            yield return new("oo", "22");
+            yield return new("oo22", "2211");
         }
     }
 }

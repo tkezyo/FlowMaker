@@ -540,10 +540,13 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}(IServiceProvider
                     public static string Name => typeof({{item.Option.Name}}InstanceProvider).FullName ?? string.Empty;
                     public static string Type => "string";
                 
-                    public async Task<IEnumerable<NameValue>> GetOptions()
+                    public async IAsyncEnumerable<NameValue> GetOptions()
                     {
                         await Task.CompletedTask;
-                        return {{item.Option.Name}}InstanceOption.Value.Instances;
+                        foreach (var item in {{item.Option.Name}}InstanceOption.Value.Instances)
+                        {
+                            yield return item;
+                        }
                     }
                 }
                 """;

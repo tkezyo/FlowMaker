@@ -253,6 +253,7 @@ namespace FlowMaker.SourceGenerator
 
                     string baseStr = $@"using FlowMaker;
 using System.Text.Json;
+using Ty;
 
 namespace {item.Option.ContainingNamespace};
 

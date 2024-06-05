@@ -9,6 +9,7 @@ using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Linq;
 using Ty;
+using Ty.Module.Configs;
 using Ty.Services;
 using Ty.ViewModels;
 
@@ -1309,10 +1310,9 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 return;
             }
-            var options = await pp.GetOptions();
 
             flowStepInputViewModel.Options.Clear();
-            foreach (var item in options)
+            await foreach (var item in pp.GetOptions())
             {
                 flowStepInputViewModel.Options.Add(new FlowStepOptionViewModel(item.Name, item.Value));
             }

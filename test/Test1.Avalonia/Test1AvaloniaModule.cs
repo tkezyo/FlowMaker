@@ -31,8 +31,6 @@ namespace Test1.Avalonia
             //serviceDescriptors.AddTransientCustomPageView<ChatViewModel, ChatView>();
             //serviceDescriptors.AddCustomLogView<CustomLogViewModel, CustomLogView>();
 
-            hostApplicationBuilder.Services.AddAutoMapper(typeof(ConfigProfile).Assembly);
-
             hostApplicationBuilder.Services.Configure<PageOptions>(options =>
             {
                 options.FirstLoadPage = typeof(FlowMakerMainViewModel);
@@ -42,12 +40,11 @@ namespace Test1.Avalonia
             {
                 options.FlowRootDir = "D:\\FlowMaker\\Flow";
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
-                options.CustomPageRootDir = "D:\\FlowMaker\\CustomPage";
                 options.Section = "设备1";
-                options.Middlewares.Add(new FlowMaker.NameValue("测试中间件", "iio"));
-                options.DefaultMiddlewares.Add(new FlowMaker.NameValue("监控", "monitor"));
-                options.DefaultMiddlewares.Add(new FlowMaker.NameValue("调试", "debug"));
-                options.DefaultMiddlewares.Add(new FlowMaker.NameValue("日志", "log"));
+                options.Middlewares.Add(new NameValue("测试中间件", "iio"));
+                options.DefaultMiddlewares.Add(new NameValue("监控", "monitor"));
+                options.DefaultMiddlewares.Add(new NameValue("调试", "debug"));
+                options.DefaultMiddlewares.Add(new NameValue("日志", "log"));
             });
 
             return Task.CompletedTask;

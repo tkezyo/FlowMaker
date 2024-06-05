@@ -69,38 +69,4 @@ namespace FlowMaker.Converters
             return parameter;
         }
     }
-
-
-    public class SpikeDeleteBoxConverter : IMultiValueConverter
-    {
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values[0] is SpikeTabViewModel tab && values[1] is SpikeBoxViewModel box)
-            {
-                return (tab, box);
-            }
-            return null;
-        }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public class SpikeDeleteActionConverter : IMultiValueConverter
-    {
-        public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (values[0] is SpikeBoxViewModel tab && values[1] is SpikeActionViewModel box)
-            {
-                return (tab, box);
-            }
-            return null;
-        }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }
