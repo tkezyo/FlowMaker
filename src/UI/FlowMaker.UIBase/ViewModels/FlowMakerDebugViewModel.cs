@@ -12,13 +12,10 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Runtime.CompilerServices;
 using Ty;
 using Ty.Module.Configs;
 using Ty.Services;
-using Ty.Services.Configs;
 using Ty.ViewModels;
-using Ty.ViewModels.Configs;
 using Ty.ViewModels.CustomPages;
 
 namespace FlowMaker.ViewModels;
@@ -133,7 +130,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         })
         .DisposeWith(Disposables);
 
-        MessageBus.Current.Listen<MonitorMessage>().Subscribe(c =>
+        MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.TaskpoolScheduler).Subscribe(c =>
         {
             locker.Wait(() =>
             {
@@ -174,11 +171,16 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
                     if (mid is MonitorMiddleware monitor)
                     {
-                        monitor.PercentChange.Subscribe(c =>
+                        if (!monitor.PercentChange.IsDisposed)
                         {
-                            flow.Percent = c;
-                        }).DisposeWith(flow.StepChange);
-                        monitor.StepChange.Subscribe(c =>
+                            monitor.PercentChange.Subscribe(c =>
+                            {
+                                flow.Percent = c;
+                            }).DisposeWith(flow.StepChange);
+                        }
+                        if (!monitor.StepChange.IsDisposed)
+                        {
+                            monitor.StepChange.Subscribe(c =>
                         {
 
                             var steps = flow.Steps;
@@ -240,6 +242,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                 DataDisplay.StepLogsCache.AddOrUpdate(stepLog);
                             }
                         }).DisposeWith(flow.StepChange);
+                        }
                     }
                 }
                 if (c.RunnerState == FlowState.Complete || c.RunnerState == FlowState.Cancel || c.RunnerState == FlowState.Error)
@@ -342,7 +345,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     var pp = _serviceProvider.GetKeyedService<IOptionProviderInject>(item.Type + ":" + item.OptionProviderName);
                     if (pp is not null)
                     {
-                      await  foreach (var option in pp.GetOptions())
+                        await foreach (var option in pp.GetOptions())
                         {
                             data.Options.Add(new FlowStepOptionViewModel(option.Name, option.Value));
                         }
@@ -363,7 +366,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 Model.Data.Add(data);
             }
         }
-   
+
 
         foreach (var item in _flowMakerOption.Middlewares)
         {

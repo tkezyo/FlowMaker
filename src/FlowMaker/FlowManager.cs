@@ -218,6 +218,16 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         }
     }
 
+    public Task DisposeAll()
+    {
+        foreach (var item in _status)
+        {
+            item.Value.Dispose();
+        }
+        _status.Clear();
+        return Task.CompletedTask;
+    }
+
     public T? GetRunnerService<T>(Guid id, string? key = null)
     {
         try
