@@ -775,6 +775,7 @@ public class DataDisplayViewModel : ReactiveObject, IDisposable
         Index = index;
         flowContext.Data.Connect()
                        .Transform(c => new FlowGlobeDataViewModel(c))
+                     .SubscribeOn(RxApp.TaskpoolScheduler)
                        .ObserveOn(RxApp.MainThreadScheduler)
                      .Bind(out _data)
                      .DisposeMany()
@@ -783,6 +784,7 @@ public class DataDisplayViewModel : ReactiveObject, IDisposable
 
         flowContext.WaitEvents.Connect()
                      .Transform(c => new WaitEventViewModel(c))
+                     .SubscribeOn(RxApp.TaskpoolScheduler)
                      .ObserveOn(RxApp.MainThreadScheduler)
                    .Bind(out _waitEvents)
                    .DisposeMany()
@@ -795,6 +797,7 @@ public class DataDisplayViewModel : ReactiveObject, IDisposable
         flowContext.Logs.Connect()
                     .Filter(filter)
                      .Transform(c => new LogInfoViewModel(c))
+                     .SubscribeOn(RxApp.TaskpoolScheduler)
                      .ObserveOn(RxApp.MainThreadScheduler)
                    .Bind(out _log)
                    .DisposeMany()
@@ -802,6 +805,7 @@ public class DataDisplayViewModel : ReactiveObject, IDisposable
                    .DisposeWith(Disposables);
 
         StepLogsCache.Connect()
+                     .SubscribeOn(RxApp.TaskpoolScheduler)
                      .ObserveOn(RxApp.MainThreadScheduler)
                    .Bind(out _stepLogs)
                    .DisposeMany()

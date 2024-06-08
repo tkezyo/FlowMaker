@@ -16,10 +16,10 @@ public partial class App : Application
         InitializeComponent();
     }
 
-    protected override void OnExit(ExitEventArgs e)
+    protected override async void OnExit(ExitEventArgs e)
     {
         var fm = TyApp.ServiceProvider.GetRequiredService<FlowManager>();
-        fm.DisposeAll();
+        await fm.DisposeAll();
         base.OnExit(e);
     }
 }

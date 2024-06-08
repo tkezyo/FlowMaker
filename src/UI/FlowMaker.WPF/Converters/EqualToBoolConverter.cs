@@ -68,7 +68,7 @@ namespace FlowMaker.Converters
             {
                 return Visibility.Collapsed;
             }
-            if (value is DataDisplayViewModel data)
+            if (value is DataDisplayViewModel data && data.WaitEvents is not null)
             {
                 return data.WaitEvents.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             }

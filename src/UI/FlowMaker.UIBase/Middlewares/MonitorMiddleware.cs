@@ -100,7 +100,10 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             PercentChange = new ReplaySubject<double>(1);
 
         }
-        PercentChange.OnNext(Percent);
+        if (!PercentChange.IsDisposed)
+        {
+            PercentChange.OnNext(Percent);
+        }
 
         MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
     }
