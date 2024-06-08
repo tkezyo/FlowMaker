@@ -87,10 +87,12 @@ public class FlowRunner : IDisposable
                    //全部完成
                    if (TaskCompletionSource is not null)
                    {
-                       FlowResult flowResult = new();
-                       flowResult.Success = true;
-                       flowResult.CurrentIndex = Context.CurrentIndex;
-                       flowResult.ErrorIndex = Context.ErrorIndex;
+                       FlowResult flowResult = new()
+                       {
+                           Success = true,
+                           CurrentIndex = Context.CurrentIndex,
+                           ErrorIndex = Context.ErrorIndex
+                       };
 
                        foreach (var item in FlowDefinition.Data)
                        {
@@ -375,10 +377,8 @@ public class FlowRunner : IDisposable
     /// 开始执行流程
     /// </summary>
     /// <param name="flowInfo"></param>
-    /// <param name="config"></param>
-    /// <param name="parentIds"></param>
-    /// <param name="currentIndex"></param>
-    /// <param name="errorIndex"></param>
+    /// <param name="checkers"></param>
+    /// <param name="flowContext"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
@@ -614,9 +614,10 @@ public class FlowRunner : IDisposable
                 }
                 if (state == StepState.Skip)
                 {
-                    StepOnceStatus once = new(i, errorIndex, Context.Index, Log);
-
-                    once.State = StepOnceState.Skip;
+                    StepOnceStatus once = new(i, errorIndex, Context.Index, Log)
+                    {
+                        State = StepOnceState.Skip
+                    };
 
                     stepState.Value.OnceLogs.AddOrUpdate(once);
 

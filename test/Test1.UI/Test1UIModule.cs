@@ -74,7 +74,7 @@ namespace Test1
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
                 options.Section = "设备1";
                 options.AutoRun = false;
-                options.CanDebug = false;
+                options.CanDebug = true;
                 options.Middlewares.Add(new NameValue("测试中间件", "iio"));
                 options.DefaultMiddlewares.Add(new NameValue("监控", "monitor"));
                 options.DefaultMiddlewares.Add(new NameValue("调试", "debug"));

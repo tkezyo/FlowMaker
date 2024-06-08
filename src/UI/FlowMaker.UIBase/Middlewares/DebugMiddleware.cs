@@ -38,7 +38,7 @@ public class DebugMiddleware : IStepOnceMiddleware, IDisposable
     {
         if (!DebugList.TryGetValue(id, out var list))
         {
-            list = new List<Guid>();
+            list = [];
             DebugList.Add(id, list);
         }
         list.Add(stepId);
