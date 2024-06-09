@@ -14,7 +14,7 @@ public interface IFlowDefinition : IStepDefinition
 }
 public class FlowDefinition : StepDefinition, IFlowDefinition
 {
-    public bool SimpleMode { get; set; }
+    public bool GanttMode { get; set; }
     public List<FlowStep> Steps { get; set; } = [];
     public List<FlowInput> Checkers { get; set; } = [];
 

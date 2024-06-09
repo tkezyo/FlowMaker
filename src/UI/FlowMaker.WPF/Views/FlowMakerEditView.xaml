@@ -84,7 +84,7 @@
                 </Button.CommandParameter>
                 <iconPacks:PackIconPixelartIcons Kind="AddBox" />
             </Button>
-            <Button  Margin="4,0" Command="{Binding CreateCommand}"   Foreground="SkyBlue" Style="{StaticResource ButtonCustom}" Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}">
+            <Button  Margin="4,0" Command="{Binding CreateCommand}"   Foreground="SkyBlue" Style="{StaticResource ButtonCustom}" Visibility="{Binding GanttMode,Converter={StaticResource Boolean2VisibilityReConverter}}">
                 <Button.CommandParameter>
                     <s:Boolean>True</s:Boolean>
                 </Button.CommandParameter>
@@ -101,7 +101,7 @@
             <Button Margin="4,0"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}"   Command="{Binding DataContext.DownActionCommand,ElementName=page}"  Style="{StaticResource ButtonCustom}">
                 <iconPacks:PackIconPixelartIcons Kind="ArrowDownBox" />
             </Button>
-            <CheckBox Content="编辑前置步骤"   Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}" IsChecked="{Binding EditPreStep}"/>
+            <CheckBox Content="编辑前置步骤"   Visibility="{Binding GanttMode,Converter={StaticResource Boolean2VisibilityConverter}}" IsChecked="{Binding EditPreStep}"/>
             <Separator Margin="10,0"/>
             <CheckBox Content="检查项"  Name="showChecker"/>
             <Button Command="{Binding AddFlowCheckerCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showChecker}">创建检查项</Button>
@@ -109,12 +109,12 @@
             <CheckBox Content="变量"  Name="showData"/>
             <Button Command="{Binding CreateGlobeDataCommand}" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showData}">创建变量</Button>
             <Separator Margin="10,0"/>
-            <CheckBox Content="简单模式" IsChecked="{Binding SimpleMode}"/>
+            <CheckBox Content="甘特图模式" IsChecked="{Binding GanttMode}"/>
             <Separator Margin="10,0"/>
-            <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100" Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+            <Slider VerticalAlignment="Center" Width="100" Value="{Binding Scale}" Minimum="1" Maximum="100" Visibility="{Binding GanttMode,Converter={StaticResource Boolean2VisibilityConverter}}"/>
         </ToolBar>
         <ScrollViewer x:Name="viewer"
-                      Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityReConverter}}"
+                      Visibility="{Binding GanttMode,Converter={StaticResource Boolean2VisibilityConverter}}"
                       Grid.Column="0"  Grid.Row="1" HorizontalScrollBarVisibility="Auto">
             <Grid  Margin="2">
                 <ItemsControl ItemsSource="{Binding Steps}"
@@ -201,7 +201,7 @@
         </ScrollViewer>
         <TreeView ItemsSource="{Binding Steps}"
                   Grid.Column="0"  Grid.Row="1"
-          x:Name="tree"  Visibility="{Binding SimpleMode,Converter={StaticResource Boolean2VisibilityConverter}}" Style="{StaticResource TreeView.Small}">
+          x:Name="tree"  Visibility="{Binding GanttMode,Converter={StaticResource Boolean2VisibilityReConverter}}" Style="{StaticResource TreeView.Small}">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate
               ItemsSource="{Binding Steps}"

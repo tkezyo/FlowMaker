@@ -310,7 +310,7 @@ public class FlowRunner : IDisposable
             SubFlowRunners.Add(step.Id, flowRunner);
             config.Middlewares = Context.Middlewares;
 
-            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs, Context.WaitEvents);
+            FlowContext context = new(config, [.. Context.FlowIds, step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, Context.Index, Context.Logs, Context.WaitEvents, Context.Data);
             var stepState = Context.StepState.Lookup(step.Id);
             if (stepState.HasValue)
             {
@@ -455,13 +455,16 @@ public class FlowRunner : IDisposable
 
             foreach (var item in flowInfo.Data)//写入 globe data
             {
-                var value = Context.ConfigDefinition.Data.FirstOrDefault(c => c.Name == item.Name);
-                var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value)
+                if (!Context.Data.Lookup(item.Name).HasValue)
                 {
-                    IsInput = item.IsInput,
-                    IsOutput = item.IsOutput
-                };
-                Context.Data.AddOrUpdate(globeData);
+                    var value = Context.ConfigDefinition.Data.FirstOrDefault(c => c.Name == item.Name);
+                    var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value)
+                    {
+                        IsInput = item.IsInput,
+                        IsOutput = item.IsOutput
+                    };
+                    Context.Data.AddOrUpdate(globeData);
+                }
             }
 
 

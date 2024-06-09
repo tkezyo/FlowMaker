@@ -16,9 +16,9 @@ public partial class Flow2 : IStep
     public int Integer { get; set; }
 
 
-    public Task Run(StepContext stepContext, CancellationToken cancellationToken)
+    public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
+        await stepContext.Log(Integer.ToString());
     }
 }
 
@@ -32,7 +32,7 @@ public partial class Flow3 : IStep
     public int Input { get; set; }
     [Output]
     public int Output { get; set; }
-    public Task Run( StepContext stepContext, CancellationToken cancellationToken)
+    public Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
         Output = Input * 2;
         return Task.CompletedTask;

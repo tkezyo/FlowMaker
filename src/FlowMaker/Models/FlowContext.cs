@@ -5,7 +5,7 @@ using Ty;
 
 namespace FlowMaker;
 
-public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null) : IDisposable
+public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null) : IDisposable
 {
     /// <summary>
     /// 流程Id
@@ -58,7 +58,7 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
     /// <summary>
     /// 所有的全局变量
     /// </summary>
-    public SourceCache<FlowGlobeData, string> Data { get; set; } = new(c => c.Name);
+    public SourceCache<FlowGlobeData, string> Data { get; set; } = data ?? new(c => c.Name);
 
     public SourceList<LogInfo> Logs { get; set; } = logger ?? new();
 

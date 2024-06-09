@@ -73,9 +73,9 @@ public class FlowMakerEditViewModel : ViewModelBase
                 }
             });
         }).Subscribe();
-        this.WhenAnyValue(c => c.SimpleMode).Skip(1).Subscribe(async c =>
+        this.WhenAnyValue(c => c.GanttMode).Skip(1).Subscribe(async c =>
         {
-            if (c)
+            if (!c)
             {
                 var result = await _messageBoxManager.Conform.Handle(new ConformInfo("简单模式下，不支持并行执行，是否继续？") { OwnerTitle = WindowTitle });
                 if (result)
@@ -85,7 +85,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                 else
                 {
                     Render();
-                    SimpleMode = false;
+                    GanttMode = true;
                 }
             }
         });
@@ -113,6 +113,8 @@ public class FlowMakerEditViewModel : ViewModelBase
         this.WhenAnyValue(c => c.FlowStep).WhereNotNull().Subscribe(c =>
         {
             ShowEdit = c is not null;
+            ResetGlobeData();
+
             if (c is not null)
             {
                 LoadIf(c);
@@ -152,7 +154,7 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         FlowDefinition flowDefinition = new() { Category = Category, Name = Name };
 
-        flowDefinition.SimpleMode = SimpleMode;
+        flowDefinition.GanttMode = GanttMode;
 
         FlowStep CreateFlowStep(FlowStepViewModel item)
         {
@@ -314,7 +316,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             return;
         }
 
-        SimpleMode = flowDefinition.SimpleMode;
+        GanttMode = flowDefinition.GanttMode;
 
         Category = flowDefinition.Category;
         Name = flowDefinition.Name;
@@ -564,7 +566,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 return;
             }
-            if (!SimpleMode)
+            if (GanttMode)
             {
                 model.PreSteps.Add(FlowStep.Id);
             }
@@ -678,8 +680,9 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
             else
             {
-                if (SimpleMode || !EditPreStep)
+                if (!GanttMode || !EditPreStep)
                 {
+
                     foreach (var item in Steps)
                     {
                         item.Status = StepStatus.Normal;
@@ -735,6 +738,10 @@ public class FlowMakerEditViewModel : ViewModelBase
                 else
                 {
                     output.Name = item.GlobeDataName;
+                    if (string.IsNullOrEmpty(output.DisplayName))
+                    {
+                        output.DisplayName = item.GlobeDataName;
+                    }
                 }
             }
             else
@@ -869,7 +876,7 @@ public class FlowMakerEditViewModel : ViewModelBase
                     max = item.Time;
                 }
             }
-            if (SimpleMode)
+            if (!GanttMode)
             {
                 item.PreTime = TimeSpan.FromSeconds(0);
             }
@@ -1325,11 +1332,11 @@ public class FlowMakerEditViewModel : ViewModelBase
 
     #region SimpleMode
     [Reactive]
-    public bool SimpleMode { get; set; } = true;
+    public bool GanttMode { get; set; } = false;
 
     public void RenderSimpleMode()
     {
-        if (!SimpleMode)
+        if (GanttMode)
         {
             return;
         }
