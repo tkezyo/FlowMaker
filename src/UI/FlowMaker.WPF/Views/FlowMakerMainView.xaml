@@ -21,16 +21,20 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <rxui:RoutedViewHost Router="{Binding Router}" Grid.ColumnSpan="5" Margin="0,0,0,0">
-            <rxui:RoutedViewHost.DefaultContent>
-                <TextBlock Text="载入中。。"
-		   HorizontalAlignment="Center"
-		   VerticalAlignment="Center" />
-            </rxui:RoutedViewHost.DefaultContent>
-            <rxui:RoutedViewHost.ViewLocator>
-                <app:AppViewLocator />
-            </rxui:RoutedViewHost.ViewLocator>
-        </rxui:RoutedViewHost>
+     
+        <ItemsControl ItemsSource="{Binding Flows}" Grid.ColumnSpan="5" Margin="0,0,0,0" >
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <UniformGrid  Columns="{Binding DataContext.ColCount, ElementName=page}" Rows="{Binding DataContext.RowCount, ElementName=page}"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <local:FlowMakerDebugView></local:FlowMakerDebugView>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
         <Expander  ExpandDirection="Up" 
                    MaxHeight="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource Expander.Small}" Grid.Column="0">
             <Expander.Header>
@@ -124,5 +128,6 @@
                 </ItemsControl>
             </ScrollViewer>
         </Expander>
+        <Button Content="保存" Command="{Binding SaveCommand}" Style="{StaticResource ButtonSuccess.Small}"  Grid.Column="2" VerticalAlignment="Bottom"/>
     </Grid>
 </rxui:ReactiveUserControl>
