@@ -47,11 +47,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
     {
-        var config = await _flowProvider.LoadConfigDefinitionAsync(flowCategory, flowName, configName);
-        if (config is null)
-        {
-            throw new InvalidOperationException("未找到配置");
-        }
+        var config = await _flowProvider.LoadConfigDefinitionAsync(flowCategory, flowName, configName) ?? throw new InvalidOperationException("未找到配置");
         var id = await Init(config);
         await foreach (var item in Run(id))
         {
@@ -61,8 +57,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public async Task<Guid> Init(ConfigDefinition configDefinition)
     {
-        var scope = _serviceProvider.CreateScope();
         Guid id = Guid.NewGuid();
+        var scope = _serviceProvider.CreateScope();
 
         var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
         var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();

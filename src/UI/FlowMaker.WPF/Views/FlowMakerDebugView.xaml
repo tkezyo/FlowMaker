@@ -135,7 +135,6 @@
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
-                    <!--<RichTextBox Padding="3" x:Name="rtb" Grid.Column="1" IsReadOnly="True" VerticalScrollBarVisibility="Auto"/>-->
                     <DataGrid Grid.Column="0" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
 Style="{StaticResource DataGrid.Small}" 
 AutoGenerateColumns="False" IsReadOnly="True">
