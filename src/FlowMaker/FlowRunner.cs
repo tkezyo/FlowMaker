@@ -651,6 +651,7 @@ public class FlowRunner : IDisposable
                         }
                     }
 
+                    StepContext stepContext = new(step, Context, once);
                     try
                     {
                         if (cancellationToken.IsCancellationRequested)
@@ -665,7 +666,6 @@ public class FlowRunner : IDisposable
                         {
                             await item.OnExecuting(Context, step, stepState.Value, once, CancellationTokenSource.Token);
                         }
-                        StepContext stepContext = new(step, Context, once);
 
                         //超时策略
                         if (timeOut > 0)
@@ -695,6 +695,7 @@ public class FlowRunner : IDisposable
                         once.EndTime = DateTime.Now;
                         once.State = StepOnceState.Error;
                         stepState.Value.OnceLogs.AddOrUpdate(once);
+                        await stepContext.Log(e.Message, LogLevel.Error);
 
                         foreach (var item in _stepOnceMiddlewares)
                         {

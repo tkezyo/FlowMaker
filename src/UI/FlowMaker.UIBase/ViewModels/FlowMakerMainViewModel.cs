@@ -184,16 +184,25 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
             var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);
             if (running is null)
             {
-                running = new MonitorRunningViewModel() { DisplayName = DateTime.Now.ToString("HH:mm:ss") + "|" + c.Context.ConfigDefinition.Category + "." + c.Context.ConfigDefinition.Name, RunnerState = c.RunnerState, Id = c.Context.FlowIds[0], TotalCount = c.TotalCount };
-                running.StartTime = DateTime.Now;
+                running = new()
+                {
+                    DisplayName = DateTime.Now.ToString("HH:mm:ss") + "|" + c.Context.ConfigDefinition.Category + "." + c.Context.ConfigDefinition.Name,
+                    RunnerState = c.RunnerState,
+                    Id = c.Context.FlowIds[0],
+                    TotalCount = c.TotalCount,
+                    StartTime = DateTime.Now
+                };
                 Runnings.Insert(0, running);
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
                 if (mid is MonitorMiddleware monitor)
                 {
-                    running.StepChange = monitor.PercentChange.Subscribe(c =>
+                    if (!monitor.PercentChange.IsDisposed)
                     {
-                        running.Percent = c;
-                    });
+                        running.StepChange = monitor.PercentChange.Subscribe(c =>
+                        {
+                            running.Percent = c;
+                        });
+                    }
                 }
             }
             else

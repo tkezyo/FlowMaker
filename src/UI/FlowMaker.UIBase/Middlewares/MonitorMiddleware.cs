@@ -1,15 +1,12 @@
 ﻿using DynamicData;
-using DynamicData.Binding;
 using FlowMaker.Persistence;
 using ReactiveUI;
-using System.Diagnostics;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
 
-public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware, IDisposable
+public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware
 {
     public int TotalCount { get; set; } = -1;
     public double CompleteCount { get; set; }
@@ -23,14 +20,12 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    public Task OnExecuted(FlowContext flowContext, FlowState state, Exception? exception, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, FlowState state, Exception? exception, CancellationToken cancellationToken)
     {
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
+        await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
 
-        //清除StepChange中的数据
-        StepChange.Dispose();
-        PercentChange.Dispose();
-        return Task.CompletedTask;
+        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
+        await Task.CompletedTask;
     }
 
     public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
@@ -57,6 +52,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     {
         if (flowContext.FlowIds.Length == 1)
         {
+
             var definition = await flowProvider.LoadFlowDefinitionAsync(flowContext.ConfigDefinition.Category, flowContext.ConfigDefinition.Name);
             if (definition is null)
             {
@@ -94,8 +90,9 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
             CompleteCount = 0;
             Percent = 0;
+
             StepChange.Dispose();
-            StepChange = new ReplaySubject<MonitorStepOnceMessage>(TotalCount);
+            StepChange = new ReplaySubject<MonitorStepOnceMessage>();
             PercentChange.Dispose();
             PercentChange = new ReplaySubject<double>(1);
 
@@ -150,12 +147,6 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
         }
         return Task.CompletedTask;
-    }
-
-    public void Dispose()
-    {
-        StepChange.Dispose();
-        PercentChange.Dispose();
     }
 }
 

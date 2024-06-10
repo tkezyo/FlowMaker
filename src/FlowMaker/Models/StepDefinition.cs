@@ -85,8 +85,8 @@ public class DataDefinition(string name, string displayName, string type, string
 
 public class OptionDefinition(string displayName, string name)
 {
-    public string Name { get; set; } = displayName;
-    public string DisplayName { get; set; } = name;
+    public string Name { get; set; } = name;
+    public string DisplayName { get; set; } = displayName;
 }
 
 public class ConfigDefinition
