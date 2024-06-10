@@ -2,7 +2,6 @@
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Polly;
 using System.Reactive;
 using System.Reactive.Disposables;
@@ -55,76 +54,78 @@ public class FlowRunner : IDisposable
         _flowMakerOption = option;
         this._serviceProvider = serviceProvider;
         this._flowProvider = flowProvider;
-        ExecuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(c =>
-           {
-               var key = c.Type + c.Type switch
-               {
-                   EventType.PreStep => c.StepId?.ToString(),
-                   EventType.Event => c.EventName,
-                   EventType.StartFlow => "",
-                   _ => ""
-               };
-               if (ExecuteStepIds.TryGetValue(key, out var steps))
-               {
-                   foreach (var item in steps)
-                   {
-                       var stepState = Context.StepState.Lookup(item);
-                       if (stepState.HasValue)
-                       {
-                           stepState.Value.Waits.Remove(key);
-
-                           if (stepState.Value.Waits.Count == 0)
-                           {
-                               var step = FlowDefinition.Steps.First(c => c.Id == item);
-                               _ = Run(step, _cancellationToken);
-                           }
-                       }
-                   }
-               }
-
-               if (Context.StepState.Items.All(c => c.EndTime.HasValue) && State == FlowState.Running)
-               {
-                   //全部完成
-                   if (TaskCompletionSource is not null)
-                   {
-                       FlowResult flowResult = new()
-                       {
-                           Success = true,
-                           CurrentIndex = Context.CurrentIndex,
-                           ErrorIndex = Context.ErrorIndex
-                       };
-
-                       foreach (var item in FlowDefinition.Data)
-                       {
-                           if (!item.IsOutput)
-                           {
-                               continue;
-                           }
-                           var data = Context.Data.Lookup(item.Name);
-                           if (data.HasValue)
-                           {
-                               flowResult.Data.Add(new FlowResultData { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value.Value });
-                           }
-                       }
-                       if (!Context.Finally)
-                       {
-                           State = FlowState.Complete;
-                           TaskCompletionSource.SetResult(flowResult);
-                       }
-                       else
-                       {
-                           flowResult.Success = false;
-                           State = FlowState.Error;
-                           TaskCompletionSource.SetException(new StepOnFinallyException(flowResult));
-                       }
-
-                   }
-               }
-
-               _locker.OnNext(Unit.Default);
-           }).DisposeWith(Disposables);
+        var d = ExecuteStepSubject.Zip(_locker.StartWith(Unit.Default)).Select(c => c.First).Subscribe(ExecuteStep);
+        Disposables.Add(d);
     }
 
+    protected void ExecuteStep(ExecuteStepEvent executeStep)
+    {
+        var key = executeStep.Type + executeStep.Type switch
+        {
+            EventType.PreStep => executeStep.StepId?.ToString(),
+            EventType.Event => executeStep.EventName,
+            EventType.StartFlow => "",
+            _ => ""
+        };
+        if (ExecuteStepIds.TryGetValue(key, out var steps))
+        {
+            foreach (var item in steps)
+            {
+                var stepState = Context.StepState.Lookup(item);
+                if (stepState.HasValue)
+                {
+                    stepState.Value.Waits.Remove(key);
+
+                    if (stepState.Value.Waits.Count == 0)
+                    {
+                        var step = FlowDefinition.Steps.First(c => c.Id == item);
+                        _ = Run(step, _cancellationToken);
+                    }
+                }
+            }
+        }
+
+        if (Context.StepState.Items.All(c => c.EndTime.HasValue) && State == FlowState.Running)
+        {
+            //全部完成
+            if (TaskCompletionSource is not null)
+            {
+                FlowResult flowResult = new()
+                {
+                    Success = true,
+                    CurrentIndex = Context.CurrentIndex,
+                    ErrorIndex = Context.ErrorIndex
+                };
+
+                foreach (var item in FlowDefinition.Data)
+                {
+                    if (!item.IsOutput)
+                    {
+                        continue;
+                    }
+                    var data = Context.Data.Lookup(item.Name);
+                    if (data.HasValue)
+                    {
+                        flowResult.Data.Add(new FlowResultData { DisplayName = item.DisplayName, Name = item.Name, Type = item.Type, Value = data.Value.Value });
+                    }
+                }
+                if (!Context.Finally)
+                {
+                    State = FlowState.Complete;
+                    TaskCompletionSource.SetResult(flowResult);
+                }
+                else
+                {
+                    flowResult.Success = false;
+                    State = FlowState.Error;
+                    TaskCompletionSource.SetException(new StepOnFinallyException(flowResult));
+                }
+
+            }
+        }
+
+        _locker.OnNext(Unit.Default);
+    }
 
     protected TaskCompletionSource<FlowResult>? TaskCompletionSource { get; set; }
     /// <summary>
