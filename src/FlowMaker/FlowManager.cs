@@ -252,14 +252,13 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     #region SingleRun
 
-    class SingleRunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope) : IDisposable
+    class SingleRunnerStatus(ConfigDefinition config, IServiceScope serviceScope) : IDisposable
     {
         public ConfigDefinition Config { get; set; } = config;
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
-        public FlowRunner FlowRunner { get; set; } = flowRunner;
 
-
+        public FlowContext Context { get; set; }
         public CancellationTokenSource Cancel { get; set; } = new();
 
         public bool Disposed { get; set; }
@@ -267,7 +266,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         {
             Disposed = true;
 
-            FlowRunner.Dispose();
             Cancel.Dispose();
             ServiceScope.Dispose();
         }
@@ -280,8 +278,23 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
         var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
-        var runner = new FlowRunner(scope.ServiceProvider, options.Value, flowProvider);
-        _singleStatus[id] = new SingleRunnerStatus(configDefinition, runner, scope)
+        var testName = DateTime.Now.ToString("yyyyMMdd") + id;
+        var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
+        if (flow is null)
+        {
+            _logger.LogError("未找到流程:{TestName}", testName);
+
+            throw new InvalidOperationException("未找到流程");
+        }
+
+        FlowContext flowContext = new(flow, configDefinition, flow.Checkers, [id], 1, 0, null, null);
+
+        foreach (var item in flow.Steps)
+        {
+
+        }
+
+        _singleStatus[id] = new SingleRunnerStatus(configDefinition, scope)
         {
             Cancel = new CancellationTokenSource()
         };
