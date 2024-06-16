@@ -7,7 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="Ty.SourceGenerator" Version="0.25.0-preview3" />
+	  <PackageReference Include="Ty.SourceGenerator" Version="0.25.0" />
 	</ItemGroup>
 
 	<ItemGroup>
