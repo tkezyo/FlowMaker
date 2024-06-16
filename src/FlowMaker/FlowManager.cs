@@ -249,4 +249,45 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         return default;
     }
     #endregion
+
+    #region SingleRun
+
+    class SingleRunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope) : IDisposable
+    {
+        public ConfigDefinition Config { get; set; } = config;
+
+        public IServiceScope ServiceScope { get; set; } = serviceScope;
+        public FlowRunner FlowRunner { get; set; } = flowRunner;
+
+
+        public CancellationTokenSource Cancel { get; set; } = new();
+
+        public bool Disposed { get; set; }
+        public void Dispose()
+        {
+            Disposed = true;
+
+            FlowRunner.Dispose();
+            Cancel.Dispose();
+            ServiceScope.Dispose();
+        }
+    }
+    private readonly ConcurrentDictionary<Guid, SingleRunnerStatus> _singleStatus = [];
+    public async Task<Guid> InitSingleRun(ConfigDefinition configDefinition)
+    {
+        Guid id = Guid.NewGuid();
+        var scope = _serviceProvider.CreateScope();
+
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
+        var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
+        var runner = new FlowRunner(scope.ServiceProvider, options.Value, flowProvider);
+        _singleStatus[id] = new SingleRunnerStatus(configDefinition, runner, scope)
+        {
+            Cancel = new CancellationTokenSource()
+        };
+        await Task.CompletedTask;
+        return id;
+    }
+
+    #endregion
 }
