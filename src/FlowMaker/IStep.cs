@@ -229,8 +229,8 @@ public interface IDataConverter<T> : IDataConverter
 
 public interface IFlowMiddleware
 {
-    Task OnExecuting(FlowContext flowContext, FlowState runnerState, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, FlowState runnerState, Exception? exception, CancellationToken cancellationToken);
+    Task OnExecuting(FlowContext flowContext, CancellationToken cancellationToken);
+    Task OnExecuted(FlowContext flowContext, Exception? exception, CancellationToken cancellationToken);
 }
 public interface IStepMiddleware
 {

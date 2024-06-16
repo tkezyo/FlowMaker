@@ -14,9 +14,9 @@ namespace FlowMaker.SourceGenerator
     {
         private bool Condition(SyntaxNode node, CancellationToken cancellationToken)
         {
-            if (node is ClassDeclarationSyntax ids)
+            if (node is ClassDeclarationSyntax cds)
             {
-                if (ids.AttributeLists.Any(v => v.Attributes.Any(c =>
+                if (cds.AttributeLists.Any(v => v.Attributes.Any(c =>
                 {
                     if (c.Name is IdentifierNameSyntax ff && ff.Identifier.Text == "Steps")
                     {
@@ -28,9 +28,9 @@ namespace FlowMaker.SourceGenerator
                     return true;
                 }
             }
-            if (node is InterfaceDeclarationSyntax iids)
+            if (node is InterfaceDeclarationSyntax ids)
             {
-                if (iids.AttributeLists.Any(v => v.Attributes.Any(c =>
+                if (ids.AttributeLists.Any(v => v.Attributes.Any(c =>
                 {
                     if (c.Name is IdentifierNameSyntax ff && ff.Identifier.Text == "Steps")
                     {
@@ -86,8 +86,8 @@ namespace FlowMaker.SourceGenerator
                         //获取所有参数
                         var parameters = methodSymbol.Parameters;
 
-                        List<Input> inputs = new List<Input>();
-                        List<Output> outputs = new List<Output>();
+                        List<Input> inputs = [];
+                        List<Output> outputs = [];
 
                         //获取Description标签的描述
                         var description = methodSymbol.GetAttributes().FirstOrDefault(v => v.AttributeClass?.Name == "DescriptionAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString();

@@ -1,11 +1,12 @@
 ﻿using DynamicData;
 using Microsoft.Extensions.Logging;
+using Polly;
 using System.Collections.Concurrent;
 using Ty;
 
 namespace FlowMaker;
 
-public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null) : IDisposable
+public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition configDefinition, List<FlowInput> checkers, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null) : IDisposable
 {
     /// <summary>
     /// 流程Id
@@ -62,6 +63,194 @@ public class FlowContext(ConfigDefinition configDefinition, Guid[] flowIds, int 
 
     public SourceList<LogInfo> Logs { get; set; } = logger ?? new();
 
+
+    public IFlowDefinition FlowDefinition { get; set; } = flowDefinition;
+    /// <summary>
+    /// 检查项
+    /// </summary>
+    public List<FlowInput> Checkers { get; set; } = checkers;
+
+    /// <summary>
+    /// 触发某事件时需要执行的Step
+    /// </summary>
+    public Dictionary<string, List<Guid>> ExecuteStepIds { get; } = [];
+
+    /// <summary>
+    /// 流程状态
+    /// </summary>
+    public FlowState State { get;  set; } = FlowState.Wait;
+
+    private void InitExecuteStepIds()
+    {
+        ExecuteStepIds.Clear();
+        if (FlowDefinition is EmbeddedFlowDefinition embeddedFlowDefinition)
+        {
+            //遍历子流程，如果是串行执行，则在他的WaitEvents中添加依赖的流程Id，如果是并行执行，则在他的WaitEvents中添加上一个串行流程Id
+            FlowStep? last = null;
+            foreach (var item in FlowDefinition.Steps)
+            {
+                if (last is not null)
+                {
+                    item.WaitEvents.Add(new FlowEvent
+                    {
+                        Type = EventType.PreStep,
+                        StepId = last?.Id
+                    });
+                }
+                if (!item.Parallel)
+                {
+                    last = item;
+                }
+            }
+        }
+
+        foreach (var item in FlowDefinition.Steps)
+        {
+            List<string> waitEvent = [];
+
+            void Register(FlowInput flowInput)
+            {
+                if (flowInput.Mode == InputMode.Event)
+                {
+                    if (string.IsNullOrEmpty(flowInput.Value))
+                    {
+                        return;
+                    }
+                    var key = EventType.Event + flowInput.Value;
+                    waitEvent.Add(key);
+                    if (!ExecuteStepIds.TryGetValue(key, out var list))
+                    {
+                        list = [];
+                        ExecuteStepIds.Add(key, list);
+                    }
+                    WaitEvents.AddOrUpdate(new WaitEvent(flowInput.Value, true));
+                    list.Add(item.Id);
+                    foreach (var subInput in flowInput.Inputs)
+                    {
+                        Register(subInput);
+                    }
+                }
+            }
+            foreach (var wait in item.Ifs.Keys.Union(item.AdditionalConditions.Keys))
+            {
+                var checker = Checkers.FirstOrDefault(c => c.Id == wait) ?? item.Checkers.FirstOrDefault(c => c.Id == wait);
+                if (checker is null)
+                {
+                    continue;
+                }
+                Register(checker);
+            }
+
+            foreach (var input in item.Inputs)
+            {
+                Register(input);
+            }
+            Register(item.TimeOut);
+            Register(item.Repeat);
+            Register(item.Retry);
+            Register(item.ErrorHandling);
+            Register(item.Finally);
+
+
+            foreach (var wait in item.WaitEvents)
+            {
+                if (wait.Type == EventType.Event)
+                {
+                    if (string.IsNullOrEmpty(wait.EventName))
+                    {
+                        continue;
+                    }
+                    WaitEvents.AddOrUpdate(new WaitEvent(wait.EventName, false));
+                }
+
+                var key = wait.Type + wait.Type switch
+                {
+                    EventType.PreStep => wait.StepId?.ToString(),
+                    EventType.Event => wait.EventName,
+                    EventType.StartFlow => string.Empty,
+                    _ => string.Empty
+                };
+                waitEvent.Add(key);
+
+                if (!ExecuteStepIds.TryGetValue(key, out var list))
+                {
+                    list = [];
+                    ExecuteStepIds.Add(key, list);
+                }
+                list.Add(item.Id);
+            }
+
+            if (waitEvent.Count == 0)
+            {
+                if (!ExecuteStepIds.TryGetValue(EventType.StartFlow.ToString(), out var list))
+                {
+                    list = [];
+                    ExecuteStepIds.Add(EventType.StartFlow.ToString(), list);
+                }
+                list.Add(item.Id);
+                continue;
+            }
+        }
+    }
+
+
+    /// <summary>
+    /// 初始化状态
+    /// </summary>
+    public void Init()
+    {
+        InitExecuteStepIds();
+        StepState.Clear();
+
+        foreach (var item in FlowDefinition.Steps)
+        {
+            var state = new StepStatus
+            {
+                StepId = item.Id
+            };
+
+            foreach (var wait in item.WaitEvents)
+            {
+                var key = wait.Type + wait.Type switch
+                {
+                    EventType.PreStep => wait.StepId?.ToString(),
+                    EventType.Event => wait.EventName,
+                    EventType.StartFlow => "",
+                    _ => ""
+                };
+                if (string.IsNullOrEmpty(key))
+                {
+                    continue;
+                }
+                state.Waits.Add(key);
+            }
+            state.Waits = state.Waits.Distinct().ToList();
+            StepState.AddOrUpdate(state);
+        }
+
+
+        foreach (var item in ConfigDefinition.Middlewares)
+        {
+            if (!Middlewares.Any(c => c == item))
+            {
+                Middlewares.Add(item);
+            }
+        }
+
+        foreach (var item in FlowDefinition.Data)//写入 globe data
+        {
+            if (!Data.Lookup(item.Name).HasValue)
+            {
+                var value = ConfigDefinition.Data.FirstOrDefault(c => c.Name == item.Name);
+                var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value)
+                {
+                    IsInput = item.IsInput,
+                    IsOutput = item.IsOutput
+                };
+                Data.AddOrUpdate(globeData);
+            }
+        }
+    }
     public void Dispose()
     {
         //EventLogs.Clear();

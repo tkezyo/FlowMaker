@@ -32,7 +32,7 @@ public class FlowStep
 
 
     /// <summary>
-    /// 并行执行-仅在简单模式下有效
+    /// 并行执行-仅在非甘特图模式下有效
     /// </summary>
     public bool Parallel { get; set; }
     /// <summary>

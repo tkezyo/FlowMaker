@@ -187,7 +187,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
                 running = new()
                 {
                     DisplayName = DateTime.Now.ToString("HH:mm:ss") + "|" + c.Context.ConfigDefinition.Category + "." + c.Context.ConfigDefinition.Name,
-                    RunnerState = c.RunnerState,
+                    RunnerState = c.Context.State,
                     Id = c.Context.FlowIds[0],
                     TotalCount = c.TotalCount,
                     StartTime = DateTime.Now
@@ -207,7 +207,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
             }
             else
             {
-                running.RunnerState = c.RunnerState;
+                running.RunnerState = c.Context.State;
             }
         }).DisposeWith(Disposables);
 
@@ -497,8 +497,7 @@ public class MonitorStepInfoViewModel : ReactiveObject
     public required string Category { get; set; }
     [Reactive]
     public required string Name { get; set; }
-    [Reactive]
-    public DefinitionType Type { get; set; }
+
     /// <summary>
     /// 重试
     /// </summary>

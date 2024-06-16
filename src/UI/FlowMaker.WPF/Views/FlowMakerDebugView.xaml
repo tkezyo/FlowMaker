@@ -158,10 +158,18 @@ AutoGenerateColumns="False" IsReadOnly="True">
                        ItemsSource="{Binding Steps}"
                        DataType="vms:MonitorStepInfoViewModel">
                         <StackPanel Orientation="Horizontal">
+                            <Button  Foreground="MediumSpringGreen">
+                                <iconPacks:PackIconPixelartIcons Kind="HumanRun" Height="10"/>
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <Button 
                              Width="15" Height="15" Margin="3" 
                              Visibility="{Binding DataContext.CanDebug,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}"
-                             hc:BorderElement.CornerRadius="10" Content="">
+                             hc:BorderElement.CornerRadius="10">
+
                                 <Button.CommandParameter>
                                     <MultiBinding Converter="{StaticResource MonitorDebugConverter}">
                                         <Binding Path="DataContext.Model" ElementName="page"/>

@@ -145,7 +145,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 }
                 var flow = Model;
 
-                if (c.RunnerState == FlowState.Running)
+                if (c.Context.State == FlowState.Running)
                 {
                     if (flow is null)
                     {
@@ -243,7 +243,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
                     }
                 }
-                if (c.RunnerState == FlowState.Complete || c.RunnerState == FlowState.Cancel || c.RunnerState == FlowState.Error)
+                if (c.Context.State == FlowState.Complete || c.Context.State == FlowState.Cancel || c.Context.State == FlowState.Error)
                 {
                     if (flow is not null)
                     {

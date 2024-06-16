@@ -287,7 +287,7 @@ public partial class {item.Option.MetadataName}
                 }
                 if (flowConverter)
                 {
-                    //获取flowConverter中的泛型参数
+                    //获取 flowConverter中的泛型参数
                     //var type = flowConverter.AttributeClass.TypeArguments[0] as INamedTypeSymbol;
 
                     //var category = flowConverter.ConstructorArguments[0].Value.ToString();
@@ -412,9 +412,7 @@ partial class {item.Option.MetadataName}
 
                     c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));
                 }
-               
             });
-
         }
     }
     public class SyntaxModel

@@ -20,11 +20,11 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    public async Task OnExecuted(FlowContext flowContext, FlowState state, Exception? exception, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext,  Exception? exception, CancellationToken cancellationToken)
     {
         await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
 
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
+        MessageBus.Current.SendMessage(new MonitorMessage(flowContext,  TotalCount));
         await Task.CompletedTask;
     }
 
@@ -48,7 +48,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
         return Task.CompletedTask;
     }
 
-    public async Task OnExecuting(FlowContext flowContext, FlowState state, CancellationToken cancellationToken)
+    public async Task OnExecuting(FlowContext flowContext, CancellationToken cancellationToken)
     {
         if (flowContext.FlowIds.Length == 1)
         {
@@ -102,7 +102,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             PercentChange.OnNext(Percent);
         }
 
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, state, TotalCount));
+        MessageBus.Current.SendMessage(new MonitorMessage(flowContext,  TotalCount));
     }
 
     public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
@@ -150,10 +150,9 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     }
 }
 
-public class MonitorMessage(FlowContext context, FlowState runnerState, int totalCount)
+public class MonitorMessage(FlowContext context,  int totalCount)
 {
     public FlowContext Context { get; set; } = context;
-    public FlowState RunnerState { get; set; } = runnerState;
     public int TotalCount { get; set; } = totalCount;
 }
 public class MonitorStepOnceMessage(FlowContext flowContext, StepStatus stepStatus, StepOnceStatus? stepOnce, Guid[] flowIds, FlowStep step)

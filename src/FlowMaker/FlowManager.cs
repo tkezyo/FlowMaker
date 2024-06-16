@@ -104,17 +104,17 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             {
                 FlowResult? flowResult = null;
                 bool needBreak = false;
-                FlowContext flowContext = new(status.Config, [id], i, errorTimes, null, null);
+                FlowContext flowContext = new(flow, status.Config, flow.Checkers, [id], i, errorTimes, null, null);
                 try
                 {
                     if (status.Config.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(status.Config.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flow, flow.Checkers, flowContext, status.Cancel.Token));
+                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flowContext, status.Cancel.Token));
                     }
                     else
                     {
-                        flowResult = await runner.Start(flow, flow.Checkers, flowContext, _status[id].Cancel.Token);
+                        flowResult = await runner.Start(flowContext, _status[id].Cancel.Token);
                     }
                     break;
                 }
@@ -204,7 +204,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             status.Dispose();
             if (status.FlowRunner is not null)
             {
-                while (status.FlowRunner.State == FlowState.Running)
+                while (status.FlowRunner.Context.State == FlowState.Running)
                 {
                     await Task.Delay(300);
                 }
@@ -243,9 +243,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         catch (Exception e)
         {
 
-            
+
         }
-    
+
         return default;
     }
     #endregion
