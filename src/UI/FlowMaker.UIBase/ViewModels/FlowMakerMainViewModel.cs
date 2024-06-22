@@ -40,7 +40,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         this._messageBoxManager = messageBoxManager;
         this._flowProvider = flowProvider;
         ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
-    
+
 
         CreateCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel?>(Create);
         RemoveCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(Remove);
@@ -64,6 +64,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
                 RowCount = 1;
             }
         });
+
+       
     }
 
     public CompositeDisposable? Disposables { get; set; }
@@ -175,7 +177,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }).DisposeWith(Disposables);
         MessageBus.Current.Listen<FlowMakerDebugViewModel>("AddDebug").Subscribe(Flows.Add).DisposeWith(Disposables);
 
-      
+
         await LoadFlows();
 
         MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
@@ -318,7 +320,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }
     }
 
-
+   
     #endregion
 }
 
@@ -384,6 +386,13 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
             ShowView = false;
         }
     }
+
+    #region 单步调试
+    [Reactive]
+    public bool SingleRun { get; set; }
+
+    #endregion
+
 
     public CompositeDisposable StepChange { get; set; } = [];
     [Reactive]
@@ -461,6 +470,8 @@ public class MonitorStepInfoViewModel : ReactiveObject
     [Reactive]
     public bool Debugging { get; set; }
 
+    public required Guid[] ParentIds { get; set; }
+
     [Reactive]
     public TimeSpan? UsedTime { get; set; }
     public DateTime? StartTime { get; set; }
@@ -490,7 +501,7 @@ public class MonitorStepInfoViewModel : ReactiveObject
         }
     }
     [Reactive]
-    public Guid? Id { get; set; }
+    public required Guid Id { get; set; }
     [Reactive]
     public required string DisplayName { get; set; }
     [Reactive]
@@ -528,7 +539,7 @@ public class MonitorStepInfoViewModel : ReactiveObject
     [Reactive]
     public bool Finally { get; set; }
 
-
+    public required FlowStep Step { get; set; }
 
     [Reactive]
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];

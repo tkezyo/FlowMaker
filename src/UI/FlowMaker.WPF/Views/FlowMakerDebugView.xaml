@@ -45,6 +45,9 @@
                 <ToggleButton x:Name="setting" Style="{StaticResource ToggleButtonDefault.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="EditBox" />
                 </ToggleButton>
+                <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}">
+                    <iconPacks:PackIconPixelartIcons Kind="HumanRun" />
+                </ToggleButton>
             </ToolBar>
             <ToolBar
                 Band="1" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=setting}">
@@ -158,7 +161,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
                        ItemsSource="{Binding Steps}"
                        DataType="vms:MonitorStepInfoViewModel">
                         <StackPanel Orientation="Horizontal">
-                            <Button  Foreground="MediumSpringGreen">
+                            <Button  Foreground="MediumSpringGreen"  Visibility="{Binding DataContext.Model.SingleRun,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.RunSingleCommand,ElementName=page}" CommandParameter="{Binding .}">
                                 <iconPacks:PackIconPixelartIcons Kind="HumanRun" Height="10"/>
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">

@@ -47,7 +47,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public string? ConfigName { get; set; }
 
 
-    public Guid? FlowInstanceId { get; set; }
     private readonly AsyncLock locker = new();
 
     [Reactive]
@@ -87,8 +86,39 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
         ShowAllLogCommand = ReactiveCommand.Create(ShowAllLog);
         ChangePageTypeCommand = ReactiveCommand.Create(ChangePageType);
+        RunSingleCommand = ReactiveCommand.CreateFromTask<MonitorStepInfoViewModel>(RunSingle);
 
         this.WhenAnyValue(c => c.SelectedStepOnce).WhereNotNull().Subscribe(ShowStepOnceLog);
+
+        this.WhenAnyValue(c => c.Model.SingleRun).Skip(1).Subscribe(async c =>
+        {
+            if (Model is null)
+            {
+                return;
+            }
+            if (!c)
+            {
+                if (Model.Id.HasValue)
+                {
+                    _flowManager.DisposeSingleRun(Model.Id.Value);
+                }
+                Model.Id = null;
+                Model.Running = false;
+
+                return;
+            }
+
+            var config = CreateConfig();
+
+            if (config is null)
+            {
+                return;
+            }
+            Model.Running = true;
+            Model.Id = await _flowManager.InitSingleRun(config);
+            await _flowManager.ExecuteSingleFlow(Model.Id.Value);
+        });
+
     }
 
     public CompositeDisposable? Disposables { get; set; }
@@ -300,10 +330,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         Model = new(FlowCategory, FlowName)
         {
             Debug = true,
-            Id = FlowInstanceId,
         };
 
-        async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, IFlowDefinition flowDefinition)
+        async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, IFlowDefinition flowDefinition, Guid[]? parentId = null)
         {
             foreach (var item in flowDefinition.Steps)
             {
@@ -313,6 +342,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     DisplayName = item.DisplayName,
                     Name = item.Name,
                     Id = item.Id,
+                    ParentIds = parentId ?? [],
+                    Step = item,
                 };
                 if (item.Type == StepType.Normal)
                 {
@@ -371,7 +402,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
         }
 
-
         foreach (var item in _flowMakerOption.Middlewares)
         {
             Model.Middlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
@@ -404,55 +434,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
         }
 
-        if (FlowInstanceId.HasValue)
-        {
-            if (!string.IsNullOrWhiteSpace(Model.LogView))
-            {
-                var vm = _serviceProvider.GetKeyedService<ILogInjectViewModel>(Model.LogView);
-                if (vm is ILogViewModel viewModel)
-                {
-                    Model.DisplayView(viewModel);
-                }
-            }
-            var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(FlowInstanceId.Value, "monitor");
 
-            if (mid is MonitorMiddleware monitor)
-            {
-                monitor.StepChange.Subscribe(c =>
-                 {
-                     var steps = this.Model.Steps;
-
-                     foreach (var item in c.FlowIds.Skip(1))
-                     {
-                         if (steps is null)
-                         {
-                             return;
-                         }
-                         steps = steps.FirstOrDefault(v => v.Id == item)?.Steps;
-                     }
-                     if (steps is null)
-                     {
-                         return;
-                     }
-                     var step = steps.FirstOrDefault(v => v.Id == c.Step.Id);
-                     if (step is not null && c.StepOnce is not null)
-                     {
-                         if (c.StepOnce.State == StepOnceState.Start && c.StepOnce.StartTime.HasValue)
-                         {
-                             step.Start(c.StepOnce.StartTime.Value);
-                         }
-                         if (c.StepOnce.State == StepOnceState.Complete && c.StepOnce.EndTime.HasValue)
-                         {
-                             step.Stop(c.StepOnce.EndTime.Value);
-                         }
-                     }
-                 }).DisposeWith(Model.StepChange);
-                monitor.PercentChange.Subscribe(c =>
-                {
-                    Model.Percent = c;
-                }).DisposeWith(Model.StepChange);
-            }
-        }
 
         await Activate();
     }
@@ -474,6 +456,48 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         MessageBus.Current.SendMessage(this, "RemoveDebug");
     }
 
+    public ConfigDefinition? CreateConfig()
+    {
+        var monitorInfoViewModel = Model;
+        if (monitorInfoViewModel is null)
+        {
+            return null;
+        }
+        var config = new ConfigDefinition
+        {
+            Category = monitorInfoViewModel.Category,
+            ConfigName = monitorInfoViewModel.ConfigName,
+            Name = monitorInfoViewModel.Name,
+            LogView = monitorInfoViewModel.LogView,
+            Timeout = monitorInfoViewModel.Timeout,
+            ErrorStop = monitorInfoViewModel.ErrorStop,
+            Repeat = monitorInfoViewModel.Repeat,
+            Retry = monitorInfoViewModel.Retry,
+        };
+        if (monitorInfoViewModel.Data is not null)
+        {
+            foreach (var item in monitorInfoViewModel.Data)
+            {
+                if (string.IsNullOrEmpty(item.Value))
+                {
+                    RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.Name} 未填写")));
+                    return null;
+                }
+                config.Data.Add(new NameValue(item.Name, item.Value));
+            }
+        }
+
+        foreach (var item in monitorInfoViewModel.Middlewares)
+        {
+            if (item.Selected)
+            {
+                config.Middlewares.Add(item.Value);
+            }
+        }
+
+        return config;
+    }
+
     public ReactiveCommand<Unit, Unit> RunCommand { get; }
     public async Task Run()
     {
@@ -485,36 +509,11 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 return;
             }
-            var config = new ConfigDefinition
-            {
-                Category = monitorInfoViewModel.Category,
-                ConfigName = monitorInfoViewModel.ConfigName,
-                Name = monitorInfoViewModel.Name,
-                LogView = monitorInfoViewModel.LogView,
-                Timeout = monitorInfoViewModel.Timeout,
-                ErrorStop = monitorInfoViewModel.ErrorStop,
-                Repeat = monitorInfoViewModel.Repeat,
-                Retry = monitorInfoViewModel.Retry,
-            };
-            if (monitorInfoViewModel.Data is not null)
-            {
-                foreach (var item in monitorInfoViewModel.Data)
-                {
-                    if (string.IsNullOrEmpty(item.Value))
-                    {
-                        RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.Name} 未填写")));
-                        return;
-                    }
-                    config.Data.Add(new NameValue(item.Name, item.Value));
-                }
-            }
+            var config = CreateConfig();
 
-            foreach (var item in monitorInfoViewModel.Middlewares)
+            if (config is null)
             {
-                if (item.Selected)
-                {
-                    config.Middlewares.Add(item.Value);
-                }
+                return;
             }
 
             Reset(monitorInfoViewModel.Steps);
@@ -534,9 +533,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     {
                         void AddDebugs(MonitorStepInfoViewModel step, List<Guid> debugs)
                         {
-                            if (step.IsDebug && step.Id.HasValue)
+                            if (step.IsDebug)
                             {
-                                debugs.Add(step.Id.Value);
+                                debugs.Add(step.Id);
                             }
                             foreach (var sub in step.Steps)
                             {
@@ -600,7 +599,16 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         }
         if (Model is not null && Model.Id.HasValue)
         {
-            await _flowManager.Stop(Model.Id.Value);
+            if (Model.Id.HasValue)
+            {
+                _flowManager.DisposeSingleRun(Model.Id.Value);
+                Model.Id = null;
+                Model.Running = false;
+            }
+            else
+            {
+                await _flowManager.Stop(Model.Id.Value);
+            }
         }
     }
     public ReactiveCommand<Unit, Unit> SendEventCommand { get; }
@@ -615,28 +623,28 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public void AddDebug(MonitorInfoViewModel monitorInfoViewModel, MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
         monitorStepInfoViewModel.IsDebug = true;
-        if (!monitorInfoViewModel.Id.HasValue || !monitorStepInfoViewModel.Id.HasValue)
+        if (!monitorInfoViewModel.Id.HasValue)
         {
             return;
         }
         var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, "debug");
         if (mid is DebugMiddleware debug)
         {
-            debug.AddDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id.Value);
+            debug.AddDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id);
         }
     }
     public ReactiveCommand<(MonitorInfoViewModel, MonitorStepInfoViewModel), Unit> RemoveDebugCommand { get; }
     public void RemoveDebug(MonitorInfoViewModel monitorInfoViewModel, MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
         monitorStepInfoViewModel.IsDebug = false;
-        if (!monitorInfoViewModel.Id.HasValue || !monitorStepInfoViewModel.Id.HasValue)
+        if (!monitorInfoViewModel.Id.HasValue)
         {
             return;
         }
         var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, "debug");
         if (mid is DebugMiddleware debug)
         {
-            debug.RemoveDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id.Value);
+            debug.RemoveDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id);
         }
     }
     public ReactiveCommand<Unit, Unit> SaveConfigCommand { get; set; }
@@ -699,6 +707,17 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             //LoadFlows();
         });
+    }
+
+    public ReactiveCommand<MonitorStepInfoViewModel, Unit> RunSingleCommand { get; }
+    public async Task RunSingle(MonitorStepInfoViewModel monitorStepInfoViewModel)
+    {
+        if (Model is null || !Model.Id.HasValue)
+        {
+            return;
+        }
+
+        await _flowManager.RunStep([Model.Id.Value, .. monitorStepInfoViewModel.ParentIds], monitorStepInfoViewModel.Step, default);
     }
 
     [Reactive]

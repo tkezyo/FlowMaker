@@ -340,6 +340,9 @@ public class StepStatus
     public DateTime? StartTime { get; set; }
 
     public DateTime? EndTime { get; set; }
+    /// <summary>
+    /// 子流程上下文
+    /// </summary>
     public FlowContext? FlowContext { get; set; }
     public int Repeat { get; set; }
     public int Retry { get; set; }
@@ -419,6 +422,7 @@ public class ExecuteStepEvent
     public Guid? StepId { get; set; }
     public string? EventName { get; set; }
     public string? EventData { get; set; }
+    public required FlowContext Context{ get; set; }
 }
 /// <summary>
 /// 事件类型
