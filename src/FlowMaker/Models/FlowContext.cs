@@ -1,7 +1,8 @@
 ﻿using DynamicData;
 using Microsoft.Extensions.Logging;
-using Polly;
 using System.Collections.Concurrent;
+using System.Reactive.Disposables;
+using System.Reactive.Subjects;
 using Ty;
 
 namespace FlowMaker;
@@ -78,7 +79,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// <summary>
     /// 流程状态
     /// </summary>
-    public FlowState State { get;  set; } = FlowState.Wait;
+    public FlowState State { get; set; } = FlowState.Wait;
 
     private void InitExecuteStepIds()
     {
@@ -193,6 +194,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
         }
     }
 
+    private CompositeDisposable Disposables { get; set; } = [];
 
     /// <summary>
     /// 初始化状态
@@ -250,30 +252,24 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
                 Data.AddOrUpdate(globeData);
             }
         }
+
+        Disposables.Add(EventLogs);
+        Disposables.Add(WaitEvents);
+        Disposables.Add(Data);
+        Disposables.Add(Logs);
     }
+
     public void Dispose()
     {
-        //EventLogs.Clear();
-        EventLogs.Dispose();
-        //WaitEvents.Clear();
-        WaitEvents.Dispose();
 
         foreach (var item in StepState.Items)
         {
-            if (item.FlowContext is not null)
-            {
-                item.FlowContext.Dispose();
-            }
             //item.OnceLogs.Clear();
             item.OnceLogs.Dispose();
         }
 
-        //StepState.Clear();
         StepState.Dispose();
-        //Data.Clear();
-        Data.Dispose();
-        //Logs.Clear();
-        Logs.Dispose();
+        Disposables.Dispose();
     }
 }
 
@@ -340,10 +336,7 @@ public class StepStatus
     public DateTime? StartTime { get; set; }
 
     public DateTime? EndTime { get; set; }
-    /// <summary>
-    /// 子流程上下文
-    /// </summary>
-    public FlowContext? FlowContext { get; set; }
+
     public int Repeat { get; set; }
     public int Retry { get; set; }
     public bool Finally { get; set; }
@@ -422,7 +415,7 @@ public class ExecuteStepEvent
     public Guid? StepId { get; set; }
     public string? EventName { get; set; }
     public string? EventData { get; set; }
-    public required FlowContext Context{ get; set; }
+    public required FlowContext Context { get; set; }
 }
 /// <summary>
 /// 事件类型

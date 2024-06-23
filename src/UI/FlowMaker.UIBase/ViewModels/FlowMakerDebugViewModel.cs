@@ -115,7 +115,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 return;
             }
             Model.Running = true;
-            Model.Id = await _flowManager.InitSingleRun(config);
+            Model.Id = await _flowManager.InitSingleRun(config, Model.SingleRun);
             await _flowManager.ExecuteSingleFlow(Model.Id.Value);
         });
 

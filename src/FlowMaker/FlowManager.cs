@@ -26,12 +26,12 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     private readonly FlowMakerOption _flowMakerOption = option.Value;
 
     #region Run
-    class RunnerStatus(ConfigDefinition config, FlowRunner flowRunner, IServiceScope serviceScope) : IDisposable
+    class RunnerStatus(ConfigDefinition config, FlowRunningStatus flowRunner, IServiceScope serviceScope) : IDisposable
     {
         public ConfigDefinition Config { get; set; } = config;
 
         public IServiceScope ServiceScope { get; set; } = serviceScope;
-        public FlowRunner FlowRunner { get; set; } = flowRunner;
+        public FlowRunningStatus FlowRunner { get; set; } = flowRunner;
 
 
         public CancellationTokenSource Cancel { get; set; } = new();
@@ -47,7 +47,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         }
     }
 
-    private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
+    private readonly ConcurrentDictionary<Guid, SingleRunnerStatus> _status = [];
 
     public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
     {
@@ -66,8 +66,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
         var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
-        var runner = new FlowRunner(scope.ServiceProvider, options.Value, flowProvider);
-        _status[id] = new RunnerStatus(configDefinition, runner, scope)
+
+        _status[id] = new SingleRunnerStatus(configDefinition, scope)
         {
             Cancel = new CancellationTokenSource()
         };
@@ -78,8 +78,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
         var status = _status[id];
-
-        var runner = status.FlowRunner;
+        if (!status.Runners.TryGetValue(id.ToString(), out var runner))
+        {
+            yield break;
+        }
         var testName = DateTime.Now.ToString("yyyyMMdd") + id;
 
         var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.Category, status.Config.Name);
@@ -114,11 +116,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     if (status.Config.Timeout > 0)
                     {
                         var timeoutPolicy = Policy.TimeoutAsync<FlowResult>(TimeSpan.FromSeconds(status.Config.Timeout), Polly.Timeout.TimeoutStrategy.Pessimistic);
-                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(flowContext, status.Cancel.Token));
+                        flowResult = await timeoutPolicy.ExecuteAsync(async () => await runner.Start(status, flowContext, status.Cancel.Token));
                     }
                     else
                     {
-                        flowResult = await runner.Start(flowContext, _status[id].Cancel.Token);
+                        flowResult = await runner.Start(status, flowContext, _status[id].Cancel.Token);
                     }
                     break;
                 }
@@ -183,22 +185,18 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         if (_status.TryGetValue(id, out var status))
         {
-            if (status.FlowRunner is not null)
-            {
-                await status.FlowRunner.SendEventAsync(eventName, eventData);
-            }
+            await status.SendEventAsync(eventName, eventData);
         }
     }
     public async Task Stop(Guid id)
     {
         if (_status.TryGetValue(id, out var status))
         {
-            if (status.FlowRunner is not null)
-            {
-                await status.FlowRunner.StopAsync();
-            }
+            status.Dispose();
+
             status.Cancel.Cancel();
         }
+        await Task.CompletedTask;
     }
 
     public async Task Dispose(Guid id)
@@ -206,15 +204,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         if (_status.TryGetValue(id, out var status))
         {
             status.Dispose();
-            if (status.FlowRunner is not null)
-            {
-                while (status.FlowRunner.Context.State == FlowState.Running)
-                {
-                    await Task.Delay(300);
-                }
-            }
+
             _status.Remove(id, out _);
         }
+        await Task.CompletedTask;
     }
 
     public Task DisposeAll()
@@ -272,12 +265,15 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     {
         public ConfigDefinition Config { get; set; } = config;
 
+        public bool SingleRun { get; set; }
+        public bool Running { get; set; }
+
         public IServiceScope ServiceScope { get; set; } = serviceScope;
 
         public CancellationTokenSource Cancel { get; set; } = new();
 
         public ConcurrentDictionary<string, FlowContext> Contexts { get; set; } = [];
-        public ConcurrentDictionary<string, FlowRunner> Runners { get; set; } = [];
+        public ConcurrentDictionary<string, FlowRunningStatus> Runners { get; set; } = [];
 
         public List<IEventMiddleware> EventMiddlewares { get; set; } = [];
         public List<IStepMiddleware> StepMiddlewares { get; set; } = [];
@@ -298,6 +294,26 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 await item.OnLog(flowContext, step, stepStatus, stepOnceStatus, info, default);
             }
         }
+
+        /// <summary>
+        /// 发送事件
+        /// </summary>
+        /// <param name="eventName"></param>
+        /// <param name="eventData"></param>
+        /// <returns></returns>
+        public async Task SendEventAsync(string eventName, string? eventData)
+        {
+            foreach (var item in Contexts)
+            {
+                foreach (var eventMiddleware in EventMiddlewares)
+                {
+                    await eventMiddleware.OnExecuting(item.Value, eventName, eventData, Cancel.Token);
+                }
+
+                await Runners[item.Key].SendEventAsync(item.Value, eventName, eventData);
+            }
+        }
+
         public bool Disposed { get; set; }
         public void Dispose()
         {
@@ -308,13 +324,14 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         }
     }
     private readonly ConcurrentDictionary<Guid, SingleRunnerStatus> _singleStatus = [];
-    public async Task<Guid> InitSingleRun(ConfigDefinition configDefinition)
+    public async Task<Guid> InitSingleRun(ConfigDefinition configDefinition, bool singleRun)
     {
         Guid id = Guid.NewGuid();
         var scope = _serviceProvider.CreateScope();
         _singleStatus[id] = new SingleRunnerStatus(configDefinition, scope)
         {
-            Cancel = new()
+            Cancel = new(),
+            SingleRun = singleRun
         };
         var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
         var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
@@ -333,6 +350,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         {
             context.Init();
 
+            if (!singleRun)
+            {
+                return;
+            }
             foreach (var step in context.FlowDefinition.Steps)
             {
                 if (step.Type == StepType.Embedded)
@@ -346,6 +367,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     FlowContext subContext = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
 
                     _singleStatus[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
+
+                    FlowRunningStatus flowRunningStatus = new FlowRunningStatus(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+                    _singleStatus[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
+
+
                 }
                 else if (step.Type == StepType.SubFlow)
                 {
@@ -365,12 +391,18 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     config.Middlewares = context.Middlewares;
                     FlowContext subContext = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
                     _singleStatus[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
+
+                    FlowRunningStatus flowRunningStatus = new FlowRunningStatus(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+                    _singleStatus[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
                 }
             }
         }
 
 
         await SetContextAsync(flowContext);
+
+        FlowRunningStatus flowRunningStatus = new FlowRunningStatus(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+        _singleStatus[id].Runners.TryAdd(string.Join("", flowContext.FlowIds), flowRunningStatus);
 
         _singleStatus[id].Contexts.TryAdd(string.Join("", flowContext.FlowIds), flowContext);
 
@@ -414,16 +446,15 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async Task ExecuteSingleFlow(Guid id)
     {
         var status = _singleStatus[id];
-        if (!status.Contexts.TryGetValue(string.Join("", id), out var flowContext))
+        if (!status.Contexts.TryGetValue(id.ToString(), out var flowContext))
         {
             return;
         }
-        flowContext.State = FlowState.Running;
-        foreach (var item in status.FlowMiddlewares)
+        if (!status.Runners.TryGetValue(id.ToString(), out var runner))
         {
-            await item.OnExecuting(flowContext, default);
+            return;
         }
-
+        await runner.StartSingleFlow(status, flowContext, default);
     }
 
     /// <summary>
@@ -438,103 +469,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         {
             return;
         }
-        var stepState = flowContext.StepState.Lookup(flowStep.Id);
-        var stepOnce = new StepOnceStatus(1, 0, "", async (stepOnceStatus, log, level) =>
+        if (!status.Runners.TryGetValue(string.Join("", ids), out var runner))
         {
-            await status.Log(ids, flowStep, stepState.Value, stepOnceStatus, log, level);
-        });
-        stepOnce.StartTime = DateTime.Now;
-        stepOnce.State = StepOnceState.Start;
-        foreach (var item in status.StepMiddlewares)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            await item.OnExecuting(flowContext, flowStep, stepState.Value, cancellationToken);
+            return;
         }
-
-        foreach (var item in status.StepOnceMiddlewares)
-        {
-            await item.OnExecuting(flowContext, flowStep, stepState.Value, stepOnce, cancellationToken);
-        }
-        StepContext stepContext = new(flowStep, flowContext, stepOnce);
-        if (stepContext.Step.Type == StepType.Normal)
-        {
-            var stepDefinition = _flowMakerOption.GetStep(stepContext.Step.Category, stepContext.Step.Name)
-                ?? throw new Exception($"未找到{stepContext.Step.Category}，{stepContext.Step.Name}定义");
-
-            var stepObj = status.ServiceScope.ServiceProvider.GetRequiredKeyedService<IStepInject>(stepDefinition.Category + ":" + stepDefinition.Name);
-            await stepObj.WrapAsync(stepContext, status.ServiceScope.ServiceProvider, cancellationToken);
-        }
-        else if (stepContext.Step.Type == StepType.Embedded)
-        {
-            var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(stepContext.Step.Category, stepContext.Step.Name);
-            var embeddedFlow = subFlowDefinition.EmbeddedFlows.First(c => c.StepId == stepContext.Step.Id);
-            var flowRunner = new FlowRunner(status.ServiceScope.ServiceProvider, _flowMakerOption, _flowProvider);
-
-            var config = new ConfigDefinition { ConfigName = null, Category = stepContext.Step.Category, Name = stepContext.Step.Name };
-
-            FlowContext context = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents, stepContext.FlowContext.Data);
-            //var stepState = stepContext.FlowContext.StepState.Lookup(stepContext.Step.Id);
-            //if (stepState.HasValue)
-            //{
-            //    stepState.Value.FlowContext = context;
-            //}
-            var results = await flowRunner.Start(context, cancellationToken);
-
-            foreach (var item in results.Data)
-            {
-                await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v => v.Name == item.Name), item.Value, status.ServiceScope.ServiceProvider, stepContext.FlowContext, cancellationToken);
-            }
-            flowRunner.Dispose();
-        }
-        else
-        {
-            var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(stepContext.Step.Category, stepContext.Step.Name);
-            var flowRunner = new FlowRunner(status.ServiceScope.ServiceProvider, _flowMakerOption, _flowProvider);
-
-            var config = new ConfigDefinition { ConfigName = null, Category = stepContext.Step.Category, Name = stepContext.Step.Name };
-            foreach (var item in subFlowDefinition.Data)
-            {
-                if (!item.IsInput)
-                {
-                    continue;
-                }
-
-                var value = await IDataConverterInject.GetValue(stepContext.Step.Inputs.First(v => v.Name == item.Name), status.ServiceScope.ServiceProvider, stepContext.FlowContext, item.DefaultValue, cancellationToken);
-                config.Data.Add(new NameValue(item.Name, value));
-            }
-            FlowContext context = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents);
-            //var stepState = stepContext.FlowContext.StepState.Lookup(stepContext.Step.Id);
-            //if (stepState.HasValue)
-            //{
-            //    stepState.Value.FlowContext = context;
-            //}
-            var results = await flowRunner.Start(context, cancellationToken);
-
-            foreach (var item in results.Data)
-            {
-                await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v => v.Name == item.Name), item.Value, status.ServiceScope.ServiceProvider, stepContext.FlowContext, cancellationToken);
-            }
-            flowRunner.Dispose();
-        }
-
-        foreach (var item in status.StepMiddlewares)
-        {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return;
-            }
-            await item.OnExecuted(flowContext, flowStep, stepState.Value, null, cancellationToken);
-        }
-        stepOnce.EndTime = DateTime.Now;
-        stepOnce.State = StepOnceState.Complete;
-
-        foreach (var item in status.StepOnceMiddlewares)
-        {
-            await item.OnExecuted(flowContext, flowStep, stepState.Value, stepOnce, null, cancellationToken);
-        }
+        await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
     }
 
     public void DisposeSingleRun(Guid id)
