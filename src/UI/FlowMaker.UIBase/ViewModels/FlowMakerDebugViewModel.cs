@@ -521,7 +521,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             monitorInfoViewModel.StepChange = [];
             try
             {
-                var id = await _flowManager.Init(config);
+                var id = await _flowManager.InitSingleRun(config, false);
                 monitorInfoViewModel.Id = id;
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "debug");
                 if (mid is DebugMiddleware debug)

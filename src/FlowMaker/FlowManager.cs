@@ -67,7 +67,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
         var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
 
-        _status[id] = new SingleRunnerStatus(configDefinition, scope)
+        _singleStatus[id] = new SingleRunnerStatus(configDefinition, scope)
         {
             Cancel = new CancellationTokenSource()
         };
@@ -77,7 +77,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
-        var status = _status[id];
+        var status = _singleStatus[id];
         if (!status.Runners.TryGetValue(id.ToString(), out var runner))
         {
             yield break;
@@ -120,7 +120,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     }
                     else
                     {
-                        flowResult = await runner.Start(status, flowContext, _status[id].Cancel.Token);
+                        flowResult = await runner.Start(status, flowContext, status.Cancel.Token);
                     }
                     break;
                 }

@@ -17,7 +17,7 @@
 	<ItemGroup>
 		<PackageReference Include="DynamicData" Version="8.4.1" />
 		<PackageReference Include="Polly" Version="8.4.0" />
-		<PackageReference Include="Ty.Module" Version="0.25.0" />
+		<PackageReference Include="Ty.Module" Version="0.26.0" />
 	</ItemGroup>
 
 </Project>
