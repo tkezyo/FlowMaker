@@ -8,7 +8,7 @@ public class FlowMakerModule : Ty.ModuleBase
 {
     public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
     {
-        hostApplicationBuilder.Services.AddTransient<FlowRunner>();
+        //hostApplicationBuilder.Services.AddTransient<FlowRunner>();
         hostApplicationBuilder.Services.AddSingleton<FlowManager>();
         hostApplicationBuilder.Services.AddTransient<IFlowProvider, FileFlowProvider>();
         return Task.CompletedTask;
