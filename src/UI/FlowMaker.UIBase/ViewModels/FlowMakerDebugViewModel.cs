@@ -100,7 +100,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 if (Model.Id.HasValue)
                 {
-                    _flowManager.DisposeSingleRun(Model.Id.Value);
+                    await _flowManager.Dispose(Model.Id.Value);
                 }
                 Model.Id = null;
                 Model.Running = false;
@@ -115,7 +115,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 return;
             }
             Model.Running = true;
-            Model.Id = await _flowManager.InitSingleRun(config, Model.SingleRun);
+            Model.Id = await _flowManager.Init(config, Model.SingleRun);
             await _flowManager.ExecuteSingleFlow(Model.Id.Value);
         });
 
@@ -521,7 +521,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             monitorInfoViewModel.StepChange = [];
             try
             {
-                var id = await _flowManager.InitSingleRun(config, false);
+                var id = await _flowManager.Init(config, false);
                 monitorInfoViewModel.Id = id;
                 var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "debug");
                 if (mid is DebugMiddleware debug)
@@ -601,7 +601,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             if (Model.Id.HasValue)
             {
-                _flowManager.DisposeSingleRun(Model.Id.Value);
+                await _flowManager.Dispose(Model.Id.Value);
                 Model.Id = null;
                 Model.Running = false;
             }

@@ -5,8 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using System.Collections.Concurrent;
-using System.Net.NetworkInformation;
-using System.Threading;
 using System.Xml.Linq;
 using Ty;
 
@@ -26,58 +24,22 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     private readonly FlowMakerOption _flowMakerOption = option.Value;
 
     #region Run
-    class RunnerStatus(ConfigDefinition config, FlowRunningStatus flowRunner, IServiceScope serviceScope) : IDisposable
-    {
-        public ConfigDefinition Config { get; set; } = config;
-
-        public IServiceScope ServiceScope { get; set; } = serviceScope;
-        public FlowRunningStatus FlowRunner { get; set; } = flowRunner;
-
-
-        public CancellationTokenSource Cancel { get; set; } = new();
-
-        public bool Disposed { get; set; }
-        public void Dispose()
-        {
-            Disposed = true;
-
-            FlowRunner.Dispose();
-            Cancel.Dispose();
-            ServiceScope.Dispose();
-        }
-    }
-
-    private readonly ConcurrentDictionary<Guid, SingleRunnerStatus> _status = [];
 
     public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
     {
         var config = await _flowProvider.LoadConfigDefinitionAsync(flowCategory, flowName, configName) ?? throw new InvalidOperationException("未找到配置");
-        var id = await Init(config);
+        var id = await Init(config, false);
         await foreach (var item in Run(id))
         {
             yield return item;
         }
     }
 
-    public async Task<Guid> Init(ConfigDefinition configDefinition)
-    {
-        Guid id = Guid.NewGuid();
-        var scope = _serviceProvider.CreateScope();
 
-        var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
-        var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
-
-        _singleStatus[id] = new SingleRunnerStatus(configDefinition, scope)
-        {
-            Cancel = new CancellationTokenSource()
-        };
-        await Task.CompletedTask;
-        return id;
-    }
 
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
-        var status = _singleStatus[id];
+        var status = _status[id];
         if (!status.Runners.TryGetValue(id.ToString(), out var runner))
         {
             yield break;
@@ -235,19 +197,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     return status.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
                 }
             }
-
-            if (_singleStatus.TryGetValue(id, out var singleStatus) && !singleStatus.Disposed)
-            {
-
-                if (string.IsNullOrEmpty(key))
-                {
-                    return singleStatus.ServiceScope.ServiceProvider.GetService<T>();
-                }
-                else
-                {
-                    return singleStatus.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
-                }
-            }
         }
         catch (Exception e)
         {
@@ -261,74 +210,13 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     #region SingleRun
 
-    public class SingleRunnerStatus(ConfigDefinition config, IServiceScope serviceScope) : IDisposable
-    {
-        public ConfigDefinition Config { get; set; } = config;
-
-        public bool SingleRun { get; set; }
-        public bool Running { get; set; }
-
-        public IServiceScope ServiceScope { get; set; } = serviceScope;
-
-        public CancellationTokenSource Cancel { get; set; } = new();
-
-        public ConcurrentDictionary<string, FlowContext> Contexts { get; set; } = [];
-        public ConcurrentDictionary<string, FlowRunningStatus> Runners { get; set; } = [];
-
-        public List<IEventMiddleware> EventMiddlewares { get; set; } = [];
-        public List<IStepMiddleware> StepMiddlewares { get; set; } = [];
-        public List<IStepOnceMiddleware> StepOnceMiddlewares { get; set; } = [];
-        public List<IFlowMiddleware> FlowMiddlewares { get; set; } = [];
-        public List<ILogMiddleware> LogMiddlewares { get; set; } = [];
-        public async Task Log(Guid[] ids, FlowStep step, StepStatus stepStatus, StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
-        {
-            if (!Contexts.TryGetValue(string.Join("", ids), out var flowContext))
-            {
-                return;
-            }
-
-            var info = new LogInfo(log, logLevel, DateTime.Now, ids.Last(), stepOnceStatus.Index);
-            flowContext.Logs.Add(info);
-            foreach (var item in LogMiddlewares)
-            {
-                await item.OnLog(flowContext, step, stepStatus, stepOnceStatus, info, default);
-            }
-        }
-
-        /// <summary>
-        /// 发送事件
-        /// </summary>
-        /// <param name="eventName"></param>
-        /// <param name="eventData"></param>
-        /// <returns></returns>
-        public async Task SendEventAsync(string eventName, string? eventData)
-        {
-            foreach (var item in Contexts)
-            {
-                foreach (var eventMiddleware in EventMiddlewares)
-                {
-                    await eventMiddleware.OnExecuting(item.Value, eventName, eventData, Cancel.Token);
-                }
-
-                await Runners[item.Key].SendEventAsync(item.Value, eventName, eventData);
-            }
-        }
-
-        public bool Disposed { get; set; }
-        public void Dispose()
-        {
-            Disposed = true;
-
-            Cancel.Dispose();
-            ServiceScope.Dispose();
-        }
-    }
-    private readonly ConcurrentDictionary<Guid, SingleRunnerStatus> _singleStatus = [];
-    public async Task<Guid> InitSingleRun(ConfigDefinition configDefinition, bool singleRun)
+ 
+    private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
+    public async Task<Guid> Init(ConfigDefinition configDefinition, bool singleRun)
     {
         Guid id = Guid.NewGuid();
         var scope = _serviceProvider.CreateScope();
-        _singleStatus[id] = new SingleRunnerStatus(configDefinition, scope)
+        _status[id] = new RunnerStatus(configDefinition, scope)
         {
             Cancel = new(),
             SingleRun = singleRun
@@ -366,10 +254,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
                     FlowContext subContext = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
 
-                    _singleStatus[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
+                    _status[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
 
-                    FlowRunningStatus flowRunningStatus = new FlowRunningStatus(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-                    _singleStatus[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
+                    FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+                    _status[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
 
 
                 }
@@ -390,10 +278,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     }
                     config.Middlewares = context.Middlewares;
                     FlowContext subContext = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
-                    _singleStatus[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
+                    _status[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
 
-                    FlowRunningStatus flowRunningStatus = new FlowRunningStatus(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-                    _singleStatus[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
+                    FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+                    _status[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
                 }
             }
         }
@@ -401,10 +289,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         await SetContextAsync(flowContext);
 
-        FlowRunningStatus flowRunningStatus = new FlowRunningStatus(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-        _singleStatus[id].Runners.TryAdd(string.Join("", flowContext.FlowIds), flowRunningStatus);
+        FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+        _status[id].Runners.TryAdd(string.Join("", flowContext.FlowIds), flowRunningStatus);
 
-        _singleStatus[id].Contexts.TryAdd(string.Join("", flowContext.FlowIds), flowContext);
+        _status[id].Contexts.TryAdd(string.Join("", flowContext.FlowIds), flowContext);
 
         foreach (var item in _flowMakerOption.DefaultMiddlewares)
         {
@@ -416,26 +304,26 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         foreach (var item in flowContext.Middlewares)
         {
-            _singleStatus[id].FlowMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IFlowMiddleware>(item));
+            _status[id].FlowMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IFlowMiddleware>(item));
         }
         foreach (var item in flowContext.Middlewares)
         {
-            _singleStatus[id].EventMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IEventMiddleware>(item));
-        }
-
-        foreach (var item in flowContext.Middlewares)
-        {
-            _singleStatus[id].StepMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IStepMiddleware>(item));
+            _status[id].EventMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IEventMiddleware>(item));
         }
 
         foreach (var item in flowContext.Middlewares)
         {
-            _singleStatus[id].StepOnceMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IStepOnceMiddleware>(item));
+            _status[id].StepMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IStepMiddleware>(item));
         }
 
         foreach (var item in flowContext.Middlewares)
         {
-            _singleStatus[id].LogMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<ILogMiddleware>(item));
+            _status[id].StepOnceMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<IStepOnceMiddleware>(item));
+        }
+
+        foreach (var item in flowContext.Middlewares)
+        {
+            _status[id].LogMiddlewares.AddRange(scope.ServiceProvider.GetKeyedServices<ILogMiddleware>(item));
         }
 
 
@@ -445,7 +333,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public async Task ExecuteSingleFlow(Guid id)
     {
-        var status = _singleStatus[id];
+        var status = _status[id];
         if (!status.Contexts.TryGetValue(id.ToString(), out var flowContext))
         {
             return;
@@ -464,7 +352,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     /// <returns></returns>
     public virtual async Task RunStep(Guid[] ids, FlowStep flowStep, CancellationToken cancellationToken)
     {
-        var status = _singleStatus[ids[0]];
+        var status = _status[ids[0]];
         if (!status.Contexts.TryGetValue(string.Join("", ids), out var flowContext))
         {
             return;
@@ -476,14 +364,67 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
     }
 
-    public void DisposeSingleRun(Guid id)
+    #endregion
+}
+public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) : IDisposable
+{
+    public ConfigDefinition Config { get; set; } = config;
+
+    public bool SingleRun { get; set; }
+    public bool Running { get; set; }
+
+    public IServiceScope ServiceScope { get; set; } = serviceScope;
+
+    public CancellationTokenSource Cancel { get; set; } = new();
+
+    public ConcurrentDictionary<string, FlowContext> Contexts { get; set; } = [];
+    public ConcurrentDictionary<string, FlowRunner> Runners { get; set; } = [];
+
+    public List<IEventMiddleware> EventMiddlewares { get; set; } = [];
+    public List<IStepMiddleware> StepMiddlewares { get; set; } = [];
+    public List<IStepOnceMiddleware> StepOnceMiddlewares { get; set; } = [];
+    public List<IFlowMiddleware> FlowMiddlewares { get; set; } = [];
+    public List<ILogMiddleware> LogMiddlewares { get; set; } = [];
+    public async Task Log(Guid[] ids, FlowStep step, StepStatus stepStatus, StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
     {
-        if (_singleStatus.TryGetValue(id, out var value))
+        if (!Contexts.TryGetValue(string.Join("", ids), out var flowContext))
         {
-            value.Dispose();
-            _singleStatus.TryRemove(id, out _);
+            return;
+        }
+
+        var info = new LogInfo(log, logLevel, DateTime.Now, ids.Last(), stepOnceStatus.Index);
+        flowContext.Logs.Add(info);
+        foreach (var item in LogMiddlewares)
+        {
+            await item.OnLog(flowContext, step, stepStatus, stepOnceStatus, info, default);
         }
     }
 
-    #endregion
+    /// <summary>
+    /// 发送事件
+    /// </summary>
+    /// <param name="eventName"></param>
+    /// <param name="eventData"></param>
+    /// <returns></returns>
+    public async Task SendEventAsync(string eventName, string? eventData)
+    {
+        foreach (var item in Contexts)
+        {
+            foreach (var eventMiddleware in EventMiddlewares)
+            {
+                await eventMiddleware.OnExecuting(item.Value, eventName, eventData, Cancel.Token);
+            }
+
+            await Runners[item.Key].SendEventAsync(item.Value, eventName, eventData);
+        }
+    }
+
+    public bool Disposed { get; set; }
+    public void Dispose()
+    {
+        Disposed = true;
+
+        Cancel.Dispose();
+        ServiceScope.Dispose();
+    }
 }

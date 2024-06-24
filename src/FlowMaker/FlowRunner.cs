@@ -2,15 +2,12 @@
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Polly;
-using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Ty;
-using static FlowMaker.FlowManager;
 
 namespace FlowMaker;
 
@@ -625,7 +622,7 @@ namespace FlowMaker;
 //    }
 //}
 
-public class FlowRunningStatus : IDisposable
+public class FlowRunner : IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IFlowProvider _flowProvider;
@@ -647,9 +644,9 @@ public class FlowRunningStatus : IDisposable
     private CompositeDisposable Disposables { get; set; } = [];
     public CancellationTokenSource CancellationTokenSource { get; set; } = new();
     protected TaskCompletionSource<FlowResult>? TaskCompletionSource { get; set; }
-    public SingleRunnerStatus? SingleRunnerStatus { get; set; }
+    public RunnerStatus? SingleRunnerStatus { get; set; }
 
-    public FlowRunningStatus(IServiceProvider serviceProvider, FlowMakerOption option, IFlowProvider flowProvider)
+    public FlowRunner(IServiceProvider serviceProvider, FlowMakerOption option, IFlowProvider flowProvider)
     {
         _flowMakerOption = option;
         this._serviceProvider = serviceProvider;
@@ -754,7 +751,7 @@ public class FlowRunningStatus : IDisposable
         {
             var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(stepContext.Step.Category, stepContext.Step.Name);
             var embeddedFlow = subFlowDefinition.EmbeddedFlows.First(c => c.StepId == stepContext.Step.Id);
-            var flowRunner = new FlowRunningStatus(_serviceProvider, _flowMakerOption, _flowProvider);
+            var flowRunner = new FlowRunner(_serviceProvider, _flowMakerOption, _flowProvider);
 
             var config = new ConfigDefinition { ConfigName = null, Category = stepContext.Step.Category, Name = stepContext.Step.Name };
 
@@ -781,7 +778,7 @@ public class FlowRunningStatus : IDisposable
         else
         {
             var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(stepContext.Step.Category, stepContext.Step.Name);
-            var flowRunner = new FlowRunningStatus(_serviceProvider, _flowMakerOption, _flowProvider);
+            var flowRunner = new FlowRunner(_serviceProvider, _flowMakerOption, _flowProvider);
 
             var config = new ConfigDefinition { ConfigName = null, Category = stepContext.Step.Category, Name = stepContext.Step.Name };
             foreach (var item in subFlowDefinition.Data)
@@ -836,7 +833,7 @@ public class FlowRunningStatus : IDisposable
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
-    public async Task<FlowResult> Start(SingleRunnerStatus singleRunnerStatus, FlowContext flowContext, CancellationToken? cancellationToken = null)
+    public async Task<FlowResult> Start(RunnerStatus singleRunnerStatus, FlowContext flowContext, CancellationToken? cancellationToken = null)
     {
         if (cancellationToken is null)
         {
@@ -1156,7 +1153,7 @@ public class FlowRunningStatus : IDisposable
     }
 
 
-    public async Task StartSingleFlow(SingleRunnerStatus singleRunnerStatus, FlowContext flowContext, CancellationToken? cancellationToken = null)
+    public async Task StartSingleFlow(RunnerStatus singleRunnerStatus, FlowContext flowContext, CancellationToken? cancellationToken = null)
     {
         SingleRunnerStatus = singleRunnerStatus;
 
