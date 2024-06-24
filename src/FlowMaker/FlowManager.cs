@@ -289,8 +289,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         await SetContextAsync(flowContext);
 
-        FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-        _status[id].Runners.TryAdd(string.Join("", flowContext.FlowIds), flowRunningStatus);
+        FlowRunner runner = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
+        _status[id].Runners.TryAdd(string.Join("", flowContext.FlowIds), runner);
 
         _status[id].Contexts.TryAdd(string.Join("", flowContext.FlowIds), flowContext);
 
