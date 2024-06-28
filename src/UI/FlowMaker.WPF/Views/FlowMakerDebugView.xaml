@@ -24,19 +24,17 @@
     <DockPanel >
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar>
+                <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" />
+                <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}"></hc:CircleProgressBar>
                 <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconPixelartIcons Kind="Play" />
-                        <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" />
-                    </StackPanel>
+                    <iconPacks:PackIconPixelartIcons Kind="Play" />
                 </Button>
                 <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
-                    <StackPanel Orientation="Horizontal">
-                        <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}"></hc:CircleProgressBar>
-                        <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" />
-                    </StackPanel>
+                    <iconPacks:PackIconPixelartIcons Kind="Pause" />
+
+
                 </Button>
-                <Button Margin="2,0,0,0" Command="{Binding ChangePageTypeCommand}"  Style="{StaticResource ButtonInfo.Small}" >
+                <Button Margin="2,0,0,0" Command="{Binding ChangePageTypeCommand}"  Style="{StaticResource ButtonInfo.Small}" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="Reload" />
                 </Button>
                 <Button Margin="2,0,0,0" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
@@ -45,8 +43,8 @@
                 <ToggleButton x:Name="setting" Style="{StaticResource ToggleButtonDefault.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="EditBox" />
                 </ToggleButton>
-                <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}">
-                    <iconPacks:PackIconPixelartIcons Kind="HumanRun" />
+                <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <iconPacks:PackIconPixelartIcons Kind="Debug" />
                 </ToggleButton>
             </ToolBar>
             <ToolBar
@@ -153,7 +151,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
         </hc:Drawer>
         <Grid  >
             <TreeView ItemsSource="{Binding Model.Steps}"
-                           Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.Tree}}"
+                           Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Tree}}"
                           HorizontalAlignment="Stretch"
                Style="{StaticResource TreeView.Small}">
                 <TreeView.ItemTemplate>
@@ -161,8 +159,8 @@ AutoGenerateColumns="False" IsReadOnly="True">
                        ItemsSource="{Binding Steps}"
                        DataType="vms:MonitorStepInfoViewModel">
                         <StackPanel Orientation="Horizontal">
-                            <Button  Foreground="MediumSpringGreen"  Visibility="{Binding DataContext.Model.SingleRun,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.RunSingleCommand,ElementName=page}" CommandParameter="{Binding .}">
-                                <iconPacks:PackIconPixelartIcons Kind="HumanRun" Height="10"/>
+                            <Button  Foreground="MediumSpringGreen"  Visibility="{Binding DataContext.Model.SingleRun,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.RunSingleCommand,ElementName=page}" CommandParameter="{Binding .}" Background="Transparent">
+                                <iconPacks:PackIconPixelartIcons Kind="DebugPlay" />
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
                                     </Style>
@@ -258,7 +256,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
             </TreeView>
 
             <DataGrid
-                          Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageType.List}}"
+                          Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.List}}"
 Style="{StaticResource DataGrid.Small}"
 ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single"  SelectedItem="{Binding SelectedStepOnce}">
                 <DataGrid.RowStyle>

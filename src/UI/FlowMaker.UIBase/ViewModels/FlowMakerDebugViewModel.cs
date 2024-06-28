@@ -96,6 +96,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 return;
             }
+            if (c)
+            {
+                PageType = PageTypes.Tree;
+            }
             if (!c)
             {
                 if (Model.Id.HasValue)
@@ -103,19 +107,21 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     await _flowManager.Dispose(Model.Id.Value);
                 }
                 Model.Id = null;
-                Model.Running = false;
+                CanDebug = true;
 
                 return;
             }
 
             var config = CreateConfig();
 
+
+            config.Middlewares.Add("single-run-monitor");
             if (config is null)
             {
                 return;
             }
-            Model.Running = true;
             Model.Id = await _flowManager.Init(config, Model.SingleRun);
+            CanDebug = false;
             await _flowManager.ExecuteSingleFlow(Model.Id.Value);
         });
 
@@ -329,7 +335,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
         Model = new(FlowCategory, FlowName)
         {
-            Debug = true,
         };
 
         async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, IFlowDefinition flowDefinition, Guid[]? parentId = null)
@@ -456,12 +461,12 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         MessageBus.Current.SendMessage(this, "RemoveDebug");
     }
 
-    public ConfigDefinition? CreateConfig()
+    public ConfigDefinition CreateConfig()
     {
         var monitorInfoViewModel = Model;
         if (monitorInfoViewModel is null)
         {
-            return null;
+            throw new Exception();
         }
         var config = new ConfigDefinition
         {
@@ -495,6 +500,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
         }
 
+
+
         return config;
     }
 
@@ -511,10 +518,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
             var config = CreateConfig();
 
-            if (config is null)
-            {
-                return;
-            }
+            config.Middlewares.Add("monitor");
+            config.Middlewares.Add("debug");
 
             Reset(monitorInfoViewModel.Steps);
             monitorInfoViewModel.StepChange?.Dispose();
@@ -772,13 +777,13 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     }
 
     [Reactive]
-    public PageType PageType { get; set; }
+    public PageTypes PageType { get; set; }
 
     public ReactiveCommand<Unit, Unit> ChangePageTypeCommand { get; }
     public void ChangePageType()
     {
         //切换下一个PageType
-        PageType = (PageType)(((int)PageType + 1) % Enum.GetValues<PageType>().Length);
+        PageType = (PageTypes)(((int)PageType + 1) % Enum.GetValues<PageTypes>().Length);
     }
 
     public async ValueTask DisposeAsync()
@@ -923,7 +928,7 @@ public class LogInfoViewModel(LogInfo logInfo) : ReactiveObject
     public string Index { get; set; } = logInfo.Index;
 }
 
-public enum PageType
+public enum PageTypes
 {
     Tree,
     List,

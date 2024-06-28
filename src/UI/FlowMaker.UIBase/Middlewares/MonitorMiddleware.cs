@@ -20,11 +20,11 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    public async Task OnExecuted(FlowContext flowContext,  Exception? exception, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, Exception? exception, CancellationToken cancellationToken)
     {
         await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
 
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext,  TotalCount));
+        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, TotalCount));
         await Task.CompletedTask;
     }
 
@@ -102,7 +102,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             PercentChange.OnNext(Percent);
         }
 
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext,  TotalCount));
+        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, TotalCount));
     }
 
     public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
@@ -150,7 +150,20 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     }
 }
 
-public class MonitorMessage(FlowContext context,  int totalCount)
+public class SingleRunMonitorMiddleware : IStepOnceMiddleware
+{
+    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+public class MonitorMessage(FlowContext context, int totalCount)
 {
     public FlowContext Context { get; set; } = context;
     public int TotalCount { get; set; } = totalCount;

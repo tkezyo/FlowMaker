@@ -1194,23 +1194,45 @@ public class FlowRunner : IDisposable
         }
         StepContext stepContext = new(flowStep, flowContext, stepOnce);
 
-        await RunStep(stepContext, cancellationToken);
-
-        foreach (var item in status.StepMiddlewares)
+        try
         {
-            if (cancellationToken.IsCancellationRequested)
+            await RunStep(stepContext, cancellationToken);
+            foreach (var item in status.StepMiddlewares)
             {
-                return;
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                await item.OnExecuted(flowContext, flowStep, stepState.Value, null, cancellationToken);
             }
-            await item.OnExecuted(flowContext, flowStep, stepState.Value, null, cancellationToken);
-        }
-        stepOnce.EndTime = DateTime.Now;
-        stepOnce.State = StepOnceState.Complete;
+            stepOnce.EndTime = DateTime.Now;
+            stepOnce.State = StepOnceState.Complete;
 
-        foreach (var item in status.StepOnceMiddlewares)
-        {
-            await item.OnExecuted(flowContext, flowStep, stepState.Value, stepOnce, null, cancellationToken);
+            foreach (var item in status.StepOnceMiddlewares)
+            {
+                await item.OnExecuted(flowContext, flowStep, stepState.Value, stepOnce, null, cancellationToken);
+            }
         }
+        catch (Exception e)
+        {
+            foreach (var item in status.StepMiddlewares)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                await item.OnExecuted(flowContext, flowStep, stepState.Value, e, cancellationToken);
+            }
+            stepOnce.EndTime = DateTime.Now;
+            stepOnce.State = StepOnceState.Error;
+
+            foreach (var item in status.StepOnceMiddlewares)
+            {
+                await item.OnExecuted(flowContext, flowStep, stepState.Value, stepOnce, e, cancellationToken);
+            }
+        }
+
+      
     }
 
     /// <summary>

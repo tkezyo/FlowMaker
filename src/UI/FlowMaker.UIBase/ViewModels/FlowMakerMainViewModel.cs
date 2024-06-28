@@ -364,8 +364,16 @@ public class MonitorRunningViewModel : ReactiveObject
 }
 
 
-public class MonitorInfoViewModel(string category, string name) : ReactiveObject, IScreen
+public class MonitorInfoViewModel : ReactiveObject, IScreen
 {
+    public MonitorInfoViewModel(string category, string name)
+    {
+        DisplayName = $"{category}:{name}";
+        Category = category;
+        Name = name;
+
+    }
+
     [Reactive]
     public bool ShowView { get; set; } = true;
     [Reactive]
@@ -397,8 +405,8 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     public CompositeDisposable StepChange { get; set; } = [];
     [Reactive]
     public Guid? Id { get; set; }
-    [Reactive]
-    public bool Debug { get; set; }
+    //[Reactive]
+    //public bool Debug { get; set; }
     [Reactive]
     public bool Running { get; set; }
 
@@ -408,12 +416,12 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     public string? EventData { get; set; }
 
     [Reactive]
-    public string DisplayName { get; set; } = $"{category}:{name}";
+    public string DisplayName { get; set; }
     [Reactive]
-    public string Category { get; set; } = category;
+    public string Category { get; set; }
 
     [Reactive]
-    public string Name { get; set; } = name;
+    public string Name { get; set; }
 
     [Reactive]
     public string? ConfigName { get; set; }
@@ -460,6 +468,7 @@ public class MonitorInfoViewModel(string category, string name) : ReactiveObject
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];
     [Reactive]
     public ObservableCollection<MiddlewareSelectViewModel> Middlewares { get; set; } = [];
+
 
 }
 public class MonitorStepInfoViewModel : ReactiveObject
