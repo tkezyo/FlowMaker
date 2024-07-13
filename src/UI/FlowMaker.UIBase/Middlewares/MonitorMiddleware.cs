@@ -152,14 +152,14 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
 
 public class SingleRunMonitorMiddleware : IStepOnceMiddleware
 {
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
+    public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        await Task.CompletedTask;
     }
 
-    public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
+    public async Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        await Task.CompletedTask;
     }
 }
 

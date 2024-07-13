@@ -49,6 +49,9 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         RunConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RunConfig);
         LoadConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(LoadConfig);
 
+        SetEditCommand = ReactiveCommand.Create(SetEdit);
+        RemoveDebugCommand = ReactiveCommand.CreateFromTask<FlowMakerDebugViewModel>(RemoveDebugAsync);
+
         SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
 
         this.WhenAnyValue(c => c.Flows.Count).Subscribe(c =>
@@ -65,7 +68,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
             }
         });
 
-       
+
     }
 
     public CompositeDisposable? Disposables { get; set; }
@@ -175,7 +178,6 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         {
             Flows.Remove(c);
         }).DisposeWith(Disposables);
-        MessageBus.Current.Listen<FlowMakerDebugViewModel>("AddDebug").Subscribe(Flows.Add).DisposeWith(Disposables);
 
 
         await LoadFlows();
@@ -284,9 +286,31 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         vm.FlowName = flowDefinitionInfoViewModel.Name;
         vm.ConfigName = null;
         await vm.Load();
-        MessageBus.Current.SendMessage(vm, "AddDebug");
+        Flows.Add(vm);
     }
 
+    [Reactive]
+    public bool Edit { get; set; }
+    public ReactiveCommand<Unit, Unit> SetEditCommand { get; }
+    public void SetEdit()
+    {
+        Edit = !Edit;
+    }
+
+    public ReactiveCommand<FlowMakerDebugViewModel, Unit> RemoveDebugCommand { get; }
+    public async Task RemoveDebugAsync(FlowMakerDebugViewModel flowMakerDebugViewModel)
+    {
+        var r = await _messageBoxManager.Conform.Handle(new ConformInfo("确定删除吗？"));
+        if (!r)
+        {
+            return;
+        }
+        if (flowMakerDebugViewModel.Model is not null && flowMakerDebugViewModel.Model.Id.HasValue)
+        {
+            await _flowManager.Stop(flowMakerDebugViewModel.Model.Id.Value);
+        }
+        Flows.Remove(flowMakerDebugViewModel);
+    }
 
 
 
@@ -298,7 +322,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         vm.FlowName = model.Name;
         vm.ConfigName = model.ConfigName;
         await vm.Load();
-        MessageBus.Current.SendMessage(vm, "AddDebug");
+        Flows.Add(vm);
     }
 
     public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RemoveConfigCommand { get; }
@@ -320,7 +344,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }
     }
 
-   
+
     #endregion
 }
 

@@ -415,7 +415,7 @@ public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) :
                 await eventMiddleware.OnExecuting(item.Value, eventName, eventData, Cancel.Token);
             }
 
-            await Runners[item.Key].SendEventAsync(item.Value, eventName, eventData);
+            await Runners[item.Key].ExecuteEventAsync(item.Value, eventName, eventData);
         }
     }
 

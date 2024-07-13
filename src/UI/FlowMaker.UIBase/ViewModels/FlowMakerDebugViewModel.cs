@@ -81,7 +81,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         StopCommand = ReactiveCommand.CreateFromTask(Stop);
         SendEventCommand = ReactiveCommand.CreateFromTask(SendEvent);
         SaveConfigCommand = ReactiveCommand.CreateFromTask(SaveConfig);
-        RemoveCommand = ReactiveCommand.CreateFromTask(Remove);
         EditFlowCommand = ReactiveCommand.CreateFromTask(EditFlow);
         ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
         ShowAllLogCommand = ReactiveCommand.Create(ShowAllLog);
@@ -446,20 +445,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     [Reactive]
     public DataDisplayViewModel? DataDisplay { get; set; }
 
-    public ReactiveCommand<Unit, Unit> RemoveCommand { get; }
-    public async Task Remove()
-    {
-        var r = await _messageBoxManager.Conform.Handle(new ConformInfo("确定删除吗？"));
-        if (!r)
-        {
-            return;
-        }
-        if (Model is not null && Model.Id.HasValue)
-        {
-            await _flowManager.Stop(Model.Id.Value);
-        }
-        MessageBus.Current.SendMessage(this, "RemoveDebug");
-    }
 
     public ConfigDefinition CreateConfig()
     {

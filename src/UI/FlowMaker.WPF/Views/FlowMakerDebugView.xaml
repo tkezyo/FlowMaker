@@ -24,25 +24,24 @@
     <DockPanel >
         <ToolBarTray DockPanel.Dock="Top">
             <ToolBar>
-                <TextBlock Text="{Binding Model.DisplayName}"  VerticalAlignment="Center" Margin="4,0" />
-                <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}"></hc:CircleProgressBar>
-                <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="Play" />
-                </Button>
-                <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="Pause" />
 
+                <ToggleButton x:Name="setting" Style="{StaticResource ToggleButtonCustom}"  Content="{Binding Model.DisplayName}" VerticalAlignment="Center">
+                </ToggleButton>
+               
+                <StackPanel Orientation="Horizontal" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}"></hc:CircleProgressBar>
+                    <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
+                        <iconPacks:PackIconPixelartIcons Kind="Play" />
+                    </Button>
+                    <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
+                        <iconPacks:PackIconPixelartIcons Kind="Pause" />
+                    </Button>
+                </StackPanel>
 
-                </Button>
                 <Button Margin="2,0,0,0" Command="{Binding ChangePageTypeCommand}"  Style="{StaticResource ButtonInfo.Small}" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="Reload" />
                 </Button>
-                <Button Margin="2,0,0,0" Command="{Binding RemoveCommand}"  Style="{StaticResource ButtonDanger.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
-                    <iconPacks:PackIconPixelartIcons Kind="Trash" />
-                </Button>
-                <ToggleButton x:Name="setting" Style="{StaticResource ToggleButtonDefault.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                    <iconPacks:PackIconPixelartIcons Kind="EditBox" />
-                </ToggleButton>
+              
                 <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="Debug" />
                 </ToggleButton>
