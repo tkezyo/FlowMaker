@@ -106,7 +106,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }
         var r = JsonSerializer.Serialize(configInfo);
         await File.WriteAllTextAsync(path, r);
-        await _messageBoxManager.Alert.Handle(new AlertInfo("保存成功"));
+        await _messageBoxManager.Notify.Handle(new NotifyInfo() { Message = "保存成功", Level = NotifyLevel.Success, Expiration = TimeSpan.FromSeconds(2) });
     }
 
     public async Task Load()
@@ -274,6 +274,11 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> RemoveCommand { get; }
     public async Task Remove(FlowDefinitionInfoViewModel flowDefinitionInfoViewModel)
     {
+        var r = await _messageBoxManager.Conform.Handle(new ConformInfo($"是否删除{flowDefinitionInfoViewModel.Name}"));
+        if (!r)
+        {
+            return;
+        }
         await _flowProvider.RemoveFlow(flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
         await LoadFlows();
     }
@@ -328,6 +333,11 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RemoveConfigCommand { get; }
     public async Task RemoveConfig(ConfigDefinitionInfoViewModel flowDefinitionInfoViewModel)
     {
+        var r = await _messageBoxManager.Conform.Handle(new ConformInfo($"是否删除{flowDefinitionInfoViewModel.ConfigName}"));
+        if (!r)
+        {
+            return;
+        }
         await _flowProvider.RemoveConfig(
                flowDefinitionInfoViewModel.ConfigName,
                flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);

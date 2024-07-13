@@ -18,7 +18,7 @@
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <ScrollViewer Grid.Column="0" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}">
+        <ScrollViewer Grid.Column="0" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,20" MaxWidth="300">
             <StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Button Command="{Binding SaveCommand}" Style="{StaticResource ButtonSuccess.Small}"  Grid.Column="3" VerticalAlignment="Bottom">
@@ -95,7 +95,11 @@
                 <DataTemplate>
                     <Grid>
                         <local:FlowMakerDebugView></local:FlowMakerDebugView>
-                        <Border Background="#99999999" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}"></Border>
+                        <Border Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                            </Border.Background>
+                        </Border>
                         <Button Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" CommandParameter="{Binding .}" Content="删除" Command="{Binding DataContext.RemoveDebugCommand, ElementName=page}" Style="{StaticResource ButtonDanger}"/>
                     </Grid>
                 </DataTemplate>
