@@ -86,8 +86,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         ShowAllLogCommand = ReactiveCommand.Create(ShowAllLog);
         ChangePageTypeCommand = ReactiveCommand.Create(ChangePageType);
         RunSingleCommand = ReactiveCommand.CreateFromTask<MonitorStepInfoViewModel>(RunSingle);
+        ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
 
-        this.WhenAnyValue(c => c.SelectedStepOnce).WhereNotNull().Subscribe(ShowStepOnceLog);
 
         this.WhenAnyValue(c => c.Model.SingleRun).Skip(1).Subscribe(async c =>
         {
@@ -733,6 +733,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     }
     [Reactive]
     public StepLogViewModel? SelectedStepOnce { get; set; }
+    public ReactiveCommand<StepLogViewModel, Unit> ShowStepOnceLogCommand { get; }
     public void ShowStepOnceLog(StepLogViewModel monitorStepInfoViewModel)
     {
         StepId = monitorStepInfoViewModel.StepId;

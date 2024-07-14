@@ -13,59 +13,81 @@
                           x:Name="page"
         xmlns:app="clr-namespace:Ty;assembly=Ty.WPFBase" xmlns:iconPacks="http://metro.mahapps.com/winfx/xaml/iconpacks"
                           d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <!-- 其他资源定义 -->
+        <Style x:Key="MouseOverVisibilityStyle" TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=StackPanel}}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <ScrollViewer Grid.Column="0" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,20" MaxWidth="300">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <Button Command="{Binding SaveCommand}" Style="{StaticResource ButtonSuccess.Small}"  Grid.Column="3" VerticalAlignment="Bottom">
-                        <iconPacks:PackIconPixelartIcons Kind="Save" />
-                    </Button>
-                    <Button Command="{Binding CreateCommand}" Style="{StaticResource ButtonPrimary.Small}"  Grid.Column="3" VerticalAlignment="Bottom">
-                        <iconPacks:PackIconPixelartIcons Kind="NotesPlus" />
-                    </Button>
-                </StackPanel>
-                <ItemsControl ItemsSource="{Binding Categories}" >
+
+        <Grid Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,24" MaxWidth="300" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Button Command="{Binding SaveCommand}" Style="{StaticResource ButtonSuccess.Small}" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" ToolTip="保存">
+                <iconPacks:PackIconPixelartIcons Kind="Save" />
+            </Button>
+            <Button Command="{Binding CreateCommand}" Style="{StaticResource ButtonPrimary.Small}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ToolTip="创建流程">
+                <iconPacks:PackIconPixelartIcons Kind="NotePlus" />
+            </Button>
+            <ScrollViewer Grid.ColumnSpan="2" >
+                <ItemsControl ItemsSource="{Binding Categories}"  >
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
+                                <StackPanel.Background>
+                                    <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                                </StackPanel.Background>
                                 <TextBlock Text="{Binding Category}" Style="{StaticResource TextBlockDefaultBold}"/>
                                 <ItemsControl Padding="4" ItemsSource="{Binding Flows}">
                                     <ItemsControl.Background>
-                                        <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                                        <SolidColorBrush Color="White"/>
                                     </ItemsControl.Background>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <StackPanel>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                    <Button Padding="4,0" Style="{StaticResource ButtonDefault.Small}"  BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0" >
+                                            <StackPanel   >
+                                                <StackPanel Orientation="Horizontal" MinWidth="100" MinHeight="20" Background="Transparent">
+                                                    <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}" VerticalAlignment="Center"/>
+                                                    <Button Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}"  BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}"  >
                                                         <Button.Foreground>
                                                             <SolidColorBrush Color="{StaticResource PrimaryColor}"/>
                                                         </Button.Foreground>
-                                                        <iconPacks:PackIconPixelartIcons Kind="Edit" />
+                                                        <iconPacks:PackIconPixelartIcons Kind="EditBox" />
                                                     </Button>
-                                                    <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}"  BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
+                                                    <Button  Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}"  BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
                                                         <Button.Foreground>
                                                             <SolidColorBrush Color="{StaticResource DangerColor}"/>
                                                         </Button.Foreground>
-                                                        <iconPacks:PackIconPixelartIcons Kind="NotesDelete" />
+                                                        <iconPacks:PackIconPixelartIcons Kind="NoteDelete" />
                                                     </Button>
+                                                  
                                                 </StackPanel>
 
-                                                <ItemsControl Margin="8" ItemsSource="{Binding Configs}">
+                                                <ItemsControl ItemsSource="{Binding Configs}" Margin="6,0,0,0">
                                                     <ItemsControl.ItemTemplate>
                                                         <DataTemplate>
-                                                            <StackPanel Orientation="Horizontal">
-                                                                <Button Content="{Binding ConfigName,StringFormat={}-{0}}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                                <Button  Padding="4,0" Style="{StaticResource ButtonDefault.Small}" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Margin="6,0">
+                                                            <StackPanel Orientation="Horizontal" MinHeight="20">
+                                                                <Button Content="{Binding ConfigName,StringFormat=-{0}}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                                <Button  Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}">
                                                                     <Button.Foreground>
                                                                         <SolidColorBrush Color="{StaticResource DangerColor}"/>
                                                                     </Button.Foreground>
-                                                                    <iconPacks:PackIconPixelartIcons Kind="NotesDelete" />
+                                                                    <iconPacks:PackIconPixelartIcons Kind="NoteDelete" />
 
                                                                 </Button>
                                                             </StackPanel>
@@ -81,9 +103,26 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </StackPanel>
-        </ScrollViewer>
+            </ScrollViewer>
+        </Grid>
 
+        <ScrollViewer   Grid.Column="0" 
+                      Visibility="{Binding DataContext.ShowLogList, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}"  Margin="0,0,0,24" MaxWidth="300">
+            <ItemsControl  ItemsSource="{Binding Runnings}" >
+                <ItemsControl.Background>
+                    <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                </ItemsControl.Background>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical">
+                            <Button Content="{Binding DisplayName}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ShowLogCommand, ElementName=page}" CommandParameter="{Binding .}"/>
+                            <ProgressBar Value="{Binding Percent}" FontSize="9" Height="10" Style="{StaticResource ProgressBarSuccess}" />
+                            <Separator/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
         <ItemsControl ItemsSource="{Binding Flows}" Grid.Column="1" >
             <ItemsControl.ItemsPanel>
@@ -106,39 +145,19 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom" Orientation="Horizontal" Grid.ColumnSpan="2">
-            <Expander  ExpandDirection="Up" 
-           MaxHeight="300"  Style="{StaticResource Expander.Small}" Grid.Column="0">
-                <Expander.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <iconPacks:PackIconPixelartIcons Kind="Notification" Margin="0,0,3,0" Foreground="Orange"/>
-                        <TextBlock Text="{Binding Runnings.Count,StringFormat=({0})}"/>
-                    </StackPanel>
-                </Expander.Header>
-                <ScrollViewer  Padding="3,0" >
-                    <ItemsControl  ItemsSource="{Binding Runnings}" VerticalAlignment="Bottom">
-                        <ItemsControl.Background>
-                            <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
-                        </ItemsControl.Background>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Orientation="Vertical" Margin="2,4">
-                                    <Button Content="{Binding DisplayName}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ShowLogCommand, ElementName=page}" CommandParameter="{Binding .}"/>
-                                    <ProgressBar Value="{Binding Percent}" FontSize="9" Height="10" Style="{StaticResource ProgressBarSuccess}" />
-                                    <Separator/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </Expander>
-            <Button  Command="{Binding SetEditCommand}" Style="{StaticResource ButtonDefault.Small}"  Grid.Column="2" VerticalAlignment="Bottom">
-                <iconPacks:PackIconPixelartIcons Kind="Edit" />
-            </Button>
 
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"  Grid.ColumnSpan="2" Grid.Column="0">
+            <ToggleButton  IsChecked="{Binding Edit}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="8,4">
+                <iconPacks:PackIconPixelartIcons Kind="Note" Foreground="DodgerBlue"/>
+            </ToggleButton>
+            <ToggleButton  IsChecked="{Binding ShowLogList}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="8,4">
+                <StackPanel Orientation="Horizontal">
+                    <iconPacks:PackIconPixelartIcons Kind="Notification" Margin="0,0,3,0" Foreground="Orange"/>
+                    <TextBlock Text="{Binding Runnings.Count,StringFormat=({0})}"/>
+                </StackPanel>
+            </ToggleButton>
 
         </StackPanel>
-
 
     </Grid>
 </rxui:ReactiveUserControl>

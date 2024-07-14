@@ -195,9 +195,9 @@ AutoGenerateColumns="False" IsReadOnly="True">
                                     </Style>
                                 </Button.Style>
                             </Button>
-                            <TextBlock Margin="10,0" Text="{Binding DisplayName}" VerticalAlignment="Center">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
+                            <Button Margin="10,0" Content="{Binding DisplayName}" VerticalAlignment="Center" Command="{Binding DataContext.ShowStepLogCommand,ElementName=page}" CommandParameter="{Binding .}"   >
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding State}" Value="Error">
                                                 <Setter Property="Foreground" Value="OrangeRed"/>
@@ -211,8 +211,8 @@ AutoGenerateColumns="False" IsReadOnly="True">
 
                                         </Style.Triggers>
                                     </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                                </Button.Style>
+                            </Button>
                             <TextBlock Text="{Binding UsedTime, StringFormat={}{0:hh\\:mm\\:ss\\.fff}}" VerticalAlignment="Center"/>
                             <TextBlock Margin="10,0,0,0" Text="{Binding CurrentIndex}" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Repeat,StringFormat={}/{0}}" VerticalAlignment="Center"/>
@@ -237,7 +237,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                            <Button Content="日志" Margin="10,0,0,0" Foreground="White" Command="{Binding DataContext.ShowStepLogCommand,ElementName=page}" CommandParameter="{Binding .}">
+                            <!--<Button Content="日志" Margin="10,0,0,0" Foreground="White" Command="{Binding DataContext.ShowStepLogCommand,ElementName=page}" CommandParameter="{Binding .}">
                                 <Button.Style>
                                     <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
                                         <Setter Property="Visibility" Value="Collapsed"/>
@@ -248,7 +248,7 @@ AutoGenerateColumns="False" IsReadOnly="True">
                                         </Style.Triggers>
                                     </Style>
                                 </Button.Style>
-                            </Button>
+                            </Button>-->
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
@@ -288,7 +288,13 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
                     </Style>
                 </DataGrid.CellStyle>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="名称" Binding="{Binding  Name}" />
+                    <DataGridTemplateColumn Header="名称">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}" Command="{Binding DataContext.ShowStepOnceLogCommand,ElementName=page}" CommandParameter="{Binding .}" Style="{StaticResource ButtonCustom}" Foreground="White"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn Header="开始" Binding="{Binding  StartTime,StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
                     <DataGridTextColumn Header="结束" Binding="{Binding  EndTime,StringFormat={}{0:HH:mm:ss}}"/>
                     <DataGridTextColumn Header="执行次数" Binding="{Binding  Index}"/>

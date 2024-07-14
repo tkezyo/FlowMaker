@@ -49,7 +49,6 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         RunConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(RunConfig);
         LoadConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(LoadConfig);
 
-        SetEditCommand = ReactiveCommand.Create(SetEdit);
         RemoveDebugCommand = ReactiveCommand.CreateFromTask<FlowMakerDebugViewModel>(RemoveDebugAsync);
 
         SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
@@ -68,6 +67,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
             }
         });
 
+        this.WhenAnyValue(c => c.ShowLogList).Where(c => c).Subscribe(c => Edit = false);
+        this.WhenAnyValue(c => c.Edit).Where(c => c).Subscribe(c => ShowLogList = false);
 
     }
 
@@ -223,7 +224,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     {
         var vm = _serviceProvider.GetRequiredService<FlowMakerLogViewModel>();
         await vm.Load(monitorRunningViewModel.Id);
-        _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c => { });
+        _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe();
     }
     public override Task Deactivate()
     {
@@ -296,11 +297,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
     [Reactive]
     public bool Edit { get; set; }
-    public ReactiveCommand<Unit, Unit> SetEditCommand { get; }
-    public void SetEdit()
-    {
-        Edit = !Edit;
-    }
+    [Reactive]
+    public bool ShowLogList { get; set; }
 
     public ReactiveCommand<FlowMakerDebugViewModel, Unit> RemoveDebugCommand { get; }
     public async Task RemoveDebugAsync(FlowMakerDebugViewModel flowMakerDebugViewModel)
