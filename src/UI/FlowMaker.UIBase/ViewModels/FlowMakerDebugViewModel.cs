@@ -131,7 +131,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             ListenDataChange?.Dispose();
             ListenDataChange = Model.Data.ToObservableChangeSet().SubscribeMany(c =>
             {
-                return c.WhenValueChanged(v => v.Type, notifyOnInitialValue: false).WhereNotNull().Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().Subscribe(v =>
+                return c.WhenValueChanged(v => v.Value, notifyOnInitialValue: false).WhereNotNull().Skip(1).Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().Subscribe(v =>
                 {
                     LastExcuteId = null;
                 });
