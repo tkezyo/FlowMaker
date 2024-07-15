@@ -25,7 +25,7 @@ public class FlowRunner : IDisposable
     /// 锁,防止多线程执行步骤分发
     /// </summary>
     private readonly Subject<Unit> _locker = new();
-    private CancellationToken _cancellationToken;
+    private CancellationToken _cancellationToken { get; set; }
 
     /// <summary>
     /// 释放资源
@@ -159,6 +159,11 @@ public class FlowRunner : IDisposable
     protected async Task ExecuteStep(StepContext stepContext, CancellationToken cancellationToken)
     {
         if (RunnerStatus is null)
+        {
+            return;
+        }
+
+        if (cancellationToken.IsCancellationRequested)
         {
             return;
         }

@@ -150,21 +150,13 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             await status.SendEventAsync(eventName, eventData);
         }
     }
-    public async Task Stop(Guid id)
-    {
-        if (_status.TryGetValue(id, out var status))
-        {
-            status.Dispose();
-
-            status.Cancel.Cancel();
-        }
-        await Task.CompletedTask;
-    }
+  
 
     public async Task Dispose(Guid id)
     {
         if (_status.TryGetValue(id, out var status))
         {
+            status.Cancel.Cancel();
             status.Dispose();
 
             _status.Remove(id, out _);
@@ -198,7 +190,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 }
             }
         }
-        catch (Exception)
+        catch (Exception e)
         {
 
 
@@ -254,10 +246,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
                     FlowContext subContext = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
                     await SetContextAsync(subContext);
-                    _status[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
+                    _status[id].Contexts.TryAdd(string.Join(",", subContext.FlowIds), subContext);
 
                     FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-                    _status[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
+                    _status[id].Runners.TryAdd(string.Join(",", subContext.FlowIds), flowRunningStatus);
 
 
                 }
@@ -279,10 +271,10 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     config.Middlewares = context.Middlewares;
                     FlowContext subContext = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
                     await SetContextAsync(subContext);
-                    _status[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
+                    _status[id].Contexts.TryAdd(string.Join(",", subContext.FlowIds), subContext);
 
                     FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-                    _status[id].Runners.TryAdd(string.Join("", subContext.FlowIds), flowRunningStatus);
+                    _status[id].Runners.TryAdd(string.Join(",", subContext.FlowIds), flowRunningStatus);
                 }
             }
         }
@@ -291,9 +283,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         await SetContextAsync(flowContext);
 
         FlowRunner runner = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
-        _status[id].Runners.TryAdd(string.Join("", flowContext.FlowIds), runner);
+        _status[id].Runners.TryAdd(string.Join(",", flowContext.FlowIds), runner);
 
-        _status[id].Contexts.TryAdd(string.Join("", flowContext.FlowIds), flowContext);
+        _status[id].Contexts.TryAdd(string.Join(",", flowContext.FlowIds), flowContext);
 
         foreach (var item in _flowMakerOption.DefaultMiddlewares)
         {
@@ -351,25 +343,24 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public virtual async Task RunSingleStep(Guid[] ids, FlowStep flowStep, CancellationToken cancellationToken)
+    public virtual async Task RunSingleStep(Guid[] ids, FlowStep flowStep, bool resetContext, CancellationToken cancellationToken = default)
     {
-        var id = string.Join("", ids);
+        var id = string.Join(",", ids);
         var status = _status[ids[0]];
-        if (!status.Contexts.TryGetValue(string.Join("", ids), out var flowContext))
+        if (!status.Contexts.TryGetValue(id, out var flowContext))
         {
             return;
         }
-        if (!status.Runners.TryGetValue(string.Join("", ids), out var runner))
+        if (!status.Runners.TryGetValue(id, out var runner))
         {
             return;
         }
 
-        if (status.LastExcuteId != id)//如果不是上次执行的id, 重置FlowContext
+        if (resetContext)
         {
-            status.LastExcuteId = id;
+            var parentId = string.Join(",", ids.SkipLast(1));
 
         }
-
 
         await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
     }
@@ -382,7 +373,6 @@ public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) :
 
     public bool SingleRun { get; set; }
 
-    public string? LastExcuteId { get; set; }
     public bool Running { get; set; }
 
     public IServiceScope ServiceScope { get; set; } = serviceScope;
@@ -399,7 +389,7 @@ public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) :
     public List<ILogMiddleware> LogMiddlewares { get; set; } = [];
     public async Task Log(Guid[] ids, FlowStep step, StepStatus stepStatus, StepOnceStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
     {
-        if (!Contexts.TryGetValue(string.Join("", ids), out var flowContext))
+        if (!Contexts.TryGetValue(string.Join(",", ids), out var flowContext))
         {
             return;
         }

@@ -324,7 +324,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }
         if (flowMakerDebugViewModel.Model is not null && flowMakerDebugViewModel.Model.Id.HasValue)
         {
-            await _flowManager.Stop(flowMakerDebugViewModel.Model.Id.Value);
+            await _flowManager.Dispose(flowMakerDebugViewModel.Model.Id.Value);
         }
         Flows.Remove(flowMakerDebugViewModel);
     }

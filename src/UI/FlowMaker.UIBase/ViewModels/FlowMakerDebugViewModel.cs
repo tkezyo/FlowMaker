@@ -597,16 +597,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         }
         if (Model is not null && Model.Id.HasValue)
         {
-            if (Model.Id.HasValue)
-            {
-                await _flowManager.Dispose(Model.Id.Value);
-                Model.Id = null;
-                Model.Running = false;
-            }
-            else
-            {
-                await _flowManager.Stop(Model.Id.Value);
-            }
+            await _flowManager.Dispose(Model.Id.Value);
+            Model.Id = null;
+            Model.Running = false;
         }
     }
     public ReactiveCommand<Unit, Unit> SendEventCommand { get; }
@@ -715,7 +708,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             return;
         }
 
-        await _flowManager.RunSingleStep([Model.Id.Value, .. monitorStepInfoViewModel.ParentIds], monitorStepInfoViewModel.Step, default);
+        await _flowManager.RunSingleStep([Model.Id.Value, .. monitorStepInfoViewModel.ParentIds], monitorStepInfoViewModel.Step, true, default);
     }
 
     [Reactive]
@@ -786,7 +779,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     {
         if (Model is not null && Model.Id.HasValue)
         {
-            await _flowManager.Stop(Model.Id.Value);
+            await _flowManager.Dispose(Model.Id.Value);
         }
     }
 }
