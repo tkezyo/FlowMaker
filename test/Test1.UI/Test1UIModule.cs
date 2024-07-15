@@ -75,6 +75,7 @@ namespace Test1
                 options.Section = "设备1";
                 options.AutoRun = false;
                 options.CanDebug = true;
+                options.MaxColCount = 5;
                 options.Middlewares.Add(new NameValue("测试中间件", "iio"));
                 //options.DefaultMiddlewares.Add(new NameValue("监控", "monitor"));
                 //options.DefaultMiddlewares.Add(new NameValue("调试", "debug"));

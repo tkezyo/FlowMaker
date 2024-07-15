@@ -105,7 +105,7 @@ namespace FlowMaker.Persistence
                 throw new Exception($"步骤文件错误:{category},{name}");
             }
 
-            FlowDefinitions[category + "." + name] = df;
+            FlowDefinitions.TryAdd(category + "." + name, df);
 
             return df;
         }

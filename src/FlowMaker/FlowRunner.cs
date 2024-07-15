@@ -565,6 +565,10 @@ public class FlowRunner : IDisposable
         var status = RunnerStatus;
 
         var stepState = flowContext.StepState.Lookup(flowStep.Id);
+        if (!stepState.HasValue)
+        {
+            throw new Exception("未找到步骤信息");
+        }
         var stepOnce = new StepOnceStatus(1, 0, flowContext.Index, async (stepOnceStatus, log, level) =>
         {
             await status.Log(flowContext.FlowIds, flowStep, stepState.Value, stepOnceStatus, log, level);

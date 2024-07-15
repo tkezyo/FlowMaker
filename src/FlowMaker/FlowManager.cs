@@ -198,7 +198,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 }
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
 
 
@@ -210,7 +210,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     #region SingleRun
 
- 
+
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
     public async Task<Guid> Init(ConfigDefinition configDefinition, bool singleRun)
     {
@@ -334,15 +334,15 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async Task ExecuteSingleFlow(Guid id)
     {
         var status = _status[id];
-        if (!status.Contexts.TryGetValue(id.ToString(), out var flowContext))
+       
+        foreach (var item in status.Runners)
         {
-            return;
+            if (!status.Contexts.TryGetValue(item.Key, out var flowContext))
+            {
+                return;
+            }
+            await item.Value.StartSingleFlow(status, flowContext, default);
         }
-        if (!status.Runners.TryGetValue(id.ToString(), out var runner))
-        {
-            return;
-        }
-        await runner.StartSingleFlow(status, flowContext, default);
     }
 
     /// <summary>

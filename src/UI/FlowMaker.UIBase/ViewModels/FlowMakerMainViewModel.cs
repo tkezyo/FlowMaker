@@ -28,7 +28,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     public int ColCount { get; set; } = 3;
     [Reactive]
     public int RowCount { get; set; } = 1;
-    public const int MaxColCount = 4;
+    [Reactive]
+    public int MaxColCount { get; set; }
 
 
     public ObservableCollection<FlowMakerDebugViewModel> Flows { get; set; } = [];
@@ -39,6 +40,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         _flowManager = flowManager;
         this._messageBoxManager = messageBoxManager;
         this._flowProvider = flowProvider;
+        MaxColCount = _flowMakerOption.MaxColCount;
+
         ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
 
 
@@ -50,6 +53,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         LoadConfigCommand = ReactiveCommand.CreateFromTask<ConfigDefinitionInfoViewModel>(LoadConfig);
 
         RemoveDebugCommand = ReactiveCommand.CreateFromTask<FlowMakerDebugViewModel>(RemoveDebugAsync);
+
+        LoadFlowsCommand = ReactiveCommand.CreateFromTask(LoadFlows);
 
         SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
 
@@ -96,11 +101,12 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }
         var path = Path.Combine(_flowMakerOption.DebugPageRootDir, _flowMakerOption.Section + ".json");
         List<ConfigInfo> configInfo = [];
+
+
         foreach (var item in Flows)
         {
-            if (string.IsNullOrEmpty(item.FlowCategory) || string.IsNullOrEmpty(item.FlowName) || string.IsNullOrEmpty(item.ConfigName))
+            if (string.IsNullOrEmpty(item.FlowCategory) || string.IsNullOrEmpty(item.FlowName) )
             {
-                await _messageBoxManager.Alert.Handle(new AlertInfo("必须先保存配置") { OwnerTitle = WindowTitle });
                 return;
             }
             configInfo.Add(new ConfigInfo { Category = item.FlowCategory, ConfigName = item.ConfigName, Name = item.FlowName });
@@ -239,6 +245,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     #region FlowTree
 
     public ObservableCollection<FlowCategoryViewModel> Categories { get; set; } = [];
+    public ReactiveCommand<Unit, Unit> LoadFlowsCommand { get; }
     public Task LoadFlows()
     {
         Categories.Clear();
@@ -287,11 +294,13 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> ExecuteFlowCommand { get; }
     public async Task ExecuteFlow(FlowDefinitionInfoViewModel flowDefinitionInfoViewModel)
     {
+
         var vm = _serviceProvider.GetRequiredService<FlowMakerDebugViewModel>();
         vm.FlowCategory = flowDefinitionInfoViewModel.Category;
         vm.FlowName = flowDefinitionInfoViewModel.Name;
         vm.ConfigName = null;
         await vm.Load();
+
         Flows.Add(vm);
     }
 
@@ -361,7 +370,7 @@ public class ConfigInfo
 {
     public required string Category { get; set; }
     public required string Name { get; set; }
-    public required string ConfigName { get; set; }
+    public string? ConfigName { get; set; }
 
 }
 

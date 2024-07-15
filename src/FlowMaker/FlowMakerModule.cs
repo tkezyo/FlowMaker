@@ -10,7 +10,7 @@ public class FlowMakerModule : Ty.ModuleBase
     {
         //hostApplicationBuilder.Services.AddTransient<FlowRunner>();
         hostApplicationBuilder.Services.AddSingleton<FlowManager>();
-        hostApplicationBuilder.Services.AddTransient<IFlowProvider, FileFlowProvider>();
+        hostApplicationBuilder.Services.AddSingleton<IFlowProvider, FileFlowProvider>();
         return Task.CompletedTask;
     }
 }

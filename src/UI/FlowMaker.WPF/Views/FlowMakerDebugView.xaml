@@ -45,6 +45,9 @@
                 <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="Debug" />
                 </ToggleButton>
+                <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowGlobeData}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                    <iconPacks:PackIconPixelartIcons Kind="Notes" />
+                </ToggleButton>
             </ToolBar>
             <ToolBar
                 Band="1" Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=setting}">
@@ -120,34 +123,16 @@
                 <app:AppViewLocator />
             </rxui:RoutedViewHost.ViewLocator>
         </rxui:RoutedViewHost>
-
-        <hc:Drawer  MaskCanClose="True" ShowMode="Cover" IsOpen="{Binding ShowLog}">
-            <Border Background="{DynamicResource RegionBrush}"  BorderThickness="0,0,0,0" BorderBrush="{DynamicResource BorderBrush}">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition MaxWidth="400" MinWidth="200"/>
-                    </Grid.ColumnDefinitions>
-                    <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="1" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Log}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                    <DataGrid Grid.Column="0" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
-Style="{StaticResource DataGrid.Small}" 
-AutoGenerateColumns="False" IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="键" Binding="{Binding  Name}" />
-                            <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                    <Button Content="{Binding LogName}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Command="{Binding ShowAllLogCommand}" />
-                    <Button Command="hc:ControlCommands.Close" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Foreground="{DynamicResource PrimaryTextBrush}" Style="{StaticResource ButtonIcon}" hc:IconElement.Geometry="{StaticResource DeleteFillCircleGeometry}"/>
-                </Grid>
-            </Border>
-        </hc:Drawer>
+        <DataGrid Grid.Column="0" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
+Style="{StaticResource DataGrid.Small}"  DockPanel.Dock="Right"
+AutoGenerateColumns="False" IsReadOnly="True"
+                   Visibility="{Binding ShowGlobeData,Converter={StaticResource Boolean2VisibilityConverter}}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="键" Binding="{Binding  Name}" />
+                <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+     
         <Grid  >
             <TreeView ItemsSource="{Binding Model.Steps}"
                            Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Tree}}"
@@ -300,6 +285,18 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
                     <DataGridTextColumn Header="执行次数" Binding="{Binding  Index}"/>
                 </DataGrid.Columns>
             </DataGrid>
+
+            <Grid  Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Log}}">
+                <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="1" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Log}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <Button Content="{Binding LogName}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ShowAllLogCommand}" />
+            </Grid>
         </Grid>
     </DockPanel>
 

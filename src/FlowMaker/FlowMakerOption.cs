@@ -24,6 +24,8 @@ public class FlowMakerOption
     /// </summary>
     public string? Section { get; set; }
 
+    public int MaxColCount { get; set; } = 4;
+
 
     /// <summary>
     /// 包含所有的步骤及转换器

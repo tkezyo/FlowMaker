@@ -89,7 +89,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
 
 
-        this.WhenAnyValue(c => c.Model.SingleRun).Skip(1).Subscribe(async c =>
+        this.WhenAnyValue(c => c.Model!.SingleRun).Skip(1).Subscribe(async c =>
         {
             if (Model is null)
             {
@@ -112,9 +112,12 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
 
             var config = CreateConfig();
+            if (config is null)
+            {
+                return;
+            }
 
-
-            config.Middlewares.Add("single-run-monitor");
+            config.Middlewares.Add("monitor");
             if (config is null)
             {
                 return;
@@ -186,7 +189,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     {
                         return;
                     }
-                    flow.Running = true;
+                    if (!flow.SingleRun)
+                    {
+                        flow.Running = true;
+                    }
                     flow.CompleteCount = 0;
                     flow.Percent = 0;
                     flow.Timeout = c.Context.ConfigDefinition.Timeout;
@@ -338,6 +344,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
         async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, IFlowDefinition flowDefinition, Guid[]? parentId = null)
         {
+            parentId = parentId ?? [];
             foreach (var item in flowDefinition.Steps)
             {
                 var step = new MonitorStepInfoViewModel
@@ -346,7 +353,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     DisplayName = item.DisplayName,
                     Name = item.Name,
                     Id = item.Id,
-                    ParentIds = parentId ?? [],
+                    ParentIds = parentId,
                     Step = item,
                 };
                 if (item.Type == StepType.Normal)
@@ -358,7 +365,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 {
                     var embedded = fde.EmbeddedFlows.First(c => c.StepId == item.Id);
                     models.Add(step);
-                    await SetFlowStepAsync(step.Steps, embedded);
+                    await SetFlowStepAsync(step.Steps, embedded, [.. parentId, step.Id]);
                 }
                 else
                 {
@@ -366,7 +373,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     if (stepDefinition is IFlowDefinition fd)
                     {
                         models.Add(step);
-                        await SetFlowStepAsync(step.Steps, fd);
+                        await SetFlowStepAsync(step.Steps, fd, [.. parentId, step.Id]);
                     }
                 }
             }
@@ -446,7 +453,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public DataDisplayViewModel? DataDisplay { get; set; }
 
 
-    public ConfigDefinition CreateConfig()
+    public ConfigDefinition? CreateConfig()
     {
         var monitorInfoViewModel = Model;
         if (monitorInfoViewModel is null)
@@ -502,7 +509,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 return;
             }
             var config = CreateConfig();
-
+            if (config is null)
+            {
+                return;
+            }
             config.Middlewares.Add("monitor");
             config.Middlewares.Add("debug");
 
@@ -716,8 +726,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public string? Index { get; set; }
     [Reactive]
     public string LogName { get; set; } = "全部";
-    [Reactive]
-    public bool ShowLog { get; set; }
+
     public ReactiveCommand<MonitorStepInfoViewModel, Unit> ShowStepLogCommand { get; }
     public void ShowStepLog(MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
@@ -729,7 +738,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = monitorStepInfoViewModel.Id;
             DataDisplay.Index = null;
         }
-        ShowLog = true;
+        PageType = PageTypes.Log;
+
     }
     [Reactive]
     public StepLogViewModel? SelectedStepOnce { get; set; }
@@ -745,7 +755,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = monitorStepInfoViewModel.StepId;
             DataDisplay.Index = monitorStepInfoViewModel.Index;
         }
-        ShowLog = true;
+        PageType = PageTypes.Log;
+
     }
 
     public ReactiveCommand<Unit, Unit> ShowAllLogCommand { get; }
@@ -759,9 +770,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = null;
             DataDisplay.Index = null;
         }
-        ShowLog = true;
+        PageType = PageTypes.Log;
     }
-
+    [Reactive]
+    public bool ShowGlobeData { get; set; }
     [Reactive]
     public PageTypes PageType { get; set; }
 
@@ -918,6 +930,7 @@ public enum PageTypes
 {
     Tree,
     List,
+    Log
 }
 
 public class FlowConfigDataInputViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
