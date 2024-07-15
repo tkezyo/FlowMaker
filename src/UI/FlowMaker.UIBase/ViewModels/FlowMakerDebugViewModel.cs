@@ -338,13 +338,11 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             return;
         }
 
-        Model = new(FlowCategory, FlowName)
-        {
-        };
+        Model = new(FlowCategory, FlowName);
 
         async Task SetFlowStepAsync(IList<MonitorStepInfoViewModel> models, IFlowDefinition flowDefinition, Guid[]? parentId = null)
         {
-            parentId = parentId ?? [];
+            parentId ??= [];
             foreach (var item in flowDefinition.Steps)
             {
                 var step = new MonitorStepInfoViewModel
@@ -717,7 +715,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             return;
         }
 
-        await _flowManager.RunStep([Model.Id.Value, .. monitorStepInfoViewModel.ParentIds], monitorStepInfoViewModel.Step, default);
+        await _flowManager.RunSingleStep([Model.Id.Value, .. monitorStepInfoViewModel.ParentIds], monitorStepInfoViewModel.Step, default);
     }
 
     [Reactive]

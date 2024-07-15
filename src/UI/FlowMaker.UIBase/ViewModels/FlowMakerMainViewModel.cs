@@ -73,7 +73,12 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         });
 
         this.WhenAnyValue(c => c.ShowLogList).Where(c => c).Subscribe(c => Edit = false);
-        this.WhenAnyValue(c => c.Edit).Where(c => c).Subscribe(c => ShowLogList = false);
+        this.WhenAnyValue(c => c.Edit).Where(c => c).Subscribe(async c =>
+        {
+            ShowLogList = false;
+
+            await LoadFlows();
+        });
 
     }
 
@@ -105,7 +110,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
         foreach (var item in Flows)
         {
-            if (string.IsNullOrEmpty(item.FlowCategory) || string.IsNullOrEmpty(item.FlowName) )
+            if (string.IsNullOrEmpty(item.FlowCategory) || string.IsNullOrEmpty(item.FlowName))
             {
                 return;
             }

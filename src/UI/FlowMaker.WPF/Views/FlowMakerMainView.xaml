@@ -30,86 +30,68 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Grid Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,24" MaxWidth="300" Grid.Column="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Button Command="{Binding LoadFlowsCommand}" Style="{StaticResource ButtonDefault.Small}" Grid.Row="1" Grid.Column="0" HorizontalAlignment="Stretch" ToolTip="刷新">
-                <iconPacks:PackIconPixelartIcons Kind="Reload" />
-            </Button>
-            <Button Command="{Binding SaveCommand}" Style="{StaticResource ButtonSuccess.Small}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ToolTip="保存">
-                <iconPacks:PackIconPixelartIcons Kind="Save" />
-            </Button>
-            <Button Command="{Binding CreateCommand}" Style="{StaticResource ButtonPrimary.Small}" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" ToolTip="创建流程">
-                <iconPacks:PackIconPixelartIcons Kind="NotePlus" />
-            </Button>
-            <ScrollViewer Grid.ColumnSpan="3" >
-                <ItemsControl ItemsSource="{Binding Categories}"  >
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <StackPanel.Background>
-                                    <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
-                                </StackPanel.Background>
-                                <TextBlock Text="{Binding Category}" Style="{StaticResource TextBlockDefaultBold}"/>
-                                <ItemsControl Padding="4" ItemsSource="{Binding Flows}">
-                                    <ItemsControl.Background>
-                                        <SolidColorBrush Color="White"/>
-                                    </ItemsControl.Background>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <StackPanel   >
-                                                <StackPanel Orientation="Horizontal" MinWidth="100" MinHeight="20" Background="Transparent">
-                                                    <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}" VerticalAlignment="Center"/>
-                                                    <Button Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}"  BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}"  >
-                                                        <Button.Foreground>
-                                                            <SolidColorBrush Color="{StaticResource PrimaryColor}"/>
-                                                        </Button.Foreground>
-                                                        <iconPacks:PackIconPixelartIcons Kind="EditBox" />
-                                                    </Button>
-                                                    <Button  Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}"  BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
-                                                        <Button.Foreground>
-                                                            <SolidColorBrush Color="{StaticResource DangerColor}"/>
-                                                        </Button.Foreground>
-                                                        <iconPacks:PackIconPixelartIcons Kind="NoteDelete" />
-                                                    </Button>
 
-                                                </StackPanel>
 
-                                                <ItemsControl ItemsSource="{Binding Configs}" Margin="6,0,0,0">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <StackPanel Orientation="Horizontal" MinHeight="20" Background="Transparent">
-                                                                <TextBlock Text=" - "/>
-                                                                <Button Content="{Binding ConfigName}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-                                                                <Button  Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}">
-                                                                    <Button.Foreground>
-                                                                        <SolidColorBrush Color="{StaticResource DangerColor}"/>
-                                                                    </Button.Foreground>
-                                                                    <iconPacks:PackIconPixelartIcons Kind="NoteDelete" />
+        <ScrollViewer Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,24" MaxWidth="300" Grid.Column="0">
+            <ItemsControl ItemsSource="{Binding Categories}"  >
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel>
+                            <StackPanel.Background>
+                                <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
+                            </StackPanel.Background>
+                            <TextBlock Text="{Binding Category}" Style="{StaticResource TextBlockDefaultBold}"/>
+                            <ItemsControl Padding="4" ItemsSource="{Binding Flows}">
+                                <ItemsControl.Background>
+                                    <SolidColorBrush Color="White"/>
+                                </ItemsControl.Background>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel   >
+                                            <StackPanel Orientation="Horizontal" MinWidth="100" MinHeight="20" Background="Transparent">
+                                                <Button Content="{Binding Name}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}" VerticalAlignment="Center"/>
+                                                <Button Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}"  BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}"  >
+                                                    <Button.Foreground>
+                                                        <SolidColorBrush Color="{StaticResource PrimaryColor}"/>
+                                                    </Button.Foreground>
+                                                    <iconPacks:PackIconPixelartIcons Kind="EditBox" />
+                                                </Button>
+                                                <Button  Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}"  BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
+                                                    <Button.Foreground>
+                                                        <SolidColorBrush Color="{StaticResource DangerColor}"/>
+                                                    </Button.Foreground>
+                                                    <iconPacks:PackIconPixelartIcons Kind="NoteDelete" />
+                                                </Button>
 
-                                                                </Button>
-                                                            </StackPanel>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
                                             </StackPanel>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
 
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
+                                            <ItemsControl ItemsSource="{Binding Configs}" Margin="6,0,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" MinHeight="20" Background="Transparent">
+                                                            <TextBlock Text=" - "/>
+                                                            <Button Content="{Binding ConfigName}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
+                                                            <Button  Padding="4,0" Style="{StaticResource MouseOverVisibilityStyle}" BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}">
+                                                                <Button.Foreground>
+                                                                    <SolidColorBrush Color="{StaticResource DangerColor}"/>
+                                                                </Button.Foreground>
+                                                                <iconPacks:PackIconPixelartIcons Kind="NoteDelete" />
+
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
 
         <ScrollViewer   Grid.Column="0" 
                       Visibility="{Binding DataContext.ShowLogList, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}"  Margin="0,0,0,24" MaxWidth="300">
@@ -152,7 +134,7 @@
 
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"  Grid.ColumnSpan="2" Grid.Column="0">
-            <ToggleButton  IsChecked="{Binding Edit}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="8,4">
+            <ToggleButton  IsChecked="{Binding Edit}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="8,4" >
                 <iconPacks:PackIconPixelartIcons Kind="Note" Foreground="DodgerBlue"/>
             </ToggleButton>
             <!--<ToggleButton  IsChecked="{Binding ShowLogList}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="8,4">
@@ -162,6 +144,12 @@
                 </StackPanel>
             </ToggleButton>-->
 
+            <Button Command="{Binding CreateCommand}" Style="{StaticResource ButtonPrimary.Small}" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" ToolTip="创建流程" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}">
+                <iconPacks:PackIconPixelartIcons Kind="NotePlus" />
+            </Button>
+            <Button Command="{Binding SaveCommand}" Style="{StaticResource ButtonSuccess.Small}" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Stretch" ToolTip="保存" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}">
+                <iconPacks:PackIconPixelartIcons Kind="Save" />
+            </Button>
         </StackPanel>
 
     </Grid>

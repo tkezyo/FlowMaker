@@ -253,7 +253,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     config.Middlewares = context.Middlewares;
 
                     FlowContext subContext = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
-
+                    await SetContextAsync(subContext);
                     _status[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
 
                     FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
@@ -278,6 +278,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     }
                     config.Middlewares = context.Middlewares;
                     FlowContext subContext = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
+                    await SetContextAsync(subContext);
                     _status[id].Contexts.TryAdd(string.Join("", subContext.FlowIds), subContext);
 
                     FlowRunner flowRunningStatus = new FlowRunner(scope.ServiceProvider, _flowMakerOption, _flowProvider);
@@ -334,7 +335,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async Task ExecuteSingleFlow(Guid id)
     {
         var status = _status[id];
-       
+
         foreach (var item in status.Runners)
         {
             if (!status.Contexts.TryGetValue(item.Key, out var flowContext))
@@ -350,8 +351,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public virtual async Task RunStep(Guid[] ids, FlowStep flowStep, CancellationToken cancellationToken)
+    public virtual async Task RunSingleStep(Guid[] ids, FlowStep flowStep, CancellationToken cancellationToken)
     {
+        var id = string.Join("", ids);
         var status = _status[ids[0]];
         if (!status.Contexts.TryGetValue(string.Join("", ids), out var flowContext))
         {
@@ -361,6 +363,14 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         {
             return;
         }
+
+        if (status.LastExcuteId != id)//如果不是上次执行的id, 重置FlowContext
+        {
+            status.LastExcuteId = id;
+
+        }
+
+
         await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
     }
 
@@ -371,6 +381,8 @@ public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) :
     public ConfigDefinition Config { get; set; } = config;
 
     public bool SingleRun { get; set; }
+
+    public string? LastExcuteId { get; set; }
     public bool Running { get; set; }
 
     public IServiceScope ServiceScope { get; set; } = serviceScope;
