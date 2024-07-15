@@ -1,4 +1,5 @@
 ﻿using DynamicData;
+using DynamicData.Binding;
 using FlowMaker.Middlewares;
 using FlowMaker.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,6 +57,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
     [Reactive]
     public bool CanDebug { get; set; }
+
+    private IDisposable? ListenDataChange { get; set; }
     public FlowMakerDebugViewModel(FlowManager flowManager, IFlowProvider flowProvider, IServiceProvider serviceProvider, IOptions<FlowMakerOption> options, IMessageBoxManager messageBoxManager)
     {
         this._flowManager = flowManager;
@@ -105,6 +108,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 {
                     await _flowManager.Dispose(Model.Id.Value);
                 }
+                ListenDataChange?.Dispose();
                 Model.Id = null;
                 CanDebug = true;
 
@@ -124,8 +128,17 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
             Model.Id = await _flowManager.Init(config, Model.SingleRun);
             CanDebug = false;
+            ListenDataChange?.Dispose();
+            ListenDataChange = Model.Data.ToObservableChangeSet().SubscribeMany(c =>
+            {
+                return c.WhenValueChanged(v => v.Type, notifyOnInitialValue: false).WhereNotNull().Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().Subscribe(v =>
+                {
+                    LastExcuteId = null;
+                });
+            }).Subscribe();
             await _flowManager.ExecuteSingleFlow(Model.Id.Value);
         });
+
 
     }
 
@@ -701,14 +714,23 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     }
 
     public ReactiveCommand<MonitorStepInfoViewModel, Unit> RunSingleCommand { get; }
+    public string? LastExcuteId { get; set; }
     public async Task RunSingle(MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
         if (Model is null || !Model.Id.HasValue)
         {
             return;
         }
+        Guid[] id = [Model.Id.Value, .. monitorStepInfoViewModel.ParentIds];
+        string idStr = string.Join(",", id);
+        bool reset = false;
+        if (LastExcuteId != idStr)
+        {
+            reset = true;
+            LastExcuteId = idStr;
+        }
 
-        await _flowManager.RunSingleStep([Model.Id.Value, .. monitorStepInfoViewModel.ParentIds], monitorStepInfoViewModel.Step, true, default);
+        await _flowManager.RunSingleStep(id, monitorStepInfoViewModel.Step, reset, default);
     }
 
     [Reactive]

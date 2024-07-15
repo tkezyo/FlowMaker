@@ -150,19 +150,6 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     }
 }
 
-public class SingleRunMonitorMiddleware : IStepOnceMiddleware
-{
-    public async Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
-    {
-        await Task.CompletedTask;
-    }
-
-    public async Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
-    {
-        await Task.CompletedTask;
-    }
-}
-
 public class MonitorMessage(FlowContext context, int totalCount)
 {
     public FlowContext Context { get; set; } = context;

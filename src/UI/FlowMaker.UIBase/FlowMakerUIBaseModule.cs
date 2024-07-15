@@ -18,8 +18,6 @@ namespace FlowMaker
             hostApplicationBuilder.Services.AddKeyedSingleton<IStepOnceMiddleware, DebugMiddleware>("debug");
 
             hostApplicationBuilder.Services.AddScoped<MonitorMiddleware>();
-            hostApplicationBuilder.Services.AddScoped<SingleRunMonitorMiddleware>();
-            hostApplicationBuilder.Services.AddKeyedScoped<IStepOnceMiddleware, SingleRunMonitorMiddleware>("single-run-monitor", (c, k) => c.GetRequiredService<SingleRunMonitorMiddleware>());
 
             hostApplicationBuilder.Services.AddKeyedScoped<IStepOnceMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());
             hostApplicationBuilder.Services.AddKeyedScoped<IFlowMiddleware, MonitorMiddleware>("monitor", (c, k) => c.GetRequiredService<MonitorMiddleware>());

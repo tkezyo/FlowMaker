@@ -35,8 +35,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         }
     }
 
-
-
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
         var status = _status[id];
@@ -150,7 +148,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             await status.SendEventAsync(eventName, eventData);
         }
     }
-  
 
     public async Task Dispose(Guid id)
     {
@@ -176,24 +173,16 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     public T? GetRunnerService<T>(Guid id, string? key = null)
     {
-        try
+        if (_status.TryGetValue(id, out var status) && !status.Disposed)
         {
-            if (_status.TryGetValue(id, out var status) && !status.Disposed)
+            if (string.IsNullOrEmpty(key))
             {
-                if (string.IsNullOrEmpty(key))
-                {
-                    return status.ServiceScope.ServiceProvider.GetService<T>();
-                }
-                else
-                {
-                    return status.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
-                }
+                return status.ServiceScope.ServiceProvider.GetService<T>();
             }
-        }
-        catch (Exception e)
-        {
-
-
+            else
+            {
+                return status.ServiceScope.ServiceProvider.GetKeyedService<T>(key);
+            }
         }
 
         return default;
@@ -359,7 +348,26 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         if (resetContext)
         {
             var parentId = string.Join(",", ids.SkipLast(1));
+            if (!status.Contexts.TryGetValue(parentId, out var parentContext))
+            {
+                return;
+            }
 
+            flowContext.Data.Clear();
+            var config = new ConfigDefinition { ConfigName = null, Category = flowStep.Category, Name = flowStep.Name };
+                config.Middlewares = parentContext.Middlewares;
+            foreach (var item in flowContext.FlowDefinition.Data)
+            {
+                if (!item.IsInput)
+                {
+                    continue;
+                }
+
+                var value = await IDataConverterInject.GetValue(flowStep.Inputs.First(v => v.Name == item.Name), _serviceProvider, parentContext, item.DefaultValue, default);
+                config.Data.Add(new NameValue(item.Name, value));
+            }
+            flowContext.ConfigDefinition = config;
+            flowContext.Init();
         }
 
         await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
