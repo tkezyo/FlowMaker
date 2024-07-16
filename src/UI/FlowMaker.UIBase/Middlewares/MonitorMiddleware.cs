@@ -8,6 +8,8 @@ namespace FlowMaker.Middlewares;
 
 public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware
 {
+    public const string Name = "monitor";
+
     public int TotalCount { get; set; } = -1;
     public double CompleteCount { get; set; }
     public double Percent { get; set; }

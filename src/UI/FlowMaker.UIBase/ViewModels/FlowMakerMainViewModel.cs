@@ -85,14 +85,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     public CompositeDisposable? Disposables { get; set; }
 
     public bool Loaded { get; set; }
-    public IList<MenuItemViewModel> InitMenu()
-    {
-        List<MenuItemViewModel> menus = [];
 
-        menus.Add(new MenuItemViewModel("保存") { Command = SaveCommand });
-
-        return menus;
-    }
     public ReactiveCommand<Unit, Unit> SaveCommand { get; }
     public async Task SaveAsync()
     {
@@ -186,6 +179,15 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
             }
         }
 
+        MessageBus.Current.Listen<MenuViewModel>("Menu").Subscribe(c =>
+        {
+            if (c.Name== "FlowMakerEdit")
+            {
+                Edit = !Edit;
+            }
+        }).DisposeWith(Disposables);
+
+
         MessageBus.Current.Listen<FlowMakerDebugViewModel>("RemoveDebug").Subscribe(c =>
         {
             Flows.Remove(c);
@@ -209,7 +211,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
                     StartTime = DateTime.Now
                 };
                 Runnings.Insert(0, running);
-                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
+                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, MonitorMiddleware.Name);
                 if (mid is MonitorMiddleware monitor)
                 {
                     if (!monitor.PercentChange.IsDisposed)

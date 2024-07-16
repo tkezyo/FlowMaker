@@ -72,7 +72,7 @@ public partial class FlowMakerLogViewModel : ViewModelBase
             return;
         }
         Disposable = [];
-        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(Id.Value, "monitor");
+        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(Id.Value, MonitorMiddleware.Name);
 
         if (mid is MonitorMiddleware monitor)
         {

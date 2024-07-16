@@ -121,7 +121,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 return;
             }
 
-            config.Middlewares.Add("monitor");
+            config.Middlewares.Add(MonitorMiddleware.Name);
             if (config is null)
             {
                 return;
@@ -219,7 +219,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     Reset(flow.Steps);
 
 
-                    var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
+                    var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, MonitorMiddleware.Name);
                     if (mid is MonitorMiddleware monitor)
                     {
                         if (!monitor.StepChange.IsDisposed)
@@ -301,7 +301,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 {
                     if (flow is not null)
                     {
-                        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "monitor");
+                        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, MonitorMiddleware.Name);
                         if (mid is MonitorMiddleware monitor)
                         {
                             monitor.PercentChange.Dispose();
@@ -488,7 +488,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 if (string.IsNullOrEmpty(item.Value))
                 {
-                    RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.Name} 未填写")));
+                    RxApp.MainThreadScheduler.Schedule(async () => await _messageBoxManager.Alert.Handle(new AlertInfo($"参数：{item.DisplayName} 未填写") { Level = NotifyLevel.Warning }));
                     return null;
                 }
                 config.Data.Add(new NameValue(item.Name, item.Value));
@@ -524,8 +524,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 return;
             }
-            config.Middlewares.Add("monitor");
-            config.Middlewares.Add("debug");
+            config.Middlewares.Add(MonitorMiddleware.Name);
+            config.Middlewares.Add(DebugMiddleware.Name);
 
             Reset(monitorInfoViewModel.Steps);
             monitorInfoViewModel.StepChange?.Dispose();
@@ -534,7 +534,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 var id = await _flowManager.Init(config, false);
                 monitorInfoViewModel.Id = id;
-                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, "debug");
+                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, DebugMiddleware.Name);
                 if (mid is DebugMiddleware debug)
                 {
                     List<Guid> debugs = [];
@@ -631,7 +631,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             return;
         }
-        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, "debug");
+        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, DebugMiddleware.Name);
         if (mid is DebugMiddleware debug)
         {
             debug.AddDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id);
@@ -645,7 +645,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             return;
         }
-        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, "debug");
+        var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(monitorInfoViewModel.Id.Value, DebugMiddleware.Name);
         if (mid is DebugMiddleware debug)
         {
             debug.RemoveDebug(monitorInfoViewModel.Id.Value, monitorStepInfoViewModel.Id);

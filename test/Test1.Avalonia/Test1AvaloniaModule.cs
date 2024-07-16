@@ -11,6 +11,7 @@ using Ty;
 using Ty.AvaloniaBase.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using FlowMaker.Middlewares;
 
 namespace Test1.Avalonia
 {
@@ -42,8 +43,8 @@ namespace Test1.Avalonia
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
                 options.Section = "设备1";
                 options.Middlewares.Add(new NameValue("测试中间件", "iio"));
-                options.DefaultMiddlewares.Add(new NameValue("监控", "monitor"));
-                options.DefaultMiddlewares.Add(new NameValue("调试", "debug"));
+                options.DefaultMiddlewares.Add(new NameValue("监控", MonitorMiddleware.Name));
+                options.DefaultMiddlewares.Add(new NameValue("调试", DebugMiddleware.Name));
                 options.DefaultMiddlewares.Add(new NameValue("日志", "log"));
             });
 

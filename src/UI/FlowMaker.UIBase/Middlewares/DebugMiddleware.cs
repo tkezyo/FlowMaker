@@ -5,6 +5,7 @@ namespace FlowMaker.Middlewares;
 
 public class DebugMiddleware : IStepOnceMiddleware, IDisposable
 {
+    public const string Name = "debug";
     public Dictionary<Guid, List<Guid>> DebugList { get; set; } = [];
     public ConcurrentDictionary<string, TaskCompletionSource> Debugging { get; set; } = [];
 
