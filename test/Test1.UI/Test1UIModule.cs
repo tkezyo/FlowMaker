@@ -19,6 +19,9 @@ using SharpVectors.Renderers.Wpf;
 using SharpVectors.Converters;
 using System.Windows.Media;
 using System.Windows.Controls;
+using System.IO;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace Test1
 {
@@ -50,23 +53,33 @@ namespace Test1
                 options.FirstLoadPage = typeof(LoadingViewModel);
                 options.Title = "牛马指挥官";
 
-                WpfDrawingSettings settings = new WpfDrawingSettings();
+                //WpfDrawingSettings settings = new WpfDrawingSettings();
 
-                // 创建一个FileSvgReader对象
-                FileSvgReader reader = new FileSvgReader(settings);
+                //// 获取当前程序集
+                //Assembly assembly = Assembly.GetAssembly(typeof(Test1UIModule));
 
-                // 读取SVG文件并转换为WPF的DrawingGroup
-                DrawingGroup drawing = reader.Read(".\\PURE.svg");
+                //// 构建资源名称
+                //string resourceName = "Test1.PURE.svg"; // 注意: 这里的路径需要根据实际情况调整
+                //// 从嵌入的资源中读取SVG文件
+                //using (Stream? stream = assembly.GetManifestResourceStream(resourceName))
+                //{
+                //    if (stream == null) throw new InvalidOperationException("无法找到嵌入的资源.");
 
-                // 创建一个DrawingImage并将DrawingGroup设置为其源
-                DrawingImage drawingImage = new DrawingImage(drawing);
+                //    // 使用FileSvgReader从Stream中读取SVG
+                //    FileSvgReader reader = new FileSvgReader(settings);
+                //    DrawingGroup drawing = reader.Read(stream);
 
-                Image image = new Image();
-                // 创建一个Image控件并将DrawingImage设置为其源
-                image.Source = drawingImage;
+                //    // 创建一个DrawingImage并将DrawingGroup设置为其源
+                //    DrawingImage drawingImage = new DrawingImage(drawing);
 
-                options.Loading = image;
 
+                //    Image image = new Image();
+                //    // 创建一个Image控件并将DrawingImage设置为其源
+                //    image.Source = drawingImage;
+                //    //image.HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch;
+                //    //image.VerticalAlignment = System.Windows.VerticalAlignment.Stretch;
+                //    options.Loading = image;
+                //}
             });
             hostApplicationBuilder.Services.Configure<FlowMakerOption>(options =>
             {

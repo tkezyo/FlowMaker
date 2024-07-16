@@ -26,28 +26,25 @@
 
 	<ItemGroup>
 		<None Remove="appsettings.json" />
-		<None Remove="appsettings.secrets.json" />
+		<None Remove="PURE.svg" />
 		<None Remove="Views\ChatView.xaml" />
 		<None Remove="Views\CustomLogView.xaml" />
 		<None Remove="Views\Loading.xaml" />
 		<Content Include="appsettings.json">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</Content>
-		<Content Include="appsettings.secrets.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <EmbeddedResource Include="PURE.svg">
+	    <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+	  </EmbeddedResource>
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\src\UI\FlowMaker.WPF\FlowMaker.WPF.csproj" />
 	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj" />
 	  <ProjectReference Include="..\Test1\Test1.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Update="PURE.svg">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
 	</ItemGroup>
 
 </Project>
