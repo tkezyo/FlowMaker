@@ -41,7 +41,7 @@ public interface IDataConverterInject
         {
             return;
         }
-        var valueStr = JsonSerializer.Serialize(value);
+        var valueStr = JsonSerializer.Serialize(value).Trim('"');
         if (!string.IsNullOrEmpty(output.ConverterCategory) && !string.IsNullOrEmpty(output.ConverterName) && !string.IsNullOrEmpty(output.InputKey))
         {
             var option = serviceProvider.GetRequiredService<IOptions<FlowMakerOption>>();

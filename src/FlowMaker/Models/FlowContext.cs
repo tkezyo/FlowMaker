@@ -241,7 +241,8 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
 
         foreach (var item in FlowDefinition.Data)//写入 globe data
         {
-            if (!Data.Lookup(item.Name).HasValue)
+            var data = Data.Lookup(item.Name);
+            if (!data.HasValue)
             {
                 var value = ConfigDefinition.Data.FirstOrDefault(c => c.Name == item.Name);
                 var globeData = new FlowGlobeData(item.Name, item.Type, value?.Value)
@@ -250,6 +251,12 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
                     IsOutput = item.IsOutput
                 };
                 Data.AddOrUpdate(globeData);
+            }
+            else
+            {
+                var value = ConfigDefinition.Data.FirstOrDefault(c => c.Name == item.Name);
+                data.Value.Value = value?.Value;
+                Data.AddOrUpdate(data.Value);
             }
         }
 

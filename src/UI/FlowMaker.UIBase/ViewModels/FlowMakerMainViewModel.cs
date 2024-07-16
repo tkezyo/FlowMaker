@@ -522,6 +522,8 @@ public class MonitorInfoViewModel : ReactiveObject, IScreen
 public class MonitorStepInfoViewModel : ReactiveObject
 {
     [Reactive]
+    public MonitorStepInfoViewModel? Parent { get; set; }
+    [Reactive]
     public bool IsDebug { get; set; }
 
     [Reactive]
