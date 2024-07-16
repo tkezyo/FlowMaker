@@ -7,12 +7,12 @@ namespace Test1
     [Steps("FFF")]
     public interface ITestStep
     {
-        Task<int> Test(StepContext stepContext, int ss = 2);
+        Task<int> Test(StepContext stepContext, int ss = 2, CancellationToken cancellationToken = default);
     }
 
     public class TestStep1 : ITestStep
     {
-        public async Task<int> Test(StepContext stepContext, int ss = 2)
+        public async Task<int> Test(StepContext stepContext, int ss = 2, CancellationToken cancellationToken = default)
         {
             for (int i = 0; i < 10; i++)
             {
@@ -25,11 +25,15 @@ namespace Test1
 
     public class TestStep2 : ITestStep
     {
-        public async Task<int> Test(StepContext stepContext, int ss = 2)
+        public async Task<int> Test(StepContext stepContext, int ss = 2, CancellationToken cancellationToken = default)
         {
             for (int i = 0; i < 30; i++)
             {
-                await Task.Delay(100);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return 0;
+                }
+                await Task.Delay(100,cancellationToken);
                 await stepContext.Log("sdfw+2" + i);
             }
             await stepContext.Log("sdfw");
