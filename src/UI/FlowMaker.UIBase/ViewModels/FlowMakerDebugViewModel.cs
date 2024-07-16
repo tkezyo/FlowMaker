@@ -88,7 +88,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
         ShowAllLogCommand = ReactiveCommand.Create(ShowAllLog);
         ChangePageTypeCommand = ReactiveCommand.Create(ChangePageType);
-        RunSingleCommand = ReactiveCommand.CreateFromTask<MonitorStepInfoViewModel>(RunSingle);
+        RunSingleCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(RunSingle);
         ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
         StopSingleCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(StopSingle);
 
@@ -131,7 +131,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 return c.WhenValueChanged(v => v.Value, notifyOnInitialValue: false).WhereNotNull().Skip(1).Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().Subscribe(v =>
                 {
-                    LastExcuteId = null;
+                    LastExecuteId = null;
                 });
             }).Subscribe();
             await _flowManager.ExecuteSingleFlow(Model.Id.Value);
@@ -713,8 +713,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     }
 
     public ReactiveCommand<MonitorStepInfoViewModel, Unit> RunSingleCommand { get; }
-    public string? LastExcuteId { get; set; }
-    public async Task RunSingle(MonitorStepInfoViewModel monitorStepInfoViewModel)
+    public string? LastExecuteId { get; set; }
+    public void RunSingle(MonitorStepInfoViewModel monitorStepInfoViewModel)
     {
         if (Model is null || !Model.Id.HasValue)
         {
@@ -735,10 +735,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         Guid[] id = [Model.Id.Value, .. monitorStepInfoViewModel.ParentIds];
         string idStr = string.Join(",", id);
         bool reset = false;
-        if (LastExcuteId != idStr)
+        if (LastExecuteId != idStr)
         {
             reset = true;
-            LastExcuteId = idStr;
+            LastExecuteId = idStr;
         }
         var config = CreateConfig();
         if (config is null)
@@ -758,7 +758,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 monitorStepInfoViewModel.SingleRunning = false;
                 monitorStepInfoViewModel.Stop(null);
             }
-        
+
         });
     }
 
