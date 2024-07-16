@@ -502,7 +502,7 @@ public class FlowRunner : IDisposable
                             {
                                 await item.OnExecuted(flowContext, step, stepState.Value, null, CancellationTokenSource.Token);
                             }
-                            TaskCompletionSource?.SetCanceled();
+                            TaskCompletionSource?.SetCanceled(cancellationToken);
                             return;
                         }
 
