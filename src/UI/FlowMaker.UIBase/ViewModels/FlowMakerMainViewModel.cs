@@ -534,6 +534,7 @@ public class MonitorStepInfoViewModel : ReactiveObject
     public CancellationTokenSource? SingleRunCancellationToken { get; set; }
     [Reactive]
     public bool SingleRunning { get; set; }
+ 
 
     [Reactive]
     public TimeSpan? UsedTime { get; set; }

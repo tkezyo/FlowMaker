@@ -494,6 +494,18 @@ public class FlowRunner : IDisposable
                             continue;
                         }
 
+                        if (e is TaskCanceledException)
+                        {
+                            stepState.Value.State = StepState.Error;
+                            stepState.Value.EndTime = DateTime.Now;
+                            foreach (var item in RunnerStatus.StepMiddlewares)
+                            {
+                                await item.OnExecuted(flowContext, step, stepState.Value, null, CancellationTokenSource.Token);
+                            }
+                            TaskCompletionSource?.SetCanceled();
+                            return;
+                        }
+
                         state = StepState.Error;
                         switch (errorHandling)
                         {
@@ -560,7 +572,7 @@ public class FlowRunner : IDisposable
             await item.OnExecuting(flowContext, cancellationToken ?? default);
         }
     }
-    public async Task RunSingleStep(FlowContext flowContext, FlowStep flowStep, CancellationToken cancellationToken)
+    public async Task RunSingleStep(FlowContext flowContext, FlowStep flowStep, int index, CancellationToken cancellationToken)
     {
         if (RunnerStatus is null)
         {
@@ -574,7 +586,7 @@ public class FlowRunner : IDisposable
         {
             throw new Exception("未找到步骤信息");
         }
-        var stepOnce = new StepOnceStatus(1, 0, flowContext.Index, async (stepOnceStatus, log, level) =>
+        var stepOnce = new StepOnceStatus(index, 0, flowContext.Index, async (stepOnceStatus, log, level) =>
         {
             await status.Log(flowContext.FlowIds, flowStep, stepState.Value, stepOnceStatus, log, level);
         });

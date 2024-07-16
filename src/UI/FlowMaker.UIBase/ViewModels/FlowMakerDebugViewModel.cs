@@ -210,6 +210,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     flow.Retry = c.Context.ConfigDefinition.Retry;
                     flow.Repeat = c.Context.ConfigDefinition.Repeat;
                     flow.ErrorStop = c.Context.ConfigDefinition.ErrorStop;
+
                     DataDisplay?.Dispose();
                     DataDisplay = new DataDisplayViewModel(c.Context, StepId, Index);
 
@@ -751,14 +752,13 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
         monitorStepInfoViewModel.SingleRunning = true;
         monitorStepInfoViewModel.SingleRunCancellationToken = new CancellationTokenSource();
-        _ = _flowManager.RunSingleStep(id, monitorStepInfoViewModel.Step, reset, config, monitorStepInfoViewModel.Parent?.Step, monitorStepInfoViewModel.SingleRunCancellationToken.Token).ContinueWith(c =>
+        _ = _flowManager.RunSingleStep(id, monitorStepInfoViewModel.Step, reset, config, ++monitorStepInfoViewModel.CurrentIndex, monitorStepInfoViewModel.Parent?.Step, monitorStepInfoViewModel.SingleRunCancellationToken.Token).ContinueWith(c =>
         {
             if (c.Status == TaskStatus.RanToCompletion)
             {
                 monitorStepInfoViewModel.SingleRunning = false;
                 monitorStepInfoViewModel.Stop(null);
             }
-
         });
     }
 

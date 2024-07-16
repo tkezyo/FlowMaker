@@ -332,7 +332,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     /// </summary>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public virtual async Task RunSingleStep(Guid[] ids, FlowStep flowStep, bool resetContext, ConfigDefinition configDefinition, FlowStep? parentStep = null, CancellationToken cancellationToken = default)
+    public virtual async Task RunSingleStep(Guid[] ids, FlowStep flowStep, bool resetContext, ConfigDefinition configDefinition, int index, FlowStep? parentStep = null, CancellationToken cancellationToken = default)
     {
         var id = string.Join(",", ids);
         var status = _status[ids[0]];
@@ -344,7 +344,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         {
             return;
         }
-
         if (resetContext)
         {
             if (ids.Length == 1)
@@ -383,7 +382,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         }
 
-        await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
+        await runner.RunSingleStep(flowContext, flowStep, index, cancellationToken);
         if (cancellationToken.IsCancellationRequested)
         {
             throw new TaskCanceledException();

@@ -16,7 +16,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// <summary>
     /// 当前下标
     /// </summary>
-    public int CurrentIndex { get; } = currentIndex;
+    public int CurrentIndex { get;  } = currentIndex;
     /// <summary>
     /// 执行错误下标
     /// </summary>
