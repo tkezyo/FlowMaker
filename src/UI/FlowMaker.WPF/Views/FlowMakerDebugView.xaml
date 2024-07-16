@@ -143,13 +143,23 @@ AutoGenerateColumns="False" IsReadOnly="True"
                        ItemsSource="{Binding Steps}"
                        DataType="vms:MonitorStepInfoViewModel">
                         <StackPanel Orientation="Horizontal">
-                            <Button  Foreground="MediumSpringGreen"  Visibility="{Binding DataContext.Model.SingleRun,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}" Command="{Binding DataContext.RunSingleCommand,ElementName=page}" CommandParameter="{Binding .}" Background="Transparent">
-                                <iconPacks:PackIconPixelartIcons Kind="DebugPlay" />
-                                <Button.Style>
-                                    <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                            <StackPanel Visibility="{Binding DataContext.Model.SingleRun,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}">
+                                <Button  Foreground="MediumSpringGreen" Visibility="{Binding SingleRunning,Converter={StaticResource Boolean2VisibilityReConverter}}"  Command="{Binding DataContext.RunSingleCommand,ElementName=page}" CommandParameter="{Binding .}" Background="Transparent">
+                                    <iconPacks:PackIconPixelartIcons Kind="DebugPlay" />
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button  Foreground="OrangeRed"  Visibility="{Binding SingleRunning,Converter={StaticResource Boolean2VisibilityConverter}}" Command="{Binding DataContext.StopSingleCommand,ElementName=page}" CommandParameter="{Binding .}" Background="Transparent">
+                                    <iconPacks:PackIconPixelartIcons Kind="DebugStop" />
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource ButtonCustom}">
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                            </StackPanel>
+                           
                             <Button 
                              Width="15" Height="15" Margin="3" 
                              Visibility="{Binding DataContext.CanDebug,Converter={StaticResource Boolean2VisibilityConverter},ElementName=page}"

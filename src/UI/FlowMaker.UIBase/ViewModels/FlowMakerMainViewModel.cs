@@ -181,7 +181,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
         MessageBus.Current.Listen<MenuViewModel>("Menu").Subscribe(c =>
         {
-            if (c.Name== "FlowMakerEdit")
+            if (c.Name == "FlowMakerEdit")
             {
                 Edit = !Edit;
             }
@@ -530,6 +530,10 @@ public class MonitorStepInfoViewModel : ReactiveObject
     public bool Debugging { get; set; }
 
     public required Guid[] ParentIds { get; set; }
+
+    public CancellationTokenSource? SingleRunCancellationToken { get; set; }
+    [Reactive]
+    public bool SingleRunning { get; set; }
 
     [Reactive]
     public TimeSpan? UsedTime { get; set; }

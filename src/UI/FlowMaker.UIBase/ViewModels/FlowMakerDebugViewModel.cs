@@ -90,7 +90,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         ChangePageTypeCommand = ReactiveCommand.Create(ChangePageType);
         RunSingleCommand = ReactiveCommand.CreateFromTask<MonitorStepInfoViewModel>(RunSingle);
         ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
-
+        StopSingleCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(StopSingle);
 
         this.WhenAnyValue(c => c.Model!.SingleRun).Skip(1).Subscribe(async c =>
         {
@@ -749,8 +749,23 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
         config.Middlewares.Add(MonitorMiddleware.Name);
 
-        await _flowManager.RunSingleStep(id, monitorStepInfoViewModel.Step, reset, config, monitorStepInfoViewModel.Parent?.Step, default);
+        monitorStepInfoViewModel.SingleRunning = true;
+        monitorStepInfoViewModel.SingleRunCancellationToken = new CancellationTokenSource();
+        _ = _flowManager.RunSingleStep(id, monitorStepInfoViewModel.Step, reset, config, monitorStepInfoViewModel.Parent?.Step, monitorStepInfoViewModel.SingleRunCancellationToken.Token).ContinueWith(c =>
+        {
+            monitorStepInfoViewModel.SingleRunning = false;
+        });
     }
+
+    public ReactiveCommand<MonitorStepInfoViewModel, Unit> StopSingleCommand { get; }
+
+    public void StopSingle(MonitorStepInfoViewModel monitorStepInfoViewModel)
+    {
+        monitorStepInfoViewModel.SingleRunCancellationToken?.Cancel();
+        monitorStepInfoViewModel.SingleRunning = false;
+        monitorStepInfoViewModel.Stop(null);
+    }
+
 
     [Reactive]
     public Guid? StepId { get; set; }

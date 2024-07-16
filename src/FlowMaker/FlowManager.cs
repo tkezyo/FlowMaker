@@ -367,7 +367,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 var config = new ConfigDefinition { ConfigName = null, Category = flowStep.Category, Name = flowStep.Name };
                 config.Middlewares = parentContext.Middlewares;
 
-                //flowContext.Data.Clear();
                 foreach (var item in flowContext.FlowDefinition.Data)
                 {
                     if (!item.IsInput)
@@ -387,6 +386,11 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
     }
 
+
+    public virtual void StopSingleStep(Guid[] ids, FlowStep flowStep)
+    {
+
+    }
     #endregion
 }
 public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) : IDisposable
