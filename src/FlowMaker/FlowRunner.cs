@@ -591,12 +591,20 @@ public class FlowRunner : IDisposable
 
         foreach (var item in status.StepOnceMiddlewares)
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
             await item.OnExecuting(flowContext, flowStep, stepState.Value, stepOnce, cancellationToken);
         }
         StepContext stepContext = new(flowStep, flowContext, stepOnce);
 
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
             await ExecuteStep(stepContext, cancellationToken);
             foreach (var item in status.StepMiddlewares)
             {
@@ -611,6 +619,10 @@ public class FlowRunner : IDisposable
 
             foreach (var item in status.StepOnceMiddlewares)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
                 await item.OnExecuted(flowContext, flowStep, stepState.Value, stepOnce, null, cancellationToken);
             }
         }
@@ -629,6 +641,10 @@ public class FlowRunner : IDisposable
 
             foreach (var item in status.StepOnceMiddlewares)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
                 await item.OnExecuted(flowContext, flowStep, stepState.Value, stepOnce, e, cancellationToken);
             }
         }

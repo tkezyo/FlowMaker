@@ -384,13 +384,14 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         }
 
         await runner.RunSingleStep(flowContext, flowStep, cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new TaskCanceledException();
+        }
     }
 
 
-    public virtual void StopSingleStep(Guid[] ids, FlowStep flowStep)
-    {
 
-    }
     #endregion
 }
 public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) : IDisposable

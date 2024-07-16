@@ -753,7 +753,12 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         monitorStepInfoViewModel.SingleRunCancellationToken = new CancellationTokenSource();
         _ = _flowManager.RunSingleStep(id, monitorStepInfoViewModel.Step, reset, config, monitorStepInfoViewModel.Parent?.Step, monitorStepInfoViewModel.SingleRunCancellationToken.Token).ContinueWith(c =>
         {
-            monitorStepInfoViewModel.SingleRunning = false;
+            if (c.Status == TaskStatus.RanToCompletion)
+            {
+                monitorStepInfoViewModel.SingleRunning = false;
+                monitorStepInfoViewModel.Stop(null);
+            }
+        
         });
     }
 
