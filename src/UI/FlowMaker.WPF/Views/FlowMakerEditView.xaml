@@ -290,7 +290,7 @@
             </TreeView.ItemTemplate>
         </TreeView>
 
-        <ScrollViewer  Grid.Column="2" Grid.Row="1" Margin="10,5" 
+        <ScrollViewer  Grid.Column="2" Grid.Row="1" Padding="10,5" 
                        Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showChecker}" >
             <ItemsControl ItemsSource="{Binding Checkers}">
                 <ItemsControl.ItemTemplate>
@@ -310,7 +310,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-        <ScrollViewer Grid.Row="1" Grid.Column="3" Margin="10,5" 
+        <ScrollViewer Grid.Row="1" Grid.Column="3" Padding="10,5" 
 Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConverter},ElementName=showData}">
             <ItemsControl ItemsSource="{Binding GlobeDatas}">
                 <ItemsControl.ItemTemplate>
@@ -358,7 +358,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
-        <ScrollViewer Grid.Row="1" Grid.Column="1"  Margin="10,5" 
+        <ScrollViewer Grid.Row="1" Grid.Column="1"  Padding="10,5" 
             Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
             <StackPanel>
                 <GroupBox Header="基本信息">
@@ -426,77 +426,90 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </GroupBox>
-                <GroupBox Header="检查项">
-                    <StackPanel>
-                        <Button Command="{Binding AddCheckerCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
-                            <iconPacks:PackIconPixelartIcons Kind="Plus" />
-                        </Button>
-                        <ItemsControl ItemsSource="{Binding FlowStep.Checkers}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Margin="5">
-                                        <Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" Style="{StaticResource ButtonDanger.Small}" Padding="1">
-                                            <iconPacks:PackIconPixelartIcons Kind="Minus"/>
-                                        </Button>
-                                        <controls:FlowInputView  EditMode="True"></controls:FlowInputView>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                <GroupBox>
+                    <GroupBox.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="检查项" VerticalAlignment="Center" Margin="10,0"/>
+                            <Button Command="{Binding AddCheckerCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                                <iconPacks:PackIconPixelartIcons Kind="Plus" />
+                            </Button>
+                        </StackPanel>
+                    </GroupBox.Header>
+                    <ItemsControl ItemsSource="{Binding FlowStep.Checkers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="5">
+                                    <Button  Command="{Binding DataContext.RemoveCheckerCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource ButtonDanger.Small}" Padding="1">
+                                        <iconPacks:PackIconPixelartIcons Kind="Minus"/>
+                                    </Button>
+                                    <controls:FlowInputView  EditMode="True"></controls:FlowInputView>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </GroupBox>
-                <GroupBox Header="执行条件">
-                    <StackPanel>
-                        <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
-                            <iconPacks:PackIconPixelartIcons Kind="Reload" />
-                        </Button>
-                        <ItemsControl ItemsSource="{Binding FlowStep.Ifs}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}" Margin="5,10"></CheckBox>
-                                        <CheckBox Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                <GroupBox >
+                    <GroupBox.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="执行条件" VerticalAlignment="Center" Margin="10,0"/>
+                            <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                                <iconPacks:PackIconPixelartIcons Kind="Reload" />
+                            </Button>
+                        </StackPanel>
+                    </GroupBox.Header>
+
+                    <ItemsControl ItemsSource="{Binding FlowStep.Ifs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}" Margin="5,10"></CheckBox>
+                                    <CheckBox Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </GroupBox>
-                <GroupBox Header="附加条件">
-                    <StackPanel>
-                        <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
-                            <iconPacks:PackIconPixelartIcons Kind="Reload" />
-                        </Button>
-                        <ItemsControl ItemsSource="{Binding FlowStep.AdditionalConditions}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}" Margin="5,10"></CheckBox>
-                                        <CheckBox Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                <GroupBox >
+                    <GroupBox.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="附加条件" VerticalAlignment="Center" Margin="10,0"/>
+                            <Button Command="{Binding LoadIfCommand}" CommandParameter="{Binding FlowStep}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                                <iconPacks:PackIconPixelartIcons Kind="Reload" />
+                            </Button>
+                        </StackPanel>
+                    </GroupBox.Header>
+                    <ItemsControl ItemsSource="{Binding FlowStep.AdditionalConditions}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <CheckBox Content="{Binding DisplayName}" IsChecked="{Binding Enable}" Margin="5,10"></CheckBox>
+                                    <CheckBox Visibility="{Binding Enable,Converter={StaticResource Boolean2VisibilityConverter}}" Content="符合" IsChecked="{Binding IsTrue}"></CheckBox>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </GroupBox>
-                <GroupBox Header="等待事件">
-                    <StackPanel>
-                        <Button Command="{Binding AddWaitEventCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
-                            <iconPacks:PackIconPixelartIcons Kind="Plus" />
-                        </Button>
-                        <ItemsControl ItemsSource="{Binding FlowStep.WaitEvents}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Bottom" Style="{StaticResource ButtonDanger.Small}" Padding="1" >
-                                            <iconPacks:PackIconPixelartIcons Kind="Minus" />
-                                        </Button>
-                                        <TextBox Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.Title="名称" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
+                <GroupBox>
+                    <GroupBox.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="等待事件" VerticalAlignment="Center" Margin="10,0"/>
+                            <Button Command="{Binding AddWaitEventCommand}" Style="{StaticResource ButtonInfo.Small}" HorizontalAlignment="Left" Padding="1">
+                                <iconPacks:PackIconPixelartIcons Kind="Plus" />
+                            </Button>
+                        </StackPanel>
+                    </GroupBox.Header>
+                    <ItemsControl ItemsSource="{Binding FlowStep.WaitEvents}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Text="{Binding Name,UpdateSourceTrigger=PropertyChanged}" MinWidth="100" />
+                                    <Button  Command="{Binding DataContext.RemoveWaitEventCommand,ElementName=page}" CommandParameter="{Binding .}" HorizontalAlignment="Left" VerticalAlignment="Center" Style="{StaticResource ButtonDanger.Small}" Padding="1" >
+                                        <iconPacks:PackIconPixelartIcons Kind="Minus" />
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </GroupBox>
             </StackPanel>
         </ScrollViewer>
