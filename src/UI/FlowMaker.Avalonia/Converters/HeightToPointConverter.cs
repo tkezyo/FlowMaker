@@ -13,6 +13,8 @@ namespace FlowMaker.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
+            if (value == null) return null;
+
             return new Point(0, ((Rect)value).Height);
         }
 

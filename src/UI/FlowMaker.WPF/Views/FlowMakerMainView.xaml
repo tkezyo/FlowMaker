@@ -30,9 +30,8 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-
-
-        <ScrollViewer Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,24" MaxWidth="300" Grid.Column="0">
+        <ScrollViewer Grid.Column="0" 
+            Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}" Margin="0,0,0,24" MaxWidth="300">
             <ItemsControl ItemsSource="{Binding Categories}"  >
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
@@ -93,24 +92,6 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <ScrollViewer   Grid.Column="0" 
-                      Visibility="{Binding DataContext.ShowLogList, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}"  Margin="0,0,0,24" MaxWidth="300">
-            <ItemsControl  ItemsSource="{Binding Runnings}" >
-                <ItemsControl.Background>
-                    <SolidColorBrush Color="{StaticResource DarkMaskColor}"/>
-                </ItemsControl.Background>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel Orientation="Vertical">
-                            <Button Content="{Binding DisplayName}" Style="{StaticResource ButtonCustom}" Command="{Binding DataContext.ShowLogCommand, ElementName=page}" CommandParameter="{Binding .}"/>
-                            <ProgressBar Value="{Binding Percent}" FontSize="9" Height="10" Style="{StaticResource ProgressBarSuccess}" />
-                            <Separator/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-
         <ItemsControl ItemsSource="{Binding Flows}" Grid.Column="1" >
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -132,17 +113,10 @@
             </ItemsControl.ItemTemplate>
         </ItemsControl>
 
-
         <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom"  Grid.ColumnSpan="2" Grid.Column="0">
             <ToggleButton  IsChecked="{Binding Edit}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="8,4" >
                 <iconPacks:PackIconPixelartIcons Kind="Note" Foreground="DodgerBlue"/>
             </ToggleButton>
-            <!--<ToggleButton  IsChecked="{Binding ShowLogList}" Style="{StaticResource ToggleButtonCustom}"   VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="8,4">
-                <StackPanel Orientation="Horizontal">
-                    <iconPacks:PackIconPixelartIcons Kind="Notification" Margin="0,0,3,0" Foreground="Orange"/>
-                    <TextBlock Text="{Binding Runnings.Count,StringFormat=({0})}"/>
-                </StackPanel>
-            </ToggleButton>-->
 
             <Button Command="{Binding CreateCommand}" Style="{StaticResource ButtonPrimary.Small}" Grid.Row="1" Grid.Column="2" HorizontalAlignment="Stretch" ToolTip="创建流程" Visibility="{Binding DataContext.Edit, ElementName=page,Converter={StaticResource Boolean2VisibilityConverter}}">
                 <iconPacks:PackIconPixelartIcons Kind="NotePlus" />
@@ -151,6 +125,5 @@
                 <iconPacks:PackIconPixelartIcons Kind="Save" />
             </Button>
         </StackPanel>
-
     </Grid>
 </rxui:ReactiveUserControl>

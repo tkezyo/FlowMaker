@@ -42,8 +42,6 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         this._flowProvider = flowProvider;
         MaxColCount = _flowMakerOption.MaxColCount;
 
-        ShowLogCommand = ReactiveCommand.CreateFromTask<MonitorRunningViewModel>(ShowLog);
-
 
         CreateCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel?>(Create);
         RemoveCommand = ReactiveCommand.CreateFromTask<FlowDefinitionInfoViewModel>(Remove);
@@ -72,11 +70,8 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
             }
         });
 
-        this.WhenAnyValue(c => c.ShowLogList).Where(c => c).Subscribe(c => Edit = false);
         this.WhenAnyValue(c => c.Edit).Where(c => c).Subscribe(async c =>
         {
-            ShowLogList = false;
-
             await LoadFlows();
         });
 
@@ -161,7 +156,6 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     }
 
 
-    public ObservableCollection<MonitorRunningViewModel> Runnings { get; set; } = [];
 
     public override async Task Activate()
     {
@@ -195,50 +189,10 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
 
         await LoadFlows();
-
-        MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
-        {
-            var id = c.Context.FlowIds[0];
-            var running = Runnings.FirstOrDefault(v => v.Id == c.Context.FlowIds[0]);
-            if (running is null)
-            {
-                running = new()
-                {
-                    DisplayName = DateTime.Now.ToString("HH:mm:ss") + "|" + c.Context.ConfigDefinition.Category + "." + c.Context.ConfigDefinition.Name,
-                    RunnerState = c.Context.State,
-                    Id = c.Context.FlowIds[0],
-                    TotalCount = c.TotalCount,
-                    StartTime = DateTime.Now
-                };
-                Runnings.Insert(0, running);
-                var mid = _flowManager.GetRunnerService<IStepOnceMiddleware>(id, MonitorMiddleware.Name);
-                if (mid is MonitorMiddleware monitor)
-                {
-                    if (!monitor.PercentChange.IsDisposed)
-                    {
-                        running.StepChange = monitor.PercentChange.Subscribe(c =>
-                        {
-                            running.Percent = c;
-                        });
-                    }
-                }
-            }
-            else
-            {
-                running.RunnerState = c.Context.State;
-            }
-        }).DisposeWith(Disposables);
-
     }
 
 
-    public ReactiveCommand<MonitorRunningViewModel, Unit> ShowLogCommand { get; }
-    public async Task ShowLog(MonitorRunningViewModel monitorRunningViewModel)
-    {
-        var vm = _serviceProvider.GetRequiredService<FlowMakerLogViewModel>();
-        await vm.Load(monitorRunningViewModel.Id);
-        _messageBoxManager.Window.Handle(new ModalInfo("牛马日志", vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe();
-    }
+   
     public override Task Deactivate()
     {
         if (Disposables is not null)
@@ -313,8 +267,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
     [Reactive]
     public bool Edit { get; set; }
-    [Reactive]
-    public bool ShowLogList { get; set; }
+  
 
     public ReactiveCommand<FlowMakerDebugViewModel, Unit> RemoveDebugCommand { get; }
     public async Task RemoveDebugAsync(FlowMakerDebugViewModel flowMakerDebugViewModel)

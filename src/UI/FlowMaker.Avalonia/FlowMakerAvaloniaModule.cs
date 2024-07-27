@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Projektanker.Icons.Avalonia.FontAwesome;
+using Projektanker.Icons.Avalonia;
 using Ty;
 
 namespace FlowMaker
@@ -19,9 +21,8 @@ namespace FlowMaker
             hostApplicationBuilder.Services.AddTransientView<FlowMakerMainViewModel, FlowMakerMainView>();
             hostApplicationBuilder.Services.AddTransientView<FlowMakerEditViewModel, FlowMakerEditView>();
             hostApplicationBuilder.Services.AddTransientCustomPageView<FlowMakerDebugViewModel, FlowMakerDebugView>();
-            hostApplicationBuilder.Services.AddTransientView<FlowMakerSelectViewModel, FlowMakerSelectView>();
-            hostApplicationBuilder.Services.AddTransientView<FlowMakerLogViewModel, FlowMakerLogView>();
-
+            IconProvider.Current
+          .Register<FontAwesomeIconProvider>();
 
             return Task.CompletedTask;
         }

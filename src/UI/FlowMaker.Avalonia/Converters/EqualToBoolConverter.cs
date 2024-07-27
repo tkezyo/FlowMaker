@@ -1,8 +1,5 @@
 ﻿using Avalonia.Data.Converters;
-using FlowMaker.ViewModels;
-using System;
 using System.Globalization;
-using System.Windows;
 
 namespace FlowMaker.Converters
 {
@@ -15,8 +12,7 @@ namespace FlowMaker.Converters
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            bool isChecked = (bool)value;
-            if (!isChecked)
+            if (value is bool isChecked && !isChecked)
             {
                 return null;
             }
@@ -29,10 +25,10 @@ namespace FlowMaker.Converters
     {
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return value.Equals(parameter) ? true : false;
+            return value?.Equals(parameter) ?? false;
         }
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return parameter;
         }
@@ -48,7 +44,7 @@ namespace FlowMaker.Converters
             return false;
         }
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return parameter;
         }

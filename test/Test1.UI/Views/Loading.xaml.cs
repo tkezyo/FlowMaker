@@ -19,7 +19,7 @@ namespace Test1.Views
             InitializeComponent();// 创建一个WpfDrawingSettings对象
 
             // 获取当前程序集
-            Assembly assembly = Assembly.GetAssembly(typeof(Test1UIModule));
+            Assembly assembly = Assembly.GetAssembly(typeof(Test1UIModule))!;
 
             // 构建资源名称
             string resourceName = "Test1.PURE.svg"; // 注意: 这里的路径需要根据实际情况调整

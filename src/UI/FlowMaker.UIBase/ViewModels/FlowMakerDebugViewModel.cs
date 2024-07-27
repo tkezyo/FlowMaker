@@ -1003,3 +1003,28 @@ public class FlowConfigDataInputViewModel(string name, string displayName, strin
     public bool HasOption { get; set; }
     public ObservableCollection<FlowStepOptionViewModel> Options { get; set; } = [];
 }
+
+public class StepLogViewModel : ReactiveObject
+{
+    [Reactive]
+    public required string Name { get; set; }
+
+    [Reactive]
+    public Guid StepId { get; set; }
+    [Reactive]
+    public required string State { get; set; }
+    [Reactive]
+    public DateTime? StartTime { get; set; }
+    [Reactive]
+    public DateTime? EndTime { get; set; }
+
+    [Reactive]
+    public required string Index { get; set; }
+
+
+    public List<NameValue> Inputs { get; set; } = [];
+    public List<NameValue> Outputs { get; set; } = [];
+
+    public required ObservableCollection<LogInfoViewModel> Logs { get; set; }
+}
+
