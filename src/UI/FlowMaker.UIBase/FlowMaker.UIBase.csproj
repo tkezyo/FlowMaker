@@ -16,8 +16,8 @@
 	
 	<ItemGroup>
 		<PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
-		<PackageReference Include="Ty.UIBase" Version="0.26.0" />
-		<PackageReference Include="Ty.SourceGenerator" Version="0.26.0" />
+		<PackageReference Include="Ty.UIBase" Version="0.27.0" />
+		<PackageReference Include="Ty.SourceGenerator" Version="0.27.0" />
 
 	</ItemGroup>
 

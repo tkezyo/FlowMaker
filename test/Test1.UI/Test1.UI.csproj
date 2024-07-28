@@ -19,9 +19,9 @@
 		<PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
 		<PackageReference Include="Serilog.Sinks.Async" Version="2.0.0" />
 		<PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-		<PackageReference Include="Serilog.Sinks.Map" Version="1.0.2" />
+		<PackageReference Include="Serilog.Sinks.Map" Version="2.0.0" />
 		<PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
-		<PackageReference Include="SharpVectors.Wpf" Version="1.8.4" />
+		<PackageReference Include="SharpVectors.Wpf" Version="1.8.4.1" />
 	</ItemGroup>
 
 	<ItemGroup>

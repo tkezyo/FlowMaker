@@ -5,7 +5,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                           x:Name="page"
-			xmlns:app="clr-namespace:Ty;assembly=Ty.AvaloniaBase"			 xmlns:i="https://github.com/projektanker/icons.avalonia"			xmlns:local="using:FlowMaker"
+			xmlns:app="clr-namespace:Ty;assembly=Ty.AvaloniaBase"
+			 xmlns:i="https://github.com/projektanker/icons.avalonia"
+			xmlns:local="using:FlowMaker"
              x:Class="FlowMaker.FlowMakerMainView">
 	<Grid>
 		<Grid.ColumnDefinitions>
@@ -19,17 +21,17 @@
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
 						<StackPanel Background="{DynamicResource SemiColorBackground1}">
-							<TextBlock Text="{Binding Category}" Classes="H1"/>
+							<TextBlock Text="{Binding Category}" Classes="H6" Theme="{StaticResource TitleTextBlock}"/>
 							<ItemsControl Padding="4" ItemsSource="{Binding Flows}" Background="White">
 								<ItemsControl.ItemTemplate>
 									<DataTemplate>
 										<StackPanel   >
 											<StackPanel Orientation="Horizontal" MinWidth="100" MinHeight="20" Background="Transparent">
-												<Button Content="{Binding Name}"  Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}" VerticalAlignment="Center"/>
-												<Button Padding="4,0"   BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" i:Attached.Icon="fa-solid fa-circle-info" >
+												<Button Content="{Binding Name}"  Command="{Binding DataContext.ExecuteFlowCommand,ElementName=page}" CommandParameter="{Binding .}" VerticalAlignment="Center" Theme="{DynamicResource BorderlessButton}"/>
+												<Button Padding="4,0"   BorderThickness="0" Command="{Binding DataContext.CreateCommand,ElementName=page}" CommandParameter="{Binding .}" i:Attached.Icon="fa-solid fa-pen-to-square" Theme="{DynamicResource BorderlessButton}">
 													
 												</Button>
-												<Button  Padding="4,0"   BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}">
+												<Button  Padding="4,0"   BorderThickness="0"  Command="{Binding DataContext.RemoveCommand,ElementName=page}" CommandParameter="{Binding .}" Classes="Danger" i:Attached.Icon="fa-solid fa-trash-can" Theme="{DynamicResource BorderlessButton}">
 													
 												</Button>
 
@@ -39,9 +41,9 @@
 												<ItemsControl.ItemTemplate>
 													<DataTemplate>
 														<StackPanel Orientation="Horizontal" MinHeight="20" Background="Transparent">
-															<TextBlock Text=" - "/>
-															<Button Content="{Binding ConfigName}"  Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}"/>
-															<Button  Padding="4,0"  BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}">
+															<TextBlock Text=" - " VerticalAlignment="Center"/>
+															<Button Content="{Binding ConfigName}"  Command="{Binding DataContext.LoadConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Theme="{DynamicResource BorderlessButton}"/>
+															<Button  Padding="4,0"  BorderThickness="0"  Command="{Binding DataContext.RemoveConfigCommand,ElementName=page}" CommandParameter="{Binding .}" Classes="Danger" i:Attached.Icon="fa-solid fa-trash-can" Theme="{DynamicResource BorderlessButton}">
 															</Button>
 														</StackPanel>
 													</DataTemplate>

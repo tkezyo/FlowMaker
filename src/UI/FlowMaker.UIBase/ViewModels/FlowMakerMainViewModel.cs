@@ -106,7 +106,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         }
         var r = JsonSerializer.Serialize(configInfo);
         await File.WriteAllTextAsync(path, r);
-        await _messageBoxManager.Notify.Handle(new NotifyInfo() { Message = "保存成功", Level = NotifyLevel.Success, Expiration = TimeSpan.FromSeconds(2) });
+        await _messageBoxManager.Notify.Handle(new NotifyInfo() { Message = "保存成功", Level = NotifyLevel.Success, Expiration = TimeSpan.FromSeconds(2), Title = "提示" });
     }
 
     public async Task Load()
@@ -192,7 +192,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
     }
 
 
-   
+
     public override Task Deactivate()
     {
         if (Disposables is not null)
@@ -267,7 +267,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
     [Reactive]
     public bool Edit { get; set; }
-  
+
 
     public ReactiveCommand<FlowMakerDebugViewModel, Unit> RemoveDebugCommand { get; }
     public async Task RemoveDebugAsync(FlowMakerDebugViewModel flowMakerDebugViewModel)
@@ -487,7 +487,7 @@ public class MonitorStepInfoViewModel : ReactiveObject
     public CancellationTokenSource? SingleRunCancellationToken { get; set; }
     [Reactive]
     public bool SingleRunning { get; set; }
- 
+
 
     [Reactive]
     public TimeSpan? UsedTime { get; set; }
