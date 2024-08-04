@@ -177,16 +177,17 @@ public enum OutputMode
     GlobeWithConverter,
 }
 
-public class FlowResult
+public class FlowResult(int currentIndex, int errorIndex)
 {
     /// <summary>
     /// 当前下标
     /// </summary>
-    public int CurrentIndex { get; set; }
+    public int CurrentIndex { get; set; } = currentIndex;
+
     /// <summary>
     /// 执行错误下标
     /// </summary>
-    public int ErrorIndex { get; set; }
+    public int ErrorIndex { get; set; } = errorIndex;
     public bool Success { get; set; }
     public Exception? Exception { get; set; }
     public List<FlowResultData> Data { get; set; } = [];

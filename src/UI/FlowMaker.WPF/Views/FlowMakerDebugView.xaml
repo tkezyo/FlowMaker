@@ -62,7 +62,7 @@
                 <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
                 <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
                 <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
-                <ItemsControl ItemsSource="{Binding Model.Middlewares}"  VerticalAlignment="Center" Margin="0,4">
+                <ItemsControl ItemsSource="{Binding Model.FlowMiddlewares}"  VerticalAlignment="Center" Margin="0,4">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel></WrapPanel>

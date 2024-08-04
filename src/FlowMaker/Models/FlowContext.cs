@@ -1,13 +1,15 @@
 ﻿using DynamicData;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Subjects;
+using System.Threading;
 using Ty;
 
 namespace FlowMaker;
 
-public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition configDefinition, List<FlowInput> checkers, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null) : IDisposable
+public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition configDefinition, List<FlowInput> checkers, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null, SourceList<EventLog>? eventLog = null) : IDisposable
 {
     /// <summary>
     /// 流程Id
@@ -16,7 +18,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// <summary>
     /// 当前下标
     /// </summary>
-    public int CurrentIndex { get;  } = currentIndex;
+    public int CurrentIndex { get; } = currentIndex;
     /// <summary>
     /// 执行错误下标
     /// </summary>
@@ -37,7 +39,9 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// <summary>
     /// 使用的中间件
     /// </summary>
-    public List<string> Middlewares { get; set; } = [];
+    public List<string> FlowMiddlewares { get; set; } = [];
+    public List<string> StepGroupMiddlewares { get; set; } = [];
+    public List<string> StepMiddlewares { get; set; } = [];
 
     public ConfigDefinition ConfigDefinition { get; set; } = configDefinition;
 
@@ -48,7 +52,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// <summary>
     /// 事件记录
     /// </summary>
-    public SourceList<EventLog> EventLogs { get; set; } = new();
+    public SourceList<EventLog> EventLogs { get; set; } = eventLog ?? new();
     /// <summary>
     /// 等待中的事件
     /// </summary>
@@ -56,7 +60,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// <summary>
     /// 所有步骤的状态
     /// </summary>
-    public SourceCache<StepStatus, Guid> StepState { get; set; } = new(c => c.StepId);
+    public SourceCache<StepGroupStatus, Guid> StepState { get; set; } = new(c => c.StepId);
     /// <summary>
     /// 所有的全局变量
     /// </summary>
@@ -75,6 +79,18 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     /// 触发某事件时需要执行的Step
     /// </summary>
     public Dictionary<string, List<Guid>> ExecuteStepIds { get; } = [];
+
+    /// <summary>
+    /// 执行步骤的事件
+    /// </summary>
+    public Subject<ExecuteStepEvent> ExecuteStepSubject { get; } = new();
+    public TaskCompletionSource TaskCompletionSource { get; set; } = new();
+    /// <summary>
+    /// 执行结果
+    /// </summary>
+    public FlowResult Result { get; set; } = new FlowResult(currentIndex, errorIndex);
+
+
 
     /// <summary>
     /// 流程状态
@@ -194,7 +210,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
         }
     }
 
-    private CompositeDisposable Disposables { get; set; } = [];
+    public CompositeDisposable Disposables { get; set; } = [];
 
     /// <summary>
     /// 初始化状态
@@ -206,7 +222,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
 
         foreach (var item in FlowDefinition.Steps)
         {
-            var state = new StepStatus
+            var state = new StepGroupStatus
             {
                 StepId = item.Id
             };
@@ -231,11 +247,25 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
         }
 
 
-        foreach (var item in ConfigDefinition.Middlewares)
+        foreach (var item in ConfigDefinition.FlowMiddlewares)
         {
-            if (!Middlewares.Any(c => c == item))
+            if (!FlowMiddlewares.Any(c => c == item))
             {
-                Middlewares.Add(item);
+                FlowMiddlewares.Add(item);
+            }
+        }
+        foreach (var item in ConfigDefinition.StepGroupMiddlewares)
+        {
+            if (!StepGroupMiddlewares.Any(c => c == item))
+            {
+                StepGroupMiddlewares.Add(item);
+            }
+        }
+        foreach (var item in ConfigDefinition.StepMiddlewares)
+        {
+            if (!StepMiddlewares.Any(c => c == item))
+            {
+                StepMiddlewares.Add(item);
             }
         }
 
@@ -260,6 +290,28 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
             }
         }
 
+
+        var d = EventLogs.Connect().SubscribeMany(c =>
+          {
+              //获取添加的事件，如果有等待的事件，则触发
+              if (WaitEvents.Items.Any(v => v.Name == c.EventName))
+              {
+                  EventData[c.EventName] = c.EventData;
+                  ExecuteStepSubject.OnNext(new ExecuteStepEvent
+                  {
+                      Type = EventType.Event,
+                      EventData = c.EventData,
+                      EventName = c.EventName,
+                      Context = this
+                  });
+
+                  WaitEvents.RemoveKey(c.EventName);
+              }
+              return Disposable.Empty;
+
+          }).Subscribe();
+        Disposables.Add(d);
+
         Disposables.Add(EventLogs);
         Disposables.Add(WaitEvents);
         Disposables.Add(Data);
@@ -279,22 +331,24 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
         Disposables.Dispose();
     }
 }
+public record StepGroupContext(FlowContext FlowContext, FlowStep Step, StepGroupStatus Status);
 
-public class StepContext(FlowStep step, FlowContext flowContext, StepOnceStatus stepOnceStatus)
+public class StepContext(FlowStep step, FlowContext flowContext, StepGroupStatus stepGroupStatus, StepStatus stepStatus)
 {
     public FlowStep Step { get; } = step;
     public FlowContext FlowContext { get; } = flowContext;
-    public int CurrentIndex { get; } = stepOnceStatus.CurrentIndex;
-    public int ErrorIndex { get; } = stepOnceStatus.ErrorIndex;
-    public StepOnceStatus StepOnceStatus { get; } = stepOnceStatus;
+    public int CurrentIndex { get; } = stepStatus.CurrentIndex;
+    public int ErrorIndex { get; } = stepStatus.ErrorIndex;
+    public StepStatus StepStatus { get; } = stepStatus;
+    public StepGroupStatus StepGroupStatus { get; } = stepGroupStatus;
 
-    public async Task Log(string log, LogLevel logLevel = LogLevel.Information)
+    public void Log(string log, LogLevel logLevel = LogLevel.Information)
     {
-        await StepOnceStatus.Log(log, logLevel);
+        StepStatus.Log(log, logLevel);
     }
 }
 
-public class StepOnceStatus(int currentIndex, int errorIndex, string parentIndex, Func<StepOnceStatus, string, LogLevel, Task> logAction)
+public class StepStatus(int currentIndex, int errorIndex, string parentIndex, Action<StepStatus, string, LogLevel> logAction, Action<StepStatus> update)
 {
     /// <summary>
     /// 当前下标
@@ -324,18 +378,19 @@ public class StepOnceStatus(int currentIndex, int errorIndex, string parentIndex
     /// 附加属性
     /// </summary>
     public Dictionary<string, object> ExtraData { get; set; } = [];
-    protected Func<StepOnceStatus, string, LogLevel, Task> LogAction { get; set; } = logAction;
+    protected Action<StepStatus, string, LogLevel> LogAction { get; set; } = logAction;
 
-    public async Task Log(string log, LogLevel logLevel = LogLevel.Information)
+    public Action<StepStatus> Update { get; set; } = update;
+    public void Log(string log, LogLevel logLevel = LogLevel.Information)
     {
-        await LogAction.Invoke(this, log, logLevel);
+        LogAction.Invoke(this, log, logLevel);
     }
 
     public const string AdditionalConditions = "AdditionalConditions";
 }
 
 public record LogInfo(string Log, LogLevel LogLevel, DateTime Time, Guid StepId, string Index);
-public class StepStatus
+public class StepGroupStatus
 {
     public Guid StepId { get; set; }
     public StepState State { get; set; }
@@ -352,35 +407,17 @@ public class StepStatus
     /// 需要等待的事件
     /// </summary>
     public List<string> Waits { get; set; } = [];
-    public SourceCache<StepOnceStatus, string> OnceLogs { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
+    public SourceCache<StepStatus, string> OnceLogs { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 }
 
 
 
-public class FlowGlobeData(string name, string type, string? value = null)
+public record class FlowGlobeData(string Name, string Type, string? Value = null, bool IsInput = false, bool IsOutput = false)
 {
-    public bool IsInput { get; set; }
-    public bool IsOutput { get; set; }
-    /// <summary>
-    /// 名称
-    /// </summary>
-    public string Name { get; set; } = name;
-    /// <summary>
-    /// 类型
-    /// </summary>
-    public string Type { get; set; } = type;
-    /// <summary>
-    /// 值
-    /// </summary>
-    public string? Value { get; set; } = value;
+    public string? Value { get; set; } = Value;
 }
 
-public class EventLog
-{
-    public DateTime Time { get; set; }
-    public required string EventName { get; set; }
-    public string? EventData { get; set; }
-}
+public record EventLog(DateTime Time, string EventName, string? EventData);
 
 public record WaitEvent(string Name, bool NeedData);
 

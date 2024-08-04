@@ -16,9 +16,9 @@ namespace Test1
         {
             for (int i = 0; i < 10; i++)
             {
-                await stepContext.Log("sdfw+1" + i);
+                stepContext.Log("sdfw+1" + i);
             }
-            await stepContext.Log("sdfw");
+            stepContext.Log("sdfw");
             return 1;
         }
     }
@@ -33,10 +33,10 @@ namespace Test1
                 {
                     return 0;
                 }
-                await Task.Delay(100,cancellationToken);
-                await stepContext.Log("sdfw+2" + i);
+                await Task.Delay(100, cancellationToken);
+                stepContext.Log("sdfw+2" + i);
             }
-            await stepContext.Log("sdfw");
+            stepContext.Log("sdfw");
             return Random.Shared.Next(0, 100);
         }
     }
@@ -57,7 +57,7 @@ namespace Test1
     {
         public (int, string) Test(StepContext stepContext, int ss = 3, CancellationToken cancellationToken = default)
         {
-            _ = stepContext.Log(ss.ToString());
+            stepContext.Log(ss.ToString());
             return (ss, "ss");
         }
 

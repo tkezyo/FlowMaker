@@ -107,5 +107,7 @@ public class ConfigDefinition
     public bool ErrorStop { get; set; }
 
     public List<NameValue> Data { get; set; } = [];
-    public List<string> Middlewares { get; set; } = [];
+    public List<string> FlowMiddlewares { get; set; } = [];
+    public List<string> StepGroupMiddlewares { get; set; } = [];
+    public List<string> StepMiddlewares { get; set; } = [];
 }

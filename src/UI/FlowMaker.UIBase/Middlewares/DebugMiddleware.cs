@@ -3,30 +3,28 @@ using System.Collections.Concurrent;
 
 namespace FlowMaker.Middlewares;
 
-public class DebugMiddleware : IStepOnceMiddleware, IDisposable
+public class DebugMiddleware : IMiddleware<StepContext>, IDisposable
 {
     public const string Name = "debug";
     public Dictionary<Guid, List<Guid>> DebugList { get; set; } = [];
     public ConcurrentDictionary<string, TaskCompletionSource> Debugging { get; set; } = [];
 
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
+    public async Task InvokeAsync(MiddlewareDelegate<StepContext> next, StepContext context, CancellationToken cancellationToken)
     {
-        return Task.CompletedTask;
-    }
-
-    public async Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
-    {
-        if (DebugList.TryGetValue(flowContext.FlowIds[0], out var list))
+        if (DebugList.TryGetValue(context.FlowContext.FlowIds[0], out var list))
         {
-            if (list.Contains(flowStep.Id))
+            if (list.Contains(context.Step.Id))
             {
                 TaskCompletionSource taskCompletionSource = new();
-                Debugging.TryAdd(flowContext.FlowIds[0] + flowStep.Id.ToString(), taskCompletionSource);
-                MessageBus.Current.SendMessage(new DebugInfo(flowContext.FlowIds[0], flowStep.Id, true));
+                Debugging.TryAdd(context.FlowContext.FlowIds[0] + context.Step.Id.ToString(), taskCompletionSource);
+                MessageBus.Current.SendMessage(new DebugInfo(context.FlowContext.FlowIds[0], context.Step.Id, true));
                 await taskCompletionSource.Task;
             }
         }
+
+        await next(context, cancellationToken);
     }
+
     public void AddDebugs(Guid id, List<Guid> stepIds)
     {
         DebugList.Add(id, stepIds);
@@ -68,6 +66,7 @@ public class DebugMiddleware : IStepOnceMiddleware, IDisposable
             task.SetCanceled();
         }
     }
+
 
 }
 public record DebugInfo(Guid Id, Guid StepId, bool Debugging);

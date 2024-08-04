@@ -47,7 +47,8 @@ public partial class Flow1 : IStep
     public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
         Prop3 = 100;
-        await stepContext.Log("测试日志", LogLevel.Information);
+        stepContext.Log("测试日志", LogLevel.Information);
+        await Task.CompletedTask;
     }
 
 }

@@ -18,7 +18,8 @@ public partial class Flow2 : IStep
 
     public async Task Run(StepContext stepContext, CancellationToken cancellationToken)
     {
-        await stepContext.Log(Integer.ToString());
+        stepContext.Log(Integer.ToString());
+        await Task.CompletedTask;
     }
 }
 

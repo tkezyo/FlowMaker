@@ -468,9 +468,12 @@ public class MonitorInfoViewModel : ReactiveObject, IScreen
     [Reactive]
     public ObservableCollection<MonitorStepInfoViewModel> Steps { get; set; } = [];
     [Reactive]
-    public ObservableCollection<MiddlewareSelectViewModel> Middlewares { get; set; } = [];
+    public ObservableCollection<MiddlewareSelectViewModel> FlowMiddlewares { get; set; } = [];
 
-
+    [Reactive]
+    public ObservableCollection<MiddlewareSelectViewModel> StepGroupMiddlewares { get; set; } = [];
+    [Reactive]
+    public ObservableCollection<MiddlewareSelectViewModel> StepMiddlewares { get; set; } = [];
 }
 public class MonitorStepInfoViewModel : ReactiveObject
 {

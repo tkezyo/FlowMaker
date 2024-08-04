@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
-using Ty;
 
 namespace FlowMaker;
 
@@ -175,7 +174,7 @@ public interface IDataConverterInject
         List<T> list = [];
         foreach (var item in input.Inputs)
         {
-            list.Add(await GetValue<T>(item, serviceProvider, context, convert, cancellationToken));
+            list.Add(await GetValue(item, serviceProvider, context, convert, cancellationToken));
         }
         return list;
     }
@@ -184,7 +183,7 @@ public interface IDataConverterInject
         T[] values = new T[input.Inputs.Count];
         for (int i = 0; i < input.Inputs.Count; i++)
         {
-            values[i] = await GetValue<T>(input.Inputs[i], serviceProvider, context, convert, cancellationToken);
+            values[i] = await GetValue(input.Inputs[i], serviceProvider, context, convert, cancellationToken);
         }
 
         return values;
@@ -221,35 +220,6 @@ public interface IDataConverter<T> : IDataConverter
 {
     Task<T> Convert(FlowContext? context, CancellationToken cancellationToken);
     Task<T> WrapAsync(FlowContext? context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken);
-}
-
-
-
-
-
-public interface IFlowMiddleware
-{
-    Task OnExecuting(FlowContext flowContext, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, Exception? exception, CancellationToken cancellationToken);
-}
-public interface IStepMiddleware
-{
-    Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception? exception, CancellationToken cancellationToken);
-}
-public interface IStepOnceMiddleware
-{
-    Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken);
-    Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken);
-}
-public interface IEventMiddleware
-{
-    Task OnExecuting(FlowContext flowContext, string eventName, string? eventData, CancellationToken cancellationToken);
-}
-
-public interface ILogMiddleware
-{
-    Task OnLog(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, LogInfo logInfo, CancellationToken cancellationToken);
 }
 
 

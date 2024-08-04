@@ -1,14 +1,13 @@
-﻿using DynamicData;
-using FlowMaker.Persistence;
+﻿using FlowMaker.Persistence;
 using ReactiveUI;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
 
-public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IStepMiddleware, IStepOnceMiddleware
+public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowContext>, IMiddleware<StepGroupContext>, IMiddleware<StepContext>
 {
-    public const string Name = "monitor";
+    public static string Name => "调试页面";
 
     public int TotalCount { get; set; } = -1;
     public double CompleteCount { get; set; }
@@ -22,40 +21,12 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
 
-    public async Task OnExecuted(FlowContext flowContext, Exception? exception, CancellationToken cancellationToken)
+    public async Task InvokeAsync(MiddlewareDelegate<FlowContext> next, FlowContext context, CancellationToken cancellationToken)
     {
-        await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
-
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, TotalCount));
-        await Task.CompletedTask;
-    }
-
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, Exception? exception, CancellationToken cancellationToken)
-    {
-
-        if (stepOnceStatus.EndTime.HasValue)
-        {
-            CompleteCount += 0.5;
-            Percent = (double)CompleteCount / TotalCount * 100;
-        }
-        if (!PercentChange.IsDisposed)
-        {
-            PercentChange.OnNext(Percent);
-        }
-        if (!StepChange.IsDisposed)
-        {
-            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, stepOnceStatus, flowContext.FlowIds, flowStep));
-        }
-
-        return Task.CompletedTask;
-    }
-
-    public async Task OnExecuting(FlowContext flowContext, CancellationToken cancellationToken)
-    {
-        if (flowContext.FlowIds.Length == 1)
+        if (context.FlowIds.Length == 1)
         {
 
-            var definition = await flowProvider.LoadFlowDefinitionAsync(flowContext.ConfigDefinition.Category, flowContext.ConfigDefinition.Name);
+            var definition = await flowProvider.LoadFlowDefinitionAsync(context.ConfigDefinition.Category, context.ConfigDefinition.Name);
             if (definition is null)
             {
                 return;
@@ -104,19 +75,40 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
             PercentChange.OnNext(Percent);
         }
 
-        MessageBus.Current.SendMessage(new MonitorMessage(flowContext, TotalCount));
+        MessageBus.Current.SendMessage(new MonitorMessage(context, TotalCount));
+
+        await next(context, cancellationToken);
+
+        await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
+
+        MessageBus.Current.SendMessage(new MonitorMessage(context, TotalCount));
+        await Task.CompletedTask;
     }
 
-    public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, StepOnceStatus stepOnceStatus, CancellationToken cancellationToken)
+    public async Task InvokeAsync(MiddlewareDelegate<StepGroupContext> next, StepGroupContext context, CancellationToken cancellationToken)
     {
-        if (stepOnceStatus.State == StepOnceState.Start && stepOnceStatus.StartTime.HasValue)
+        if (!StepChange.IsDisposed)
+        {
+            StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
+        }
+
+        await next(context, cancellationToken);
+        if (!StepChange.IsDisposed)
+        {
+            StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
+        }
+    }
+
+    public async Task InvokeAsync(MiddlewareDelegate<StepContext> next, StepContext context, CancellationToken cancellationToken)
+    {
+        if (context.StepStatus.State == StepOnceState.Start && context.StepStatus.StartTime.HasValue)
         {
             CompleteCount += 0.5;
             Percent = (double)CompleteCount / TotalCount * 100;
 
         }
 
-        if (stepOnceStatus.State == StepOnceState.Skip)
+        if (context.StepStatus.State == StepOnceState.Skip)
         {
             CompleteCount += 1;
             Percent = (double)CompleteCount / TotalCount * 100;
@@ -128,27 +120,10 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IFlowMiddleware, IS
         }
         if (!StepChange.IsDisposed)
         {
-            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, stepOnceStatus, flowContext.FlowIds, flowStep));
+            StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.StepGroupStatus, context.StepStatus, context.FlowContext.FlowIds, context.Step));
         }
-        return Task.CompletedTask;
-    }
 
-    public Task OnExecuting(FlowContext flowContext, FlowStep flowStep, StepStatus step, CancellationToken cancellationToken)
-    {
-        if (!StepChange.IsDisposed)
-        {
-            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
-        }
-        return Task.CompletedTask;
-    }
-
-    public Task OnExecuted(FlowContext flowContext, FlowStep flowStep, StepStatus step, Exception? exception, CancellationToken cancellationToken)
-    {
-        if (!StepChange.IsDisposed)
-        {
-            StepChange.OnNext(new MonitorStepOnceMessage(flowContext, step, null, flowContext.FlowIds, flowStep));
-        }
-        return Task.CompletedTask;
+        await next(context, cancellationToken);
     }
 }
 
@@ -157,11 +132,12 @@ public class MonitorMessage(FlowContext context, int totalCount)
     public FlowContext Context { get; set; } = context;
     public int TotalCount { get; set; } = totalCount;
 }
-public class MonitorStepOnceMessage(FlowContext flowContext, StepStatus stepStatus, StepOnceStatus? stepOnce, Guid[] flowIds, FlowStep step)
+
+public class MonitorStepOnceMessage(FlowContext flowContext, StepGroupStatus stepGroupStatus, StepStatus? stepStatus, Guid[] flowIds, FlowStep step)
 {
     public FlowContext FlowContext { get; set; } = flowContext;
-    public StepStatus StepStatus { get; } = stepStatus;
-    public StepOnceStatus? StepOnce { get; set; } = stepOnce;
+    public StepGroupStatus StepGroupStatus { get; } = stepGroupStatus;
+    public StepStatus? StepStatus { get; set; } = stepStatus;
     public Guid[] FlowIds { get; set; } = flowIds;
     public FlowStep Step { get; set; } = step;
 }
