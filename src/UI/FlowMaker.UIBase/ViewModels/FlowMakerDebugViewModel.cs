@@ -968,7 +968,7 @@ public class DataDisplayViewModel : ReactiveObject, IDisposable
     private readonly ReadOnlyObservableCollection<WaitEventViewModel> _waitEvents;
     public ReadOnlyObservableCollection<StepLogViewModel> StepLogs => _stepLogs;
     private readonly ReadOnlyObservableCollection<StepLogViewModel> _stepLogs;
-    public SourceCache<StepLogViewModel, string> StepLogsCache = new SourceCache<StepLogViewModel, string>(c => c.StepId + "." + c.Index);
+    public SourceCache<StepLogViewModel, string> StepLogsCache = new(c => c.StepId + "." + c.Index);
 
 }
 
@@ -1021,7 +1021,8 @@ public enum PageTypes
 {
     Tree,
     List,
-    Log
+    Log,
+    Edit
 }
 
 public class FlowConfigDataInputViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
