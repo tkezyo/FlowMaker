@@ -1,10 +1,8 @@
 ﻿using DynamicData;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Subjects;
-using System.Threading;
 using Ty;
 
 namespace FlowMaker;
@@ -213,11 +211,17 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
 
     public CompositeDisposable Disposables { get; set; } = [];
 
+    private bool Inited { get; set; }
     /// <summary>
     /// 初始化状态
     /// </summary>
     public void Init()
     {
+        if (Inited)
+        {
+            return;
+        }
+        Inited = true;
         InitExecuteStepIds();
         StepState.Clear();
 
