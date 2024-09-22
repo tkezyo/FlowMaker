@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Xml.Linq;
 using Ty;
 
@@ -67,6 +68,9 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             {
                 bool needBreak = false;
                 FlowContext flowContext = new(flow, status.Config, flow.Checkers, [id], i, errorTimes, null, null);
+                flowContext.Init();
+                _status[id].Contexts.TryAdd(flowContext.Id, flowContext);
+
                 try
                 {
                     async Task StartAsync()
@@ -122,6 +126,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 }
                 finally
                 {
+                    _status[id].Contexts.TryRemove(flowContext.Id, out _);
                     flowContext.Dispose();
                 }
 
@@ -215,7 +220,6 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
         {
             Cancel = new(),
             SingleRun = singleRun,
-            Context = flowContext
         };
         async Task SetContextAsync(FlowContext context)
         {
@@ -268,30 +272,8 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         await SetContextAsync(flowContext);
 
-
         _status[id].Contexts.TryAdd(string.Join(",", flowContext.FlowIds), flowContext);
 
-        foreach (var item in configDefinition.FlowMiddlewares)
-        {
-            if (!flowContext.FlowMiddlewares.Any(c => c == item))
-            {
-                flowContext.FlowMiddlewares.Add(item);
-            }
-        }
-        foreach (var item in configDefinition.StepGroupMiddlewares)
-        {
-            if (!flowContext.StepGroupMiddlewares.Any(c => c == item))
-            {
-                flowContext.StepGroupMiddlewares.Add(item);
-            }
-        }
-        foreach (var item in configDefinition.StepMiddlewares)
-        {
-            if (!flowContext.StepMiddlewares.Any(c => c == item))
-            {
-                flowContext.StepMiddlewares.Add(item);
-            }
-        }
         await Task.CompletedTask;
         return id;
     }
@@ -397,7 +379,6 @@ public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) :
     public CancellationTokenSource Cancel { get; set; } = new();
 
     public ConcurrentDictionary<string, FlowContext> Contexts { get; set; } = [];
-    public required FlowContext Context { get; set; }
 
 
     public void Log(Guid[] ids, StepStatus stepOnceStatus, string log, LogLevel logLevel = LogLevel.Information)
@@ -419,7 +400,10 @@ public class RunnerStatus(ConfigDefinition config, IServiceScope serviceScope) :
     /// <returns></returns>
     public void SendEvent(string eventName, string? eventData)
     {
-        Context.EventLogs.Add(new EventLog(DateTime.Now, eventName, eventData));
+        foreach (var item in Contexts)
+        {
+            item.Value.EventLogs.Add(new EventLog(DateTime.Now, eventName, eventData));
+        }
     }
 
     public bool Disposed { get; set; }

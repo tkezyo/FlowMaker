@@ -11,6 +11,7 @@ namespace FlowMaker;
 
 public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition configDefinition, List<FlowInput> checkers, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null, SourceList<EventLog>? eventLog = null) : IDisposable
 {
+    public string Id { get; set; } = string.Join(",", flowIds);
     /// <summary>
     /// 流程Id
     /// </summary>
