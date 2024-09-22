@@ -36,7 +36,7 @@
                     </Button>
                 </StackPanel>
 
-              
+
 
                 <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
                     <iconPacks:PackIconPixelartIcons Kind="Debug" />
@@ -262,49 +262,78 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
 
                 <Button Content="{Binding LogName}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ShowAllLogCommand}" />
             </Grid>
-            <StackPanel Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Edit}}">
-                <Button  Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
-                    <iconPacks:PackIconPixelartIcons Kind="Save" />
-                </Button>
-                <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0" ToolTip="编辑流程">
-                    <iconPacks:PackIconPixelartIcons Kind="Edit" />
-                </Button>
-                <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
-                <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
-                <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
-                <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
-                <Separator/>
+            <ScrollViewer  Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Edit}}" Padding="4,0">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
+                            <iconPacks:PackIconPixelartIcons Kind="Save" />
+                        </Button>
+                        <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0" ToolTip="编辑流程">
+                            <iconPacks:PackIconPixelartIcons Kind="Edit" />
+                        </Button>
+                    </StackPanel>
+                    <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
+                    <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
+                    <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
+                    <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
+                    <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
+                    <Separator/>
+                    <WrapPanel Orientation="Horizontal">
+                        <StackPanel Margin="10,4">
+                            <TextBlock Text="流程中间件"/>
+                            <ItemsControl ItemsSource="{Binding Model.FlowMiddlewares}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
+                                            <Button Content="⬆️" Style="{StaticResource ButtonCustom}" Padding="4"/>
+                                            <Button Content="⬇️" Style="{StaticResource ButtonCustom}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <StackPanel Margin="10,4">
+                            <TextBlock Text="步骤组中间件"/>
+                            <ItemsControl ItemsSource="{Binding Model.StepGroupMiddlewares}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <StackPanel Margin="10,4">
+                            <TextBlock Text="步骤中间件"/>
+                            <ItemsControl ItemsSource="{Binding Model.StepMiddlewares}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </WrapPanel>
 
-                <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
-                <ItemsControl ItemsSource="{Binding Model.FlowMiddlewares}"  VerticalAlignment="Center" Margin="0,4">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel></WrapPanel>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Separator/>
-                <ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center" Margin="0,4">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel></WrapPanel>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel>
-                                <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                                <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+                    <Separator/>
+                    <ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center" Margin="0,4">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel></WrapPanel>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                                    <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
         </Grid>
     </DockPanel>
 

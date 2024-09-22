@@ -42,10 +42,10 @@ namespace Test1.Avalonia
                 options.FlowRootDir = "D:\\FlowMaker\\Flow";
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
                 options.Section = "设备1";
-                options.Middlewares.Add(new NameValue("测试中间件", "iio"));
-                options.DefaultMiddlewares.Add(new NameValue("监控", MonitorMiddleware.Name));
-                options.DefaultMiddlewares.Add(new NameValue("调试", DebugMiddleware.Name));
-                options.DefaultMiddlewares.Add(new NameValue("日志", "log"));
+                //options.Middlewares.Add(new NameValue("测试中间件", "iio"));
+                //options.DefaultMiddlewares.Add(new NameValue("监控", MonitorMiddleware.Name));
+                //options.DefaultMiddlewares.Add(new NameValue("调试", DebugMiddleware.Name));
+                //options.DefaultMiddlewares.Add(new NameValue("日志", "log"));
             });
 
             return Task.CompletedTask;

@@ -196,6 +196,14 @@ public interface IDataConverterInject
         return ReshapeRecursive(dims, list, 0);
     }
 
+    /// <summary>
+    /// 递归重塑数组, 用于多维数组
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="dims">数组的维度</param>
+    /// <param name="list">要重塑的数组</param>
+    /// <param name="start">起始索引</param>
+    /// <returns>重塑后的数组</returns>
     private static Array ReshapeRecursive<T>(int[] dims, T[] list, int start)
     {
         if (dims.Length == 1)
