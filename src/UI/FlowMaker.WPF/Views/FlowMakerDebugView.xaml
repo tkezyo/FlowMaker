@@ -285,7 +285,7 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
                             </StackPanel>
                         </GroupBox>
                         <GroupBox Header="属性" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100">
-                            <ItemsControl ItemsSource="{Binding Model.Data}" VerticalAlignment="Center" Margin="0,4">
+                            <ItemsControl ItemsSource="{Binding Model.Data}"  Margin="0,4">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <WrapPanel></WrapPanel>
