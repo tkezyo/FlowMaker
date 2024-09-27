@@ -23,50 +23,123 @@
         <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
     </UserControl.Resources>
     <DockPanel >
-        <ToolBarTray DockPanel.Dock="Top">
-            <ToolBar>
-                <Button  Command="{Binding ChangePageTypeCommand}" Content="{Binding Model.DisplayName}" Style="{StaticResource ButtonCustom}" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                </Button>
-                <StackPanel Orientation="Horizontal" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                    <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}"></hc:CircleProgressBar>
-                    <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
-                        <iconPacks:PackIconPixelartIcons Kind="Play" />
-                    </Button>
-                    <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
-                        <iconPacks:PackIconPixelartIcons Kind="Pause" />
-                    </Button>
+        <ScrollViewer  DockPanel.Dock="Top" MaxHeight="200"
+       Padding="4,0">
+            <WrapPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical" Margin="0,4">
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                            <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}"></hc:CircleProgressBar>
+                            <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
+                                <iconPacks:PackIconPixelartIcons Kind="Play" />
+                            </Button>
+                            <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
+                                <iconPacks:PackIconPixelartIcons Kind="Pause" />
+                            </Button>
+                        </StackPanel>
+                        <Button  Command="{Binding ShowEditCommand}" Content="{Binding Model.DisplayName}" Style="{StaticResource ButtonCustom}" >
+                        </Button>
+                    </StackPanel>
+                  
+
+                    <UniformGrid Columns="2"   Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
+                            <iconPacks:PackIconPixelartIcons Kind="Save" />
+                        </Button>
+                        <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2" ToolTip="编辑流程">
+                            <iconPacks:PackIconPixelartIcons Kind="Edit" />
+                        </Button>
+                        <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowList}" >
+                            <iconPacks:PackIconPixelartIcons Kind="List" />
+                        </ToggleButton>
+                        <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" >
+                            <iconPacks:PackIconPixelartIcons Kind="Debug" />
+                        </ToggleButton>
+                    </UniformGrid>
+          
+
                 </StackPanel>
 
-
-
-                <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                    <iconPacks:PackIconPixelartIcons Kind="Debug" />
-                </ToggleButton>
-                <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowGlobeData}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                    <iconPacks:PackIconPixelartIcons Kind="Notes" />
-                </ToggleButton>
-
-                <StackPanel Orientation="Horizontal">
-                    <StackPanel.Visibility>
-                        <MultiBinding Converter="{StaticResource SendEventVisibilityReConverter}">
-                            <Binding Path="DataDisplay" />
-                            <Binding Path="DataDisplay.WaitEvents.Count" />
-                        </MultiBinding>
-                    </StackPanel.Visibility>
-                    <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}" HorizontalAlignment="Left">
-                        <iconPacks:PackIconPixelartIcons Kind="MailArrowRight" />
-                    </Button>
-                    <ComboBox ItemsSource="{Binding DataDisplay.WaitEvents}"
+                <GroupBox Header="基础" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <StackPanel>
+                        <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
+                        <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
+                        <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
+                        <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
+                        <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="属性" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <ItemsControl ItemsSource="{Binding Model.Data}"  Margin="0,4">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel></WrapPanel>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
+                                    <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+                <GroupBox Header="事件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <StackPanel Orientation="Vertical">
+                        <!--<StackPanel.Visibility>
+                                <MultiBinding Converter="{StaticResource SendEventVisibilityReConverter}">
+                                    <Binding Path="DataDisplay" />
+                                    <Binding Path="DataDisplay.WaitEvents.Count" />
+                                </MultiBinding>
+                            </StackPanel.Visibility>-->
+                        <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}" HorizontalAlignment="Left">
+                            <iconPacks:PackIconPixelartIcons Kind="MailArrowRight" />
+                        </Button>
+                        <ComboBox ItemsSource="{Binding DataDisplay.WaitEvents}"
       DisplayMemberPath="Name"
       Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80" x:Name="eventName"/>
-                    <TextBox 
+                        <TextBox 
 Visibility="{Binding SelectedItem.NeedData,Converter={StaticResource Boolean2VisibilityConverter},ElementName=eventName}"
 Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
-                </StackPanel>
-            </ToolBar>
-
-        </ToolBarTray>
-
+                    </StackPanel>
+                </GroupBox>
+                <GroupBox Header="流程中间件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <ItemsControl ItemsSource="{Binding Model.FlowMiddlewares}" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding}"  >
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+                <GroupBox Header="步骤组中间件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <ItemsControl ItemsSource="{Binding Model.StepGroupMiddlewares}" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding}" >
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+                <GroupBox Header="步骤中间件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                    <ItemsControl ItemsSource="{Binding Model.StepMiddlewares}" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </GroupBox>
+            </WrapPanel>
+        </ScrollViewer>
 
         <rxui:RoutedViewHost  DockPanel.Dock="Bottom"
    Visibility="{Binding Model.ShowView,Converter={StaticResource Boolean2VisibilityConverter}}" 
@@ -79,19 +152,38 @@ Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{Sta
                 <app:AppViewLocator />
             </rxui:RoutedViewHost.ViewLocator>
         </rxui:RoutedViewHost>
-        <DataGrid Grid.Column="0" ItemsSource="{Binding DataDisplay.FlowGlobeData}"
-Style="{StaticResource DataGrid.Small}"  DockPanel.Dock="Right"
-AutoGenerateColumns="False" IsReadOnly="True"
-                   Visibility="{Binding ShowGlobeData,Converter={StaticResource Boolean2VisibilityConverter}}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="键" Binding="{Binding  Name}" />
-                <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
-            </DataGrid.Columns>
-        </DataGrid>
 
+        <Grid DockPanel.Dock="Bottom"
+              Visibility="{Binding ShowLog,Converter={StaticResource Boolean2VisibilityConverter}}" MinHeight="100">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="0" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Log}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <DataGrid  ItemsSource="{Binding DataDisplay.FlowGlobeData}"
+                       Grid.Column="1"
+Style="{StaticResource DataGrid.Small}"  
+AutoGenerateColumns="False" IsReadOnly="True" >
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="键" Binding="{Binding  Name}" />
+                    <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <StackPanel Grid.ColumnSpan="2" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
+                <Button Content="X"  Command="{Binding CloseLogCommand}" />
+                <Button Content="{Binding LogName}"  Command="{Binding ShowAllLogCommand}" />
+            </StackPanel>
+        </Grid>
         <Grid  >
             <TreeView ItemsSource="{Binding Model.Steps}"
-                           Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Tree}}"
+                            Visibility="{Binding ShowList,Converter={StaticResource Boolean2VisibilityReConverter}}"
                           HorizontalAlignment="Stretch"
                Style="{StaticResource TreeView.Small}">
                 <TreeView.ItemTemplate>
@@ -206,7 +298,7 @@ AutoGenerateColumns="False" IsReadOnly="True"
             </TreeView>
 
             <DataGrid
-                          Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.List}}"
+                          Visibility="{Binding ShowList,Converter={StaticResource Boolean2VisibilityConverter}}"
 Style="{StaticResource DataGrid.Small}"
 ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsReadOnly="True" SelectionMode="Single"  SelectedItem="{Binding SelectedStepOnce}">
                 <DataGrid.RowStyle>
@@ -252,85 +344,7 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
                 </DataGrid.Columns>
             </DataGrid>
 
-            <Grid  Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Log}}">
-                <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="1" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Log}" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
 
-                <Button Content="{Binding LogName}" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Command="{Binding ShowAllLogCommand}" />
-            </Grid>
-            <ScrollViewer  Visibility="{Binding PageType,Converter={StaticResource EqualToVisibilityConverter},ConverterParameter={x:Static vms:PageTypes.Edit}}" Padding="4,0">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
-                            <iconPacks:PackIconPixelartIcons Kind="Save" />
-                        </Button>
-                        <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2,0" ToolTip="编辑流程">
-                            <iconPacks:PackIconPixelartIcons Kind="Edit" />
-                        </Button>
-                    </StackPanel>
-                   
-                    <WrapPanel Orientation="Horizontal">
-                        <GroupBox Header="基础" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}">
-                            <StackPanel>
-                                <TextBox Text="{Binding Model.Repeat,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重复:"  hc:TitleElement.TitlePlacement="Left"/>
-                                <TextBox Text="{Binding Model.Retry,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="重试:"  hc:TitleElement.TitlePlacement="Left"/>
-                                <TextBox Text="{Binding Model.Timeout,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="超时:"  hc:TitleElement.TitlePlacement="Left"/>
-                                <CheckBox Content="错误后停止" IsChecked="{Binding Model.ErrorStop}"/>
-                                <ComboBox ItemsSource="{Binding CustomLogs}" hc:TitleElement.Title="自定义日志" SelectedItem="{Binding Model.LogView}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.TitlePlacement="Left"></ComboBox>
-                            </StackPanel>
-                        </GroupBox>
-                        <GroupBox Header="属性" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100">
-                            <ItemsControl ItemsSource="{Binding Model.Data}"  Margin="0,4">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel></WrapPanel>
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <TextBox hc:TitleElement.Title="{Binding DisplayName}" MinWidth="50"  Text="{Binding Value,UpdateSourceTrigger=PropertyChanged}" hc:TitleElement.TitlePlacement="Left" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityReConverter}}"/>
-                                            <ComboBox  hc:TitleElement.Title="{Binding DisplayName}" hc:TitleElement.TitlePlacement="Left" ItemsSource="{Binding Options}" SelectedValue="{Binding Value,UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding HasOption,Converter={StaticResource Boolean2VisibilityConverter}}" SelectedValuePath="Name" DisplayMemberPath="DisplayName"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </GroupBox>
-                        <GroupBox Header="流程中间件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100">
-                            <ItemsControl ItemsSource="{Binding Model.FlowMiddlewares}" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding}"  >
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </GroupBox>
-                        <GroupBox Header="步骤组中间件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100">
-                            <ItemsControl ItemsSource="{Binding Model.StepGroupMiddlewares}" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding}" >
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </GroupBox>
-                        <GroupBox Header="步骤中间件" Margin="10,4" Style="{StaticResource GroupBoxTab.Small}" MinWidth="100">
-                            <ItemsControl ItemsSource="{Binding Model.StepMiddlewares}" dd:DragDrop.IsDragSource="True" dd:DragDrop.IsDropTarget="True" dd:DragDrop.DropHandler="{Binding}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Selected,Mode=TwoWay}" Margin="2"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </GroupBox>
-                    </WrapPanel>
-                </StackPanel>
-            </ScrollViewer>
 
         </Grid>
     </DockPanel>

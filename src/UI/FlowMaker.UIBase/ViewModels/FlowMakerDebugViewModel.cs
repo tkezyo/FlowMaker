@@ -87,10 +87,11 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         EditFlowCommand = ReactiveCommand.CreateFromTask(EditFlow);
         ShowStepLogCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(ShowStepLog);
         ShowAllLogCommand = ReactiveCommand.Create(ShowAllLog);
-        ChangePageTypeCommand = ReactiveCommand.Create(ChangePageType);
+        CloseLogCommand = ReactiveCommand.Create(CloseLog);
         RunSingleCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(RunSingle);
         ShowStepOnceLogCommand = ReactiveCommand.Create<StepLogViewModel>(ShowStepOnceLog);
         StopSingleCommand = ReactiveCommand.Create<MonitorStepInfoViewModel>(StopSingle);
+        ShowEditCommand = ReactiveCommand.Create(() => ShowEdit = !ShowEdit);
 
         this.WhenAnyValue(c => c.Model!.SingleRun).Skip(1).Subscribe(async c =>
         {
@@ -98,10 +99,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             {
                 return;
             }
-            if (c)
-            {
-                PageType = PageTypes.Tree;
-            }
+
             if (!c)
             {
                 if (Model.Id.HasValue)
@@ -829,7 +827,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = monitorStepInfoViewModel.Id;
             DataDisplay.Index = null;
         }
-        PageType = PageTypes.Log;
+        ShowLog = true;
+        //PageType = PageTypes.Log;
 
     }
     [Reactive]
@@ -846,7 +845,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = monitorStepInfoViewModel.StepId;
             DataDisplay.Index = monitorStepInfoViewModel.Index;
         }
-        PageType = PageTypes.Log;
+        ShowLog = true;
+        // PageType = PageTypes.Log;
 
     }
 
@@ -861,19 +861,28 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.StepId = null;
             DataDisplay.Index = null;
         }
-        PageType = PageTypes.Log;
+        ShowLog = true;
+        //PageType = PageTypes.Log;
     }
+    public ReactiveCommand<Unit, Unit> CloseLogCommand { get; }
+    public void CloseLog()
+    {
+        ShowLog = false;
+
+        //PageType = PageTypes.Log;
+    }
+
     [Reactive]
-    public bool ShowGlobeData { get; set; }
+    public bool ShowLog { get; set; }
+    [Reactive]
+    public bool ShowEdit { get; set; }
+    [Reactive]
+    public bool ShowList { get; set; }
     [Reactive]
     public PageTypes PageType { get; set; }
+    public ReactiveCommand<Unit, bool> ShowEditCommand { get; }
 
-    public ReactiveCommand<Unit, Unit> ChangePageTypeCommand { get; }
-    public void ChangePageType()
-    {
-        //切换下一个PageType
-        PageType = (PageTypes)(((int)PageType + 1) % Enum.GetValues<PageTypes>().Length);
-    }
+
 
     public async ValueTask DisposeAsync()
     {
@@ -1021,7 +1030,6 @@ public enum PageTypes
 {
     Tree,
     List,
-    Log,
     Edit
 }
 
