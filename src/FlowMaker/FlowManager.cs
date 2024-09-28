@@ -18,11 +18,10 @@ namespace FlowMaker;
 /// <param name="serviceProvider"></param>
 /// <param name="flowProvider"></param>
 /// <param name="logger"></param>
-public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowProvider, ILogger<FlowManager> logger, IOptions<FlowMakerOption> option)
+public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowProvider, ILogger<FlowManager> logger)
 {
     private readonly IFlowProvider _flowProvider = flowProvider;
     private readonly ILogger<FlowManager> _logger = logger;
-    private readonly FlowMakerOption _flowMakerOption = option.Value;
 
     #region Run
 

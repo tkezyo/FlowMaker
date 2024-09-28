@@ -58,11 +58,16 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
 
             if (context is null)
             {
-                throw new Exception("未找到上下文");
+                config.FlowMiddlewares = stepContext.FlowContext.FlowMiddlewares;
+                config.StepGroupMiddlewares = stepContext.FlowContext.StepGroupMiddlewares;
+                config.StepMiddlewares = stepContext.FlowContext.StepMiddlewares;
+                context = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents, stepContext.FlowContext.Data);
+                context.Init();
+                //throw new Exception("未找到上下文");
             }
 
             //TODO  这里需要从FlowManager获取
-            //FlowContext context = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents, stepContext.FlowContext.Data);
+           
 
             var builder = new MiddlewareBuilder<FlowContext>(serviceProvider);
 
@@ -103,9 +108,13 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
 
             if (context is null)
             {
-                throw new Exception("未找到上下文");
+                config.FlowMiddlewares = stepContext.FlowContext.FlowMiddlewares;
+                config.StepGroupMiddlewares = stepContext.FlowContext.StepGroupMiddlewares;
+                config.StepMiddlewares = stepContext.FlowContext.StepMiddlewares;
+                context = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents);
+                context.Init();
             }
-            //FlowContext context = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents);
+          
 
             var builder = new MiddlewareBuilder<FlowContext>(serviceProvider);
 

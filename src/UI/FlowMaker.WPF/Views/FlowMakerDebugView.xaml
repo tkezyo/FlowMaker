@@ -40,23 +40,43 @@
                         <Button  Command="{Binding ShowEditCommand}" Content="{Binding Model.DisplayName}" Style="{StaticResource ButtonCustom}" >
                         </Button>
                     </StackPanel>
-                  
-
-                    <UniformGrid Columns="2"   Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
-                            <iconPacks:PackIconPixelartIcons Kind="Save" />
-                        </Button>
-                        <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2" ToolTip="编辑流程">
-                            <iconPacks:PackIconPixelartIcons Kind="Edit" />
-                        </Button>
-                        <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowList}" >
-                            <iconPacks:PackIconPixelartIcons Kind="List" />
-                        </ToggleButton>
-                        <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" >
-                            <iconPacks:PackIconPixelartIcons Kind="Debug" />
-                        </ToggleButton>
-                    </UniformGrid>
-          
+                    <Border BorderBrush="LightGray" BorderThickness="1" Margin="4,4" CornerRadius="3"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <UniformGrid Columns="3" HorizontalAlignment="Left" >
+                            <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
+                                <iconPacks:PackIconPixelartIcons Kind="Save" />
+                            </Button>
+                            <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2" ToolTip="编辑流程">
+                                <iconPacks:PackIconPixelartIcons Kind="Edit" />
+                            </Button>
+                            <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowList}" >
+                                <iconPacks:PackIconPixelartIcons Kind="List" />
+                            </ToggleButton>
+                            <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" >
+                                <iconPacks:PackIconPixelartIcons Kind="Debug" />
+                            </ToggleButton>
+                        </UniformGrid>
+                    </Border>
+                    <GroupBox Header="事件" Margin="4,4" Style="{StaticResource GroupBoxTab.Small}"
+                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
+                        <StackPanel Orientation="Vertical">
+                            <!--<StackPanel.Visibility>
+                                <MultiBinding Converter="{StaticResource SendEventVisibilityReConverter}">
+                                    <Binding Path="DataDisplay" />
+                                    <Binding Path="DataDisplay.WaitEvents.Count" />
+                                </MultiBinding>
+                            </StackPanel.Visibility>-->
+                            <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}" HorizontalAlignment="Left">
+                                <iconPacks:PackIconPixelartIcons Kind="MailArrowRight" />
+                            </Button>
+                            <ComboBox ItemsSource="{Binding DataDisplay.WaitEvents}"
+      DisplayMemberPath="Name"
+      Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80" x:Name="eventName"/>
+                            <TextBox 
+Visibility="{Binding SelectedItem.NeedData,Converter={StaticResource Boolean2VisibilityConverter},ElementName=eventName}"
+Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
+                        </StackPanel>
+                    </GroupBox>
+                
 
                 </StackPanel>
 
@@ -87,26 +107,6 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </GroupBox>
-                <GroupBox Header="事件" Margin="4,4" Style="{StaticResource GroupBoxTab.Small}"
-                           Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
-                    <StackPanel Orientation="Vertical">
-                        <!--<StackPanel.Visibility>
-                                <MultiBinding Converter="{StaticResource SendEventVisibilityReConverter}">
-                                    <Binding Path="DataDisplay" />
-                                    <Binding Path="DataDisplay.WaitEvents.Count" />
-                                </MultiBinding>
-                            </StackPanel.Visibility>-->
-                        <Button  Command="{Binding DataContext.SendEventCommand,ElementName=page}"  Style="{StaticResource ButtonPrimary.Small}" HorizontalAlignment="Left">
-                            <iconPacks:PackIconPixelartIcons Kind="MailArrowRight" />
-                        </Button>
-                        <ComboBox ItemsSource="{Binding DataDisplay.WaitEvents}"
-      DisplayMemberPath="Name"
-      Text="{Binding Model.EventName,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ComboBoxExtend.Small}" hc:TitleElement.Title="名称:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80" x:Name="eventName"/>
-                        <TextBox 
-Visibility="{Binding SelectedItem.NeedData,Converter={StaticResource Boolean2VisibilityConverter},ElementName=eventName}"
-Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource TextBoxExtend.Small}" hc:TitleElement.Title="数据:"  hc:TitleElement.TitlePlacement="Left" MinWidth="80"/>
-                    </StackPanel>
                 </GroupBox>
                 <GroupBox Header="中间件" Margin="4,4" Style="{StaticResource GroupBoxTab.Small}"
             Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
@@ -142,7 +142,6 @@ Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{Sta
 
 
                 </GroupBox>
-      
             </WrapPanel>
         </ScrollViewer>
 
@@ -348,9 +347,6 @@ ItemsSource="{Binding DataDisplay.StepLogs}" AutoGenerateColumns="False"  IsRead
                     <DataGridTextColumn Header="执行次数" Binding="{Binding  Index}"/>
                 </DataGrid.Columns>
             </DataGrid>
-
-
-
         </Grid>
     </DockPanel>
 

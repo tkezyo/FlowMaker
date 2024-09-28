@@ -94,6 +94,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowCon
 
         await next(context, cancellationToken);
         if (!StepChange.IsDisposed)
+
         {
             StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
         }

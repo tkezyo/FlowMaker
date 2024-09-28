@@ -19,6 +19,7 @@ namespace Test1
                 stepContext.Log("sdfw+1" + i);
             }
             stepContext.Log("sdfw");
+            await Task.Delay(1000);
             return 1;
         }
     }

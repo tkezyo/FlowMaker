@@ -73,7 +73,7 @@ public class FlowExecuteMiddleware(IServiceProvider serviceProvider) : IMiddlewa
         if (executeStep.Context.StepState.Items.All(c => c.EndTime.HasValue) && executeStep.Context.State == FlowState.Running)
         {
             //全部完成
-            if (executeStep.Context.TaskCompletionSource is null)
+            if (executeStep.Context.TaskCompletionSource is null || executeStep.Context.TaskCompletionSource.Task.Status == TaskStatus.RanToCompletion)
             {
                 return;
             }
