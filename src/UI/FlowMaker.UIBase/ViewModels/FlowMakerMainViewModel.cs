@@ -601,7 +601,7 @@ public class ConfigDefinitionInfoViewModel(string category, string name, string 
 }
 
 
-public class MiddlewareSelectViewModel(string name, string value) : ReactiveObject
+public class MiddlewareSelectViewModel(string name, string value, bool selected = false) : ReactiveObject
 {
     [Reactive]
     public string Name { get; set; } = name;
@@ -609,5 +609,5 @@ public class MiddlewareSelectViewModel(string name, string value) : ReactiveObje
     [Reactive]
     public string Value { get; set; } = value;
     [Reactive]
-    public bool Selected { get; set; }
+    public bool Selected { get; set; } = selected;
 }

@@ -421,18 +421,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             }
         }
 
-        foreach (var item in _flowMakerOption.FlowMiddlewares)
-        {
-            Model.FlowMiddlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
-        }
-        foreach (var item in _flowMakerOption.StepGroupMiddlewares)
-        {
-            Model.StepGroupMiddlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
-        }
-        foreach (var item in _flowMakerOption.StepMiddlewares)
-        {
-            Model.StepMiddlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
-        }
+
         if (!string.IsNullOrEmpty(ConfigName))
         {
             var config = await _flowProvider.LoadConfigDefinitionAsync(FlowCategory, FlowName, ConfigName);
@@ -454,21 +443,73 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     }
                 }
 
-                foreach (var item in Model.FlowMiddlewares)
+                foreach (var item in config.FlowMiddlewares)
                 {
-                    item.Selected = config.FlowMiddlewares.Contains(item.Value);
+                    var middleware = _flowMakerOption.FlowMiddlewares.FirstOrDefault(c => c.Value == item);
+                    if (middleware is null)
+                    {
+                        Model.FlowMiddlewares.Add(new MiddlewareSelectViewModel(item, item, true));
+                    }
+                    else
+                    {
+                        Model.FlowMiddlewares.Add(new MiddlewareSelectViewModel(middleware.Name, item, true));
+                    }
                 }
-                foreach (var item in Model.StepGroupMiddlewares)
+                foreach (var item in config.StepGroupMiddlewares)
                 {
-                    item.Selected = config.StepGroupMiddlewares.Contains(item.Value);
+                    var middleware = _flowMakerOption.StepGroupMiddlewares.FirstOrDefault(c => c.Value == item);
+                    if (middleware is null)
+                    {
+                        Model.StepGroupMiddlewares.Add(new MiddlewareSelectViewModel(item, item, true));
+                    }
+                    else
+                    {
+                        Model.StepGroupMiddlewares.Add(new MiddlewareSelectViewModel(middleware.Name, item, true));
+                    }
                 }
-                foreach (var item in Model.StepMiddlewares)
+                foreach (var item in config.StepMiddlewares)
                 {
-                    item.Selected = config.StepMiddlewares.Contains(item.Value);
+                    var middleware = _flowMakerOption.StepMiddlewares.FirstOrDefault(c => c.Value == item);
+                    if (middleware is null)
+                    {
+                        Model.StepMiddlewares.Add(new MiddlewareSelectViewModel(item, item, true));
+                    }
+                    else
+                    {
+                        Model.StepMiddlewares.Add(new MiddlewareSelectViewModel(middleware.Name, item, true));
+                    }
                 }
+
+
             }
         }
+        foreach (var item in _flowMakerOption.FlowMiddlewares)
+        {
+            if (Model.FlowMiddlewares.Any(c => c.Value == item.Value))
+            {
+                continue;
+            }
 
+            Model.FlowMiddlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
+        }
+        foreach (var item in _flowMakerOption.StepGroupMiddlewares)
+        {
+            if (Model.StepGroupMiddlewares.Any(c => c.Value == item.Value))
+            {
+                continue;
+            }
+
+            Model.StepGroupMiddlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
+        }
+        foreach (var item in _flowMakerOption.StepMiddlewares)
+        {
+            if (Model.StepMiddlewares.Any(c => c.Value == item.Value))
+            {
+                continue;
+            }
+
+            Model.StepMiddlewares.Add(new MiddlewareSelectViewModel(item.Name, item.Value));
+        }
 
 
         await Activate();

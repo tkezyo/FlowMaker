@@ -29,13 +29,14 @@
                 <StackPanel Orientation="Vertical" Margin="0,4">
                     <StackPanel Orientation="Horizontal">
                         <StackPanel Orientation="Horizontal" Visibility="{Binding Model.SingleRun,Converter={StaticResource Boolean2VisibilityReConverter}}">
-                            <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}"></hc:CircleProgressBar>
+                           
                             <Button  Command="{Binding RunCommand}" Style="{StaticResource ButtonPrimary.Small}"  Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityReConverter}}" >
                                 <iconPacks:PackIconPixelartIcons Kind="Play" />
                             </Button>
                             <Button Command="{Binding StopCommand}" Style="{StaticResource ButtonWarning.Small}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}" >
                                 <iconPacks:PackIconPixelartIcons Kind="Pause" />
                             </Button>
+                            <hc:CircleProgressBar Value="{Binding Model.Percent}"  Height="14" Width="14"  ArcThickness="2"  ShowText="False"  Style="{StaticResource ProgressBarInfoCircle}" Visibility="{Binding Model.Running,Converter={StaticResource Boolean2VisibilityConverter}}"></hc:CircleProgressBar>
                         </StackPanel>
                         <Button  Command="{Binding ShowEditCommand}" Content="{Binding Model.DisplayName}" Style="{StaticResource ButtonCustom}" >
                         </Button>
