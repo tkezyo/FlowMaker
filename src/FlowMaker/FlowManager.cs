@@ -74,7 +74,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                 {
                     async Task StartAsync()
                     {
-                        var builder = new MiddlewareBuilder<FlowContext>(serviceProvider);
+                        var builder = new MiddlewareBuilder<FlowContext>(status.ServiceScope.ServiceProvider);
 
                         foreach (var item in flowContext.FlowMiddlewares)
                         {
@@ -336,7 +336,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                         continue;
                     }
 
-                    var value = await IDataConverterInject.GetValue(parentStep.Inputs.First(v => v.Name == item.Name), serviceProvider, flowContext, item.DefaultValue, default);
+                    var value = await IDataConverterInject.GetValue(parentStep.Inputs.First(v => v.Name == item.Name), status.ServiceScope.ServiceProvider, flowContext, item.DefaultValue, default);
                     config.Data.Add(new NameValue(item.Name, value));
                 }
                 flowContext.ConfigDefinition = config;
@@ -345,7 +345,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
         }
 
-        var builder = new MiddlewareBuilder<StepGroupContext>(serviceProvider);
+        var builder = new MiddlewareBuilder<StepGroupContext>(status.ServiceScope.ServiceProvider);
 
         foreach (var item in flowContext.StepGroupMiddlewares)
         {

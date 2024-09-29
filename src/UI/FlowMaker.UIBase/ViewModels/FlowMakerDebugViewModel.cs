@@ -191,7 +191,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 }
                 var flow = Model;
 
-                if (c.Context.State == FlowState.Running)
+                if (!flow.Running)
                 {
                     if (flow is null)
                     {
@@ -218,9 +218,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     var mid = _flowManager.GetRunnerService<IMiddleware<StepContext>>(id, MonitorMiddleware.Name);
                     if (mid is MonitorMiddleware monitor)
                     {
-                        if (!monitor.StepChange.IsDisposed)
+                        if (!monitor.Model.StepChange.IsDisposed)
                         {
-                            monitor.StepChange.Subscribe(c =>
+                            monitor.Model.StepChange.Subscribe(c =>
                             {
 
                                 var steps = flow.Steps;
@@ -283,9 +283,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                 }
                             }).DisposeWith(flow.StepChange);
                         }
-                        if (!monitor.PercentChange.IsDisposed)
+                        if (!monitor.Model.PercentChange.IsDisposed)
                         {
-                            monitor.PercentChange.Subscribe(c =>
+                            monitor.Model.PercentChange.Subscribe(c =>
                             {
                                 flow.Percent = c;
                             }).DisposeWith(flow.StepChange);
@@ -300,8 +300,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         var mid = _flowManager.GetRunnerService<IMiddleware<StepContext>>(id, MonitorMiddleware.Name);
                         if (mid is MonitorMiddleware monitor)
                         {
-                            monitor.PercentChange.Dispose();
-                            monitor.StepChange.Dispose();
+                            monitor.Model.PercentChange.Dispose();
+                            monitor.Model.StepChange.Dispose();
                         }
                         flow.Running = false;
                         Stop(flow.Steps);

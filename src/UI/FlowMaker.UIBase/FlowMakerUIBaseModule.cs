@@ -15,19 +15,28 @@ namespace FlowMaker
         }
         public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
-            hostApplicationBuilder.Services.AddScopedMiddleware<DebugMiddleware>(DebugMiddleware.Name, DebugMiddleware.Name);
+            hostApplicationBuilder.Services.AddSingletonMiddleware<DebugMiddleware>(DebugMiddleware.Name, DebugMiddleware.Name);
 
+            hostApplicationBuilder.Services.AddScoped<MonitorModel>();
             hostApplicationBuilder.Services.AddScoped<MonitorMiddleware>();
+            hostApplicationBuilder.Services.AddScoped<MonitorEndMiddleware>();
 
             hostApplicationBuilder.Services.AddKeyedScoped<IMiddleware<StepContext>, MonitorMiddleware>(MonitorMiddleware.Name, (c, k) => c.GetRequiredService<MonitorMiddleware>());
             hostApplicationBuilder.Services.AddKeyedScoped<IMiddleware<FlowContext>, MonitorMiddleware>(MonitorMiddleware.Name, (c, k) => c.GetRequiredService<MonitorMiddleware>());
             hostApplicationBuilder.Services.AddKeyedScoped<IMiddleware<StepGroupContext>, MonitorMiddleware>(MonitorMiddleware.Name, (c, k) => c.GetRequiredService<MonitorMiddleware>());
+
+            hostApplicationBuilder.Services.AddKeyedScoped<IMiddleware<StepContext>, MonitorEndMiddleware>(MonitorEndMiddleware.Name, (c, k) => c.GetRequiredService<MonitorEndMiddleware>());
+            hostApplicationBuilder.Services.AddKeyedScoped<IMiddleware<FlowContext>, MonitorEndMiddleware>(MonitorEndMiddleware.Name, (c, k) => c.GetRequiredService<MonitorEndMiddleware>());
+            hostApplicationBuilder.Services.AddKeyedScoped<IMiddleware<StepGroupContext>, MonitorEndMiddleware>(MonitorEndMiddleware.Name, (c, k) => c.GetRequiredService<MonitorEndMiddleware>());
 
             hostApplicationBuilder.Services.Configure<FlowMakerOption>(c =>
             {
                 c.FlowMiddlewares.Add(new NameValue(MonitorMiddleware.Name, MonitorMiddleware.Name));
                 c.StepGroupMiddlewares.Add(new NameValue(MonitorMiddleware.Name, MonitorMiddleware.Name));
                 c.StepMiddlewares.Add(new NameValue(MonitorMiddleware.Name, MonitorMiddleware.Name));
+                c.FlowMiddlewares.Add(new NameValue(MonitorEndMiddleware.Name, MonitorEndMiddleware.Name));
+                c.StepGroupMiddlewares.Add(new NameValue(MonitorEndMiddleware.Name, MonitorEndMiddleware.Name));
+                c.StepMiddlewares.Add(new NameValue(MonitorEndMiddleware.Name, MonitorEndMiddleware.Name));
             });
 
             hostApplicationBuilder.Services.Configure<MenuOptions>(options =>

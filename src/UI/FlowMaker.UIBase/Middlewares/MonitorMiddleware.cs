@@ -5,10 +5,8 @@ using System.Reactive.Subjects;
 
 namespace FlowMaker.Middlewares;
 
-public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowContext>, IMiddleware<StepGroupContext>, IMiddleware<StepContext>
+public class MonitorModel
 {
-    public static string Name => "调试页面";
-
     public int TotalCount { get; set; } = -1;
     public double CompleteCount { get; set; }
     public double Percent { get; set; }
@@ -20,19 +18,58 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowCon
     /// 百分比变化
     /// </summary>
     public ReplaySubject<double> PercentChange { get; set; } = new(1);
+}
 
+public class MonitorEndMiddleware(MonitorModel monitorModel) : IMiddleware<FlowContext>, IMiddleware<StepGroupContext>, IMiddleware<StepContext>
+{
+    public static string Name => "调试页面结束";
+    public async Task InvokeAsync(MiddlewareDelegate<FlowContext> next, FlowContext context, CancellationToken cancellationToken)
+    {
+        await next(context, cancellationToken);
+
+        MessageBus.Current.SendMessage(new MonitorMessage(context, monitorModel.TotalCount));
+    }
+    public async Task InvokeAsync(MiddlewareDelegate<StepGroupContext> next, StepGroupContext context, CancellationToken cancellationToken)
+    {
+        await next(context, cancellationToken);
+        if (!monitorModel.StepChange.IsDisposed)
+        {
+            monitorModel.StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
+        }
+    }
+
+    public async Task InvokeAsync(MiddlewareDelegate<StepContext> next, StepContext context, CancellationToken cancellationToken)
+    {
+        await next(context, cancellationToken);
+
+        if (!monitorModel.StepChange.IsDisposed)
+        {
+            monitorModel.StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.StepGroupStatus, context.StepStatus, context.FlowContext.FlowIds, context.Step));
+        }
+    }
+
+
+}
+
+public class MonitorMiddleware(IFlowProvider flowProvider, MonitorModel monitorModel) : IMiddleware<FlowContext>, IMiddleware<StepGroupContext>, IMiddleware<StepContext>
+{
+    private readonly IFlowProvider _flowProvider = flowProvider;
+
+    public static string Name => "调试页面";
+
+    public MonitorModel Model { get; } = monitorModel;
     public async Task InvokeAsync(MiddlewareDelegate<FlowContext> next, FlowContext context, CancellationToken cancellationToken)
     {
         if (context.FlowIds.Length == 1)
         {
 
-            var definition = await flowProvider.LoadFlowDefinitionAsync(context.ConfigDefinition.Category, context.ConfigDefinition.Name);
+            var definition = await _flowProvider.LoadFlowDefinitionAsync(context.ConfigDefinition.Category, context.ConfigDefinition.Name);
             if (definition is null)
             {
                 return;
             }
 
-            TotalCount = 0;
+            Model.TotalCount = 0;
 
             async Task SetFlowStepAsync(IFlowDefinition flowDefinition)
             {
@@ -40,7 +77,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowCon
                 {
                     if (item.Type == StepType.Normal)
                     {
-                        TotalCount++;
+                        Model.TotalCount++;
                     }
                     else if (item.Type == StepType.Embedded && flowDefinition is FlowDefinition fde)
                     {
@@ -50,7 +87,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowCon
                     }
                     else
                     {
-                        var stepDefinition = await flowProvider.GetStepDefinitionAsync(item.Category, item.Name);
+                        var stepDefinition = await _flowProvider.GetStepDefinitionAsync(item.Category, item.Name);
                         if (stepDefinition is FlowDefinition fd)
                         {
                             await SetFlowStepAsync(fd);
@@ -61,70 +98,66 @@ public class MonitorMiddleware(IFlowProvider flowProvider) : IMiddleware<FlowCon
 
             await SetFlowStepAsync(definition);
 
-            CompleteCount = 0;
-            Percent = 0;
+            Model.CompleteCount = 0;
+            Model.Percent = 0;
 
-            StepChange.Dispose();
-            StepChange = new ReplaySubject<MonitorStepOnceMessage>();
-            PercentChange.Dispose();
-            PercentChange = new ReplaySubject<double>(1);
+            Model.StepChange.Dispose();
+            Model.StepChange = new ReplaySubject<MonitorStepOnceMessage>();
+            Model.PercentChange.Dispose();
+            Model.PercentChange = new ReplaySubject<double>(1);
 
         }
-        if (!PercentChange.IsDisposed)
+        if (!Model.PercentChange.IsDisposed)
         {
-            PercentChange.OnNext(Percent);
+            Model.PercentChange.OnNext(Model.Percent);
         }
 
-        MessageBus.Current.SendMessage(new MonitorMessage(context, TotalCount));
+        MessageBus.Current.SendMessage(new MonitorMessage(context, Model.TotalCount));
+        await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
 
         await next(context, cancellationToken);
 
-        await Task.Delay(10, cancellationToken);//解决视图过快，无法停止的问题
-
-        MessageBus.Current.SendMessage(new MonitorMessage(context, TotalCount));
         await Task.CompletedTask;
     }
 
     public async Task InvokeAsync(MiddlewareDelegate<StepGroupContext> next, StepGroupContext context, CancellationToken cancellationToken)
     {
-        if (!StepChange.IsDisposed)
+        if (!Model.StepChange.IsDisposed)
         {
-            StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
+            Model.StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
         }
 
         await next(context, cancellationToken);
-        if (!StepChange.IsDisposed)
-
-        {
-            StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.Status, null, context.FlowContext.FlowIds, context.Step));
-        }
     }
 
     public async Task InvokeAsync(MiddlewareDelegate<StepContext> next, StepContext context, CancellationToken cancellationToken)
     {
         if (context.StepStatus.State == StepOnceState.Start && context.StepStatus.StartTime.HasValue)
         {
-            CompleteCount += 0.5;
-            Percent = (double)CompleteCount / TotalCount * 100;
+            Model.CompleteCount += 0.5;
+            Model.Percent = (double)Model.CompleteCount / Model.TotalCount * 100;
 
         }
 
         if (context.StepStatus.State == StepOnceState.Skip)
         {
-            CompleteCount += 1;
-            Percent = (double)CompleteCount / TotalCount * 100;
+            Model.CompleteCount += 1;
+            Model.Percent = (double)Model.CompleteCount / Model.TotalCount * 100;
         }
 
-        if (!PercentChange.IsDisposed)
+        if (!Model.PercentChange.IsDisposed)
         {
-            PercentChange.OnNext(Percent);
+            Model.PercentChange.OnNext(Model.Percent);
         }
-        if (!StepChange.IsDisposed)
+        if (!Model.StepChange.IsDisposed)
         {
-            StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.StepGroupStatus, context.StepStatus, context.FlowContext.FlowIds, context.Step));
+            Model.StepChange.OnNext(new MonitorStepOnceMessage(context.FlowContext, context.StepGroupStatus, context.StepStatus, context.FlowContext.FlowIds, context.Step));
         }
 
         await next(context, cancellationToken);
+
+
+
     }
 }
 
