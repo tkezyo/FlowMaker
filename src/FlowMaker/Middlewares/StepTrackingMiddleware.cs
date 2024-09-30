@@ -9,19 +9,19 @@ public class StepTrackingMiddleware : IMiddleware<StepContext>
         try
         {
             context.StepStatus.StartTime = DateTime.Now;
-            context.StepStatus.State = StepOnceState.Start;
+            context.StepStatus.State = StepState.Start;
             context.StepStatus.Update.Invoke(context.StepStatus);
 
             await next(context, cancellationToken);
 
             context.StepStatus.EndTime = DateTime.Now;
-            context.StepStatus.State = StepOnceState.Complete;
+            context.StepStatus.State = StepState.Complete;
             context.StepStatus.Update.Invoke(context.StepStatus);
         }
         catch (Exception e)
         {
             context.StepStatus.EndTime = DateTime.Now;
-            context.StepStatus.State = StepOnceState.Error;
+            context.StepStatus.State = StepState.Error;
             context.StepStatus.Update.Invoke(context.StepStatus);
 
             throw new Exception("Step failed", e);

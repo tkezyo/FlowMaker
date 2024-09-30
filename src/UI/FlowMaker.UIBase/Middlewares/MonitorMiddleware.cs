@@ -132,14 +132,14 @@ public class MonitorMiddleware(IFlowProvider flowProvider, MonitorModel monitorM
 
     public async Task InvokeAsync(MiddlewareDelegate<StepContext> next, StepContext context, CancellationToken cancellationToken)
     {
-        if (context.StepStatus.State == StepOnceState.Start && context.StepStatus.StartTime.HasValue)
+        if (context.StepStatus.State == StepState.Start && context.StepStatus.StartTime.HasValue)
         {
             Model.CompleteCount += 0.5;
             Model.Percent = (double)Model.CompleteCount / Model.TotalCount * 100;
 
         }
 
-        if (context.StepStatus.State == StepOnceState.Skip)
+        if (context.StepStatus.State == StepState.Skip)
         {
             Model.CompleteCount += 1;
             Model.Percent = (double)Model.CompleteCount / Model.TotalCount * 100;

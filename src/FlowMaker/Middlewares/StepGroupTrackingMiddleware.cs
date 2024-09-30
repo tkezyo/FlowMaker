@@ -11,7 +11,7 @@ public class StepGroupTrackingMiddleware(IServiceProvider serviceProvider) : IMi
         try
         {
             context.Status.StartTime = DateTime.Now;
-            context.Status.State = StepState.Start;
+            context.Status.State = StepGroupState.Start;
 
             var repeat = await IDataConverterInject.GetValue(context.Step.Repeat, serviceProvider, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
             var retry = await IDataConverterInject.GetValue(context.Step.Retry, serviceProvider, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
@@ -27,17 +27,17 @@ public class StepGroupTrackingMiddleware(IServiceProvider serviceProvider) : IMi
 
             await next(context, cancellationToken);
 
-            if (context.Status.State != StepState.Skip)
+            if (context.Status.State != StepGroupState.Skip)
             {
                 context.Status.EndTime = DateTime.Now;
-                context.Status.State = StepState.Complete;
+                context.Status.State = StepGroupState.Complete;
                 context.FlowContext.StepState.AddOrUpdate(context.Status);
             }
         }
         catch (Exception e)
         {
             context.Status.EndTime = DateTime.Now;
-            context.Status.State = StepState.Error;
+            context.Status.State = StepGroupState.Error;
             context.FlowContext.StepState.AddOrUpdate(context.Status);
 
             if (e is TaskCanceledException)

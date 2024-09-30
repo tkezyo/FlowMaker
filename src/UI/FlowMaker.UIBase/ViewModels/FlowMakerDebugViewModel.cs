@@ -178,7 +178,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
         MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.TaskpoolScheduler).Subscribe(c =>
         {
-            locker.Wait(() =>
+            locker.Wait(async () =>
             {
                 if (c.Context.FlowIds.Length > 1)
                 {
@@ -245,7 +245,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                         step.ErrorIndex = c.StepStatus.ErrorIndex;
                                         step.CurrentIndex = c.StepStatus.CurrentIndex;
 
-                                        if (c.StepStatus.State == StepOnceState.Start && c.StepStatus.StartTime.HasValue)
+                                        if (c.StepStatus.State == StepState.Start && c.StepStatus.StartTime.HasValue)
                                         {
                                             step.Start(c.StepStatus.StartTime.Value);
                                         }
@@ -253,6 +253,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                         {
                                             step.Stop(c.StepStatus.EndTime.Value);
                                         }
+                                     
                                     }
                                     else
                                     {
@@ -297,6 +298,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 {
                     if (flow is not null)
                     {
+                        await Task.Delay(100);
                         var mid = _flowManager.GetRunnerService<IMiddleware<StepContext>>(id, MonitorMiddleware.Name);
                         if (mid is MonitorMiddleware monitor)
                         {
@@ -319,6 +321,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         flow.Percent = 100;
                         flow.StepChange = [];
                     }
+                  
                 }
             });
         })
@@ -654,7 +657,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             item.StartTime = null;
             item.UsedTime = null;
-            item.State = StepState.Wait;
+            item.State = StepGroupState.Wait;
             item.ErrorIndex = 0;
             item.CurrentIndex = 0;
             item.Repeat = 0;

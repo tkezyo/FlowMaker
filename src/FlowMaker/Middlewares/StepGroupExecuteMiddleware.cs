@@ -8,7 +8,7 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
     public static string Name => "执行";
     public async Task InvokeAsync(MiddlewareDelegate<StepGroupContext> next, StepGroupContext context, CancellationToken cancellationToken)
     {
-        StepState state = StepState.Start;
+        StepGroupState state = StepGroupState.Start;
         int errorIndex = 0;
         for (int i = 0; i < context.Status.Repeat; i++)
         {
@@ -19,7 +19,7 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
                 {
                     skipReason = "Finally";
 
-                    state = StepState.Skip;
+                    state = StepGroupState.Skip;
                 }
             }
             else
@@ -34,7 +34,7 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
                     if (result != item2.Value)
                     {
                         skipReason = reason;
-                        state = StepState.Skip;
+                        state = StepGroupState.Skip;
                         break;
                     }
                 }
@@ -48,9 +48,9 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
             while (true)
             {
                 StepStatus once = new(i, errorIndex, context.FlowContext.Index, Log, c => context.Status.OnceLogs.AddOrUpdate(c));
-                if (state == StepState.Skip)
+                if (state == StepGroupState.Skip)
                 {
-                    once.State = StepOnceState.Skip;
+                    once.State = StepState.Skip;
                     Log(once, $"Step {context.Step.Name} Skip, Reason: {skipReason}", LogLevel.Information);
                 }
                 List<string> additionalConditions = [];

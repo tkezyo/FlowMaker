@@ -377,7 +377,7 @@ public class StepStatus(int currentIndex, int errorIndex, string parentIndex, Ac
     /// 输出
     /// </summary>
     public List<NameValue> Outputs { get; set; } = [];
-    public StepOnceState State { get; set; }
+    public StepState State { get; set; }
 
     /// <summary>
     /// 附加属性
@@ -398,7 +398,7 @@ public record LogInfo(string Log, LogLevel LogLevel, DateTime Time, Guid StepId,
 public class StepGroupStatus
 {
     public Guid StepId { get; set; }
-    public StepState State { get; set; }
+    public StepGroupState State { get; set; }
 
     public DateTime? StartTime { get; set; }
 
@@ -438,7 +438,7 @@ public enum FlowState
     Cancel,
     Error,
 }
-public enum StepState
+public enum StepGroupState
 {
     Wait,
     Start,
@@ -447,7 +447,7 @@ public enum StepState
     Skip,
 }
 
-public enum StepOnceState
+public enum StepState
 {
     Wait,
     Start,
