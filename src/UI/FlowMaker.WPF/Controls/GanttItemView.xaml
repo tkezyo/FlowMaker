@@ -1,0 +1,163 @@
+﻿<UserControl x:Class="FlowMaker.Controls.GanttItemView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:FlowMaker.Controls" xmlns:viewmodels="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase" xmlns:converters="clr-namespace:FlowMaker.Converters" 
+                    xmlns:models="clr-namespace:FlowMaker;assembly=FlowMaker"
+                    xmlns:vms="clr-namespace:FlowMaker.ViewModels;assembly=FlowMaker.UIBase"
+                           xmlns:hc="https://handyorg.github.io/handycontrol"
+             mc:Ignorable="d" 
+             x:Name="page"
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <converters:LeftToMarginConverter x:Key="marginConverter" />
+        <converters:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter" />
+        <converters:LeftToWidthConverter x:Key="widthConverter"/>
+        <converters:FlowStepsConverter x:Key="FlowStepsConverter"/>
+        <Style TargetType="Button" x:Key="actionBtn" 
+         BasedOn="{StaticResource ButtonCustom}">
+            <Setter Property="hc:BackgroundSwitchElement.MouseHoverBackground" Value="Gray"/>
+            <Setter Property="hc:BackgroundSwitchElement.MouseDownBackground" Value="Gray"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="BorderBrush" Value="#534fbc"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vms:StepStatus.Normal}">
+                    <Setter  Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="BlueViolet"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vms:StepStatus.DependencyError}">
+                    <Setter Property="Background" Value="IndianRed"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vms:StepStatus.PreStep}">
+                    <Setter  Property="Foreground" Value="White"/>
+                    <Setter Property="Background" Value="DarkBlue"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vms:StepStatus.IndirectPreStep}">
+                    <Setter Property="Background" Value="DeepSkyBlue"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Status}" Value="{x:Static vms:StepStatus.Selected}">
+                    <Setter Property="Background" Value="LimeGreen"/>
+                </DataTrigger>
+            </Style.Triggers>
+
+        </Style>
+    </UserControl.Resources>
+    <ItemsControl ItemsSource="{Binding Steps,ElementName=page}"
+                               VerticalAlignment="Top" AlternationCount="{Binding Steps.Count,ElementName=page}">
+        <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate>
+                <StackPanel>
+                </StackPanel>
+            </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+            <HierarchicalDataTemplate  DataType="vms:FlowStepViewModel" ItemsSource="{Binding Steps}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Row="0"  >
+                        <TextBlock Text="{Binding Path=(ItemsControl.AlternationIndex), 
+RelativeSource={RelativeSource Mode=TemplatedParent}}" VerticalAlignment="Top" HorizontalAlignment="Center" TextAlignment="Center" Width="30" >
+                        </TextBlock>
+
+                        <Button x:Name="btn" 
+                        Content="{Binding DisplayName}" Command="{Binding ChangePreCommand,ElementName=page}"     Style="{StaticResource actionBtn}" Visibility="{Binding IsSubFlow,Converter={StaticResource Boolean2VisibilityReConverter}}">
+                            <Button.CommandParameter>
+                                <MultiBinding Converter="{StaticResource FlowStepsConverter}">
+                                    <Binding Path="."/>
+                                    <Binding ElementName="page" Path="Steps"/>
+                                </MultiBinding>
+                            </Button.CommandParameter>
+                            <Button.Width>
+                                <MultiBinding Converter="{StaticResource widthConverter}">
+                                    <Binding Path="Time"/>
+                                    <Binding Path="Scale" ElementName="page"/>
+                                </MultiBinding>
+                            </Button.Width>
+                            <Button.Margin>
+                                <MultiBinding Converter="{StaticResource marginConverter}">
+                                    <Binding Path="PreTime"/>
+                                    <Binding Path="Scale" ElementName="page"/>
+                                </MultiBinding>
+                            </Button.Margin>
+                        </Button>
+                        <Grid Visibility="{Binding IsSubFlow,Converter={StaticResource Boolean2VisibilityConverter}}" Grid.Row="1">
+                            <Grid.Margin>
+                                <MultiBinding Converter="{StaticResource marginConverter}">
+                                    <Binding Path="PreTime"/>
+                                    <Binding Path="Scale" ElementName="page"/>
+                                </MultiBinding>
+                            </Grid.Margin>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button
+                                    Content="{Binding DisplayName}"
+                                    Command="{Binding ChangePreCommand,ElementName=page}" 
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    Style="{StaticResource actionBtn}" >
+                                <Button.CommandParameter>
+                                    <MultiBinding Converter="{StaticResource FlowStepsConverter}">
+                                        <Binding Path="."/>
+                                        <Binding Path="DataContext.Steps" RelativeSource="{RelativeSource AncestorType={x:Type UserControl}}"/>
+                                    </MultiBinding>
+                                </Button.CommandParameter>
+                                <Button.Width>
+                                    <MultiBinding Converter="{StaticResource widthConverter}">
+                                        <Binding Path="Time"/>
+                                        <Binding Path="Scale" ElementName="page"/>
+                                    </MultiBinding>
+                                </Button.Width>
+                            </Button>
+                            <ToggleButton Content="展开"
+                                    Margin="3,0"
+                                    FontSize="10"
+                                          HorizontalAlignment="Left"
+                                    Style="{StaticResource ToggleButtonCustom}"
+                                          IsChecked="{Binding ShowSubSteps}"
+                                       Grid.Row="0"
+                                        Grid.Column="1"
+                                    />
+
+                            <local:GanttItemView Steps="{Binding Steps}"
+                                                 Grid.Row="1"
+                                                 Grid.Column="0"
+                                                 Grid.ColumnSpan="2"
+                                                     Scale="{Binding Scale,ElementName=page}" 
+                                                     ChangePreCommand="{Binding ChangePreCommand,ElementName=page}" 
+                                                     Visibility="{Binding ShowEmbeddedSteps,Converter={StaticResource Boolean2VisibilityConverter}}"
+                                                     Margin="-30,0"
+                                                     />
+                        </Grid>
+
+                        <TextBlock Margin="8,0" VerticalAlignment="Top" Text="{Binding Name}"></TextBlock>
+                        <ItemsControl ItemsSource="{Binding Conditions}" VerticalAlignment="Top">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"></StackPanel>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding DisplayName}" Margin="2,0" IsChecked="{Binding IsTrue}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+
+                </Grid>
+
+            </HierarchicalDataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

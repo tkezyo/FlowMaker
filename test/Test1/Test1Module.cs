@@ -1,4 +1,5 @@
 ﻿using FlowMaker;
+using FlowMaker.Fluent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ty;
@@ -23,8 +24,6 @@ namespace Test1
             hostApplicationBuilder.Services.AddFlowStep<Flow3>();
             hostApplicationBuilder.Services.AddFlowStep<MyClass>();
             hostApplicationBuilder.Services.AddFlowStep<TestFlow1>();
-            hostApplicationBuilder.Services.AddFlowConverter<ValueConverter>();
-            hostApplicationBuilder.Services.AddFlowConverter<BoolConverter>();
             hostApplicationBuilder.Services.AddConfigOptionProvider<PortProvider>();
             hostApplicationBuilder.Services.AddCaesarModeFlowStep();
             hostApplicationBuilder.Services.AddScoped<CaesarMode>();

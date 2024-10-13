@@ -11,7 +11,6 @@ public class FlowMakerModule : Ty.ModuleBase
     {
         //hostApplicationBuilder.Services.AddTransient<FlowRunner>();
         hostApplicationBuilder.Services.AddSingleton<FlowManager>();
-        hostApplicationBuilder.Services.AddSingleton<IFlowProvider, FileFlowProvider>();
 
         hostApplicationBuilder.Services.AddScopedMiddleware<FlowStateTrackingMiddleware>(FlowStateTrackingMiddleware.Name, FlowStateTrackingMiddleware.Name);
         hostApplicationBuilder.Services.AddScopedMiddleware<FlowExecuteMiddleware>(FlowExecuteMiddleware.Name, FlowExecuteMiddleware.Name);

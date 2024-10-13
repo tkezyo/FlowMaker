@@ -13,6 +13,15 @@ namespace FlowMaker.SourceGenerator
     [Generator]
     public class StepGenerator : IIncrementalGenerator
     {
+        private static readonly DiagnosticDescriptor unsupportedTypeDiagnosticDescriptor = new(
+                id: "FM0001",
+                title: "不支持的参数类型",
+                messageFormat: "不支持类型:{0}",
+                category: "FlowMaker",
+                defaultSeverity: DiagnosticSeverity.Error,
+                isEnabledByDefault: true,
+                description: "支持的类型有Number,String,Boolean,DateTime,DateOnly,TimeOnly."
+            );
         private bool Condition(SyntaxNode node, CancellationToken cancellationToken)
         {
             if (node is ClassDeclarationSyntax ids)
@@ -31,13 +40,13 @@ namespace FlowMaker.SourceGenerator
                             return true;
                         }
                     }
-                    if (c.Type is GenericNameSyntax ff)
-                    {
-                        if (ff.Identifier.Text == "IDataConverter" && ff.TypeArgumentList.Arguments.Any())
-                        {
-                            return true;
-                        }
-                    }
+                    //if (c.Type is GenericNameSyntax ff)
+                    //{
+                    //    if (ff.Identifier.Text == "IDataConverter" && ff.TypeArgumentList.Arguments.Any())
+                    //    {
+                    //        return true;
+                    //    }
+                    //}
 
                     return false;
                 });
@@ -70,7 +79,6 @@ namespace FlowMaker.SourceGenerator
             {
                 var attires = item.Option.GetAttributes();
                 var flowStep = item.Option.Interfaces.Any(c => c.Name == "IStep");
-                var flowConverter = item.Option.Interfaces.Any(c => c.Name == "IDataConverter");
 
                 if (flowStep)
                 {
@@ -116,8 +124,61 @@ namespace FlowMaker.SourceGenerator
                             {
                                 defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
                             }
+
+                            ITypeSymbol GetRealType(ITypeSymbol type)
+                            {
+                                if (type is IArrayTypeSymbol arrayType)
+                                {
+                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
+                                    {
+                                        return GetRealType(subArrayType);
+                                    }
+                                    else
+                                    {
+                                        return arrayType.ElementType;
+                                    }
+                                }
+                                return type;
+                            }
+                            var realType = GetRealType(property.Type);
+                            var flowDataType = "FlowDataType.Number";
+                            //验证是否是字符串,数字,布尔,枚举转换为数字,时间,日期
+                            if (realType.SpecialType == SpecialType.System_String)
+                            {
+                                flowDataType = "FlowDataType.String";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_Int32 ||
+                                 realType.SpecialType == SpecialType.System_Int64 ||
+                                 realType.SpecialType == SpecialType.System_Double ||
+                                 realType.SpecialType == SpecialType.System_Byte ||
+                                 realType.SpecialType == SpecialType.System_Single ||
+                                 realType.SpecialType == SpecialType.System_Decimal ||
+                                 realType.SpecialType == SpecialType.System_Int16 ||
+                                 realType.SpecialType == SpecialType.System_UInt16 ||
+                                 realType.SpecialType == SpecialType.System_UInt32 ||
+                                 realType.SpecialType == SpecialType.System_UInt64 ||
+                                 realType.SpecialType == SpecialType.System_SByte ||
+                                 //或者是枚举
+                                 realType.TypeKind == TypeKind.Enum)
+                            {
+                                flowDataType = "FlowDataType.Number";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_Boolean)
+                            {
+                                flowDataType = "FlowDataType.Boolean";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_DateTime)
+                            {
+                                flowDataType = "FlowDataType.DateTime";
+                            }
+                            else
+                            {
+                                c.ReportDiagnostic(Diagnostic.Create(unsupportedTypeDiagnosticDescriptor, property.Locations[0], property.Type.ToDisplayString()));
+                                //类型错误
+                            }
+
                             defStringBuilder.AppendLine($$"""
-        var {{property.Name}}Prop = new DataDefinition("{{property.Name}}", "{{displayName}}", "{{property.Type.ToDisplayString().Trim('?')}}", "{{defaultValueValue}}");
+        var {{property.Name}}Prop = new DataDefinition("{{property.Name}}", "{{displayName}}", {{flowDataType}}, "{{defaultValueValue}}");
 """);
                             if (input is not null)
                             {
@@ -133,29 +194,16 @@ namespace FlowMaker.SourceGenerator
                             }
                             props.Add($"{property.Name}Prop");
                             bool isArray = false;
-                            string subType = string.Empty;
                             int rank = 0;
 
                             if (property.Type.TypeKind == TypeKind.Array && property.Type is IArrayTypeSymbol arrayTypeSymbol)
                             {
-                                string GetSubType(IArrayTypeSymbol arrayType)
-                                {
-                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
-                                    {
-                                        return GetSubType(subArrayType);
-                                    }
-                                    else
-                                    {
-                                        return arrayType.ElementType.ToDisplayString();
-                                    }
-                                }
+
                                 isArray = true;
-                                subType = GetSubType(arrayTypeSymbol);
                                 rank = arrayTypeSymbol.ToDisplayString().Count(c => c == '[');
                                 defStringBuilder.AppendLine($$"""
         {{property.Name}}Prop.IsArray = true;        
         {{property.Name}}Prop.Rank = {{rank}};        
-        {{property.Name}}Prop.SubType = "{{subType}}";
 """);
                             }
 
@@ -172,7 +220,7 @@ namespace FlowMaker.SourceGenerator
                                         enumDisplayName = enumDisplayNameAttr.ConstructorArguments[0].Value.ToString();
                                     }
                                     defStringBuilder.AppendLine($$"""
-        {{property.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", $"{(int){{typeSymbol.Name}}.{{enumValue.Name}}}"));
+        {{property.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", $"{({{typeSymbol.EnumUnderlyingType.ToDisplayString()}}){{typeSymbol.Name}}.{{enumValue.Name}}}"));
 """);
                                 }
                             }
@@ -211,11 +259,11 @@ namespace FlowMaker.SourceGenerator
         var {{memberName}}Input = stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}}));
         if ({{memberName}}Input.Mode == InputMode.Array)
         {
-            {{memberName}} = ({{property.Type.ToDisplayString()}})IDataConverterInject.Reshape<{{subType}}>({{memberName}}Input.Dims, await IDataConverterInject.GetArrayValue<{{subType}}>({{memberName}}Input, serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
+            {{memberName}} = IStepInject.ConvertToArray<{{property.Type.ToDisplayString()}}>(IStepInject.Reshape<{{realType.ToDisplayString()}}>({{memberName}}Input.Dims, IStepInject.GetArrayValue<{{realType.ToDisplayString()}}>({{memberName}}Input, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{realType.ToDisplayString()}}>(s))));
         }
         else
         {
-            {{memberName}} = await IDataConverterInject.GetValue<{{property.Type.ToDisplayString()}}>({{memberName}}Input, serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+            {{memberName}} = IStepInject.GetValue<{{property.Type.ToDisplayString()}}>({{memberName}}Input, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), nameof({{memberName}}));
         }
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
@@ -225,14 +273,14 @@ namespace FlowMaker.SourceGenerator
                                     if (property.Type.SpecialType == SpecialType.System_String)
                                     {
                                         inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IDataConverterInject.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}})), serviceProvider, stepContext.FlowContext, s => s?.ToString(), cancellationToken);
+        {{memberName}} = IStepInject.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}})), stepContext.FlowContext, s => s?.ToString(), nameof({{memberName}}));
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                                     }
                                     else
                                     {
                                         inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IDataConverterInject.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}})), serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{memberName}} = IStepInject.GetValue<{{property.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{memberName}})), stepContext.FlowContext, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), nameof({{memberName}}));
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                                     }
@@ -244,7 +292,7 @@ namespace FlowMaker.SourceGenerator
                             if (output is not null)
                             {
                                 outputStringBuilder.AppendLine($$"""
-        await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{memberName}})), {{memberName}}, serviceProvider, stepContext.FlowContext, cancellationToken);
+        IStepInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{memberName}})), {{memberName}}, stepContext.FlowContext);
         stepContext.StepStatus.Outputs.Add(new NameValue(nameof({{memberName}}), JsonSerializer.Serialize({{memberName}})));
 """);
                             }
@@ -284,133 +332,6 @@ public partial class {item.Option.MetadataName}
 ";
 
                     c.AddSource($"{item.Option.MetadataName}.s.g.cs", SourceText.From(baseStr, Encoding.UTF8));
-                }
-                if (flowConverter)
-                {
-                    //获取 flowConverter中的泛型参数
-                    //var type = flowConverter.AttributeClass.TypeArguments[0] as INamedTypeSymbol;
-
-                    //var category = flowConverter.ConstructorArguments[0].Value.ToString();
-                    //var name = flowConverter.ConstructorArguments[1].Value.ToString();
-
-                    var type = item.Option.AllInterfaces.FirstOrDefault(c => c.Name == "IDataConverter");
-                    if (type.TypeArguments.Any())
-                    {
-                        type = type.TypeArguments[0] as INamedTypeSymbol;
-                    }
-                    StringBuilder inputStringBuilder = new();
-
-                    StringBuilder defStringBuilder = new();
-                    List<string> inputs = [];
-                    foreach (var member in item.Option.GetMembers())
-                    {
-                        if (member is IPropertySymbol property)
-                        {
-                            if (property.IsStatic)
-                            {
-                                continue;
-                            }
-                            var memberName = member.Name;
-                            var propAttires = property.GetAttributes();
-                            var displayNameAttr = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DescriptionAttribute");
-                            var input = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "InputAttribute");
-
-                            var output = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "OutputAttribute");
-                            if (input is null && output is null)
-                            {
-                                continue;
-                            }
-                            var displayName = memberName;
-
-                            if (displayNameAttr is not null)
-                            {
-                                displayName = displayNameAttr.ConstructorArguments[0].Value.ToString();
-                            }
-
-                            var options = propAttires.Where(c => c.AttributeClass.Name == "OptionAttribute").ToList();
-                            var defaultValue = propAttires.FirstOrDefault(c => c.AttributeClass.Name == "DefaultValueAttribute");
-                            string defaultValueValue = string.Empty;
-                            if (defaultValue is not null)
-                            {
-                                defaultValueValue = defaultValue.ConstructorArguments[0].Value.ToString();
-                            }
-                            defStringBuilder.AppendLine($$"""
-        var {{property.Name}}Prop = new DataDefinition("{{property.Name}}", "{{displayName}}", "{{property.Type.ToDisplayString().Trim('?')}}", "{{defaultValueValue}}");
-""");
-                            if (input is not null)
-                            {
-                                defStringBuilder.AppendLine($$"""
-        {{property.Name}}Prop.IsInput = true;
-""");
-                            }
-                            if (output is not null)
-                            {
-                                defStringBuilder.AppendLine($$"""
-        {{property.Name}}Prop.IsOutput = true;
-""");
-                            }
-                            inputs.Add($"{property.Name}Prop");
-
-                            if (options.Any())
-                            {
-                                foreach (var option in options)
-                                {
-                                    defStringBuilder.AppendLine($$"""
-        {{property.Name}}Prop.Options.Add(new OptionDefinition("{{option.ConstructorArguments[0].Value}}", "{{option.ConstructorArguments[1].Value}}"));
-""");
-                                }
-                            }
-                            if (input is not null)
-                            {
-                                inputStringBuilder.AppendLine($$"""
-        {{memberName}} = await IDataConverter<{{property.Type.ToDisplayString()}}>.GetValue(inputs.First(v=> v.Name == "{{memberName}}"), serviceProvider, context, s => JsonSerializer.Deserialize<{{property.Type.ToDisplayString()}}>(s), cancellationToken);
-""");
-
-                            }
-                        }
-                    }
-
-
-                    string baseStr = $@"using FlowMaker;
-using System.Text.Json;
-using Ty;
-using Ty.Module.Configs;
-
-namespace {item.Option.ContainingNamespace};
-
-#nullable enable
-
-partial class {item.Option.MetadataName}
-{{
-    public async Task<{type.ToDisplayString()}> WrapAsync(FlowContext? context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
-    {{
-{inputStringBuilder}
-        return await Convert(context, cancellationToken);
-    }}
-
-    public async Task<string> GetStringResultAsync(FlowContext context, IReadOnlyList<FlowInput> inputs, IServiceProvider serviceProvider, CancellationToken cancellationToken)
-    {{
-        var result  = await WrapAsync(context, inputs, serviceProvider, cancellationToken);
-        return JsonSerializer.Serialize(result);
-    }}
-
-
-    public static ConverterDefinition GetDefinition()
-    {{
-{defStringBuilder}
-        return new ConverterDefinition
-        {{
-            Category = {item.Option.MetadataName}.Category,
-            Name = {item.Option.MetadataName}.Name,
-            Output = ""{type.ToDisplayString()}"",
-            Inputs = [ {string.Join(", ", inputs)} ]
-        }};
-    }}
-}}
-#nullable restore
-";
-
-                    c.AddSource($"{item.Option.MetadataName}.c.g.cs", SourceText.From(baseStr, Encoding.UTF8));
                 }
             });
         }

@@ -7,7 +7,6 @@ namespace FlowMaker;
 public class FlowMakerOption
 {
     public string DebugPageRootDir { get; set; } = string.Empty;
-    public string FlowRootDir { get; set; } = string.Empty;
     /// <summary>
     /// 程序启动时是否自动运行
     /// </summary>
@@ -35,7 +34,7 @@ public class FlowMakerOption
     /// <summary>
     /// 选项集
     /// </summary>
-    public Dictionary<string, List<NameValue>> OptionProviders { get; set; } = [];
+    public Dictionary<FlowDataType, List<NameValue>> OptionProviders { get; set; } = [];
     /// <summary>
     /// 可选的中间件
     /// </summary>
@@ -63,7 +62,7 @@ public class FlowMakerOption
         }
         return group;
     }
-    public List<NameValue> GetOrAddType(string type)
+    public List<NameValue> GetOrAddType(FlowDataType type)
     {
         if (!OptionProviders.TryGetValue(type, out var group))
         {
@@ -72,14 +71,7 @@ public class FlowMakerOption
         }
         return group;
     }
-    public ConverterDefinition? GetConverter(string category, string name)
-    {
-        if (Group.TryGetValue(category, out var group))
-        {
-            return group.ConverterDefinitions.FirstOrDefault(c => c.Name == name);
-        }
-        return null;
-    }
+
     public StepDefinition? GetStep(string category, string name)
     {
         if (Group.TryGetValue(category, out var group))
@@ -94,7 +86,7 @@ public class FlowMakerOption
 public class FlowMakerOptionGroup
 {
     public List<StepDefinition> StepDefinitions { get; set; } = [];
-    public List<ConverterDefinition> ConverterDefinitions { get; set; } = [];
+
 }
 
 public static partial class FlowMakerExtension
@@ -110,18 +102,6 @@ public static partial class FlowMakerExtension
             group.StepDefinitions.Add(T.GetDefinition());
         });
     }
-    public static void AddFlowConverter<T>(this IServiceCollection serviceDescriptors)
-        where T : class, IDataConverter
-    {
-        serviceDescriptors.AddKeyedTransient<IDataConverterInject, T>(T.Category + ":" + T.Name);
-        serviceDescriptors.Configure<FlowMakerOption>(c =>
-        {
-            var group = c.GetOrAddGroup(T.Category);
-
-            group.ConverterDefinitions.Add(T.GetDefinition());
-        });
-    }
-
 }
 public static partial class FlowMiddlewareExtension
 {

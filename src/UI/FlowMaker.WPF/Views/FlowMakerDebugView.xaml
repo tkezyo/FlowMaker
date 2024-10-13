@@ -42,20 +42,20 @@
                         </Button>
                     </StackPanel>
                     <Border BorderBrush="LightGray" BorderThickness="1" Margin="4,4" CornerRadius="3"  Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
-                        <UniformGrid Columns="3" HorizontalAlignment="Left" >
-                            <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置">
+                        <WrapPanel  HorizontalAlignment="Left" >
+                            <Button Command="{Binding DataContext.SaveConfigCommand,ElementName=page}" Style="{StaticResource ButtonSuccess.Small}" ToolTip="保存配置" Margin="2">
                                 <iconPacks:PackIconPixelartIcons Kind="Save" />
                             </Button>
                             <Button  Command="{Binding DataContext.EditFlowCommand,ElementName=page}" Style="{StaticResource ButtonInfo.Small}" Margin="2" ToolTip="编辑流程">
                                 <iconPacks:PackIconPixelartIcons Kind="Edit" />
                             </Button>
-                            <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowList}" >
+                            <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding ShowList}" Margin="2">
                                 <iconPacks:PackIconPixelartIcons Kind="List" />
                             </ToggleButton>
-                            <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" >
+                            <ToggleButton  Style="{StaticResource ToggleButtonDefault.Small}"  IsChecked="{Binding Model.SingleRun}" Margin="2">
                                 <iconPacks:PackIconPixelartIcons Kind="Debug" />
                             </ToggleButton>
-                        </UniformGrid>
+                        </WrapPanel>
                     </Border>
                     <GroupBox Header="事件" Margin="4,4" Style="{StaticResource GroupBoxTab.Small}"
                            Visibility="{Binding ShowEdit,Converter={StaticResource Boolean2VisibilityConverter}}">
@@ -165,7 +165,7 @@ Text="{Binding Model.EventData,UpdateSourceTrigger=PropertyChanged}" Style="{Sta
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="0" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" >
+            <ListBox ItemsSource="{Binding DataDisplay.Log}" Grid.Column="0" x:Name="logListbox" Style="{StaticResource ListBoxCustom}" Height="200">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding Log}" />
@@ -181,7 +181,7 @@ AutoGenerateColumns="False" IsReadOnly="True" >
                     <DataGridTextColumn Header="值" Binding="{Binding  Value}"/>
                 </DataGrid.Columns>
             </DataGrid>
-            <StackPanel Grid.ColumnSpan="2" HorizontalAlignment="Left" VerticalAlignment="Top" Orientation="Horizontal">
+            <StackPanel Grid.ColumnSpan="1" HorizontalAlignment="Right" VerticalAlignment="Top" Orientation="Horizontal">
                 <Button Content="X"  Command="{Binding CloseLogCommand}" />
                 <Button Content="{Binding LogName}"  Command="{Binding ShowAllLogCommand}" />
             </StackPanel>

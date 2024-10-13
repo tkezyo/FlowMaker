@@ -207,37 +207,35 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
 
     public ObservableCollection<FlowCategoryViewModel> Categories { get; set; } = [];
     public ReactiveCommand<Unit, Unit> LoadFlowsCommand { get; }
-    public Task LoadFlows()
+    public async Task LoadFlows()
     {
         Categories.Clear();
-        _flowProvider.LoadCategories().ToList().ForEach(c =>
+        var array = await _flowProvider.LoadFlowAndConfig();
+        foreach (var item in array.GroupBy(c => c.Category))
         {
-            var category = new FlowCategoryViewModel(c);
-            Categories.Add(category);
-            _flowProvider.LoadFlows(c).ToList().ForEach(c =>
+            var category = new FlowCategoryViewModel(item.Key);
+            foreach (var flowItem in item)
             {
-                var flow = new FlowDefinitionInfoViewModel(category.Category, c.Name);
+                var flow = new FlowDefinitionInfoViewModel(flowItem.Id, flowItem.Category, flowItem.Name);
                 category.Flows.Add(flow);
-                foreach (var item in c.Configs)
+                foreach (var configItem in flowItem.Configs)
                 {
-                    flow.Configs.Add(new ConfigDefinitionInfoViewModel(c.Category, c.Name, item));
+                    flow.Configs.Add(new ConfigDefinitionInfoViewModel(configItem.Value, configItem.Name, flowItem.Id, flowItem.Category, flowItem.Name));
                 }
-            });
-        });
-
-        return Task.CompletedTask;
-
+            }
+            Categories.Add(category);
+        }
     }
 
     public ReactiveCommand<FlowDefinitionInfoViewModel?, Unit> CreateCommand { get; }
     public async Task Create(FlowDefinitionInfoViewModel? flowDefinitionInfoViewModel)
     {
         var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
-        await vm.Load(flowDefinitionInfoViewModel?.Category, flowDefinitionInfoViewModel?.Name);
+        await vm.Load(flowDefinitionInfoViewModel?.Id);
         var title = "牛马编辑器" + " " + flowDefinitionInfoViewModel?.Category + " " + flowDefinitionInfoViewModel?.Name;
-        _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
+        _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(async c =>
         {
-            LoadFlows();
+            await LoadFlows();
         });
     }
     public ReactiveCommand<FlowDefinitionInfoViewModel, Unit> RemoveCommand { get; }
@@ -248,7 +246,7 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         {
             return;
         }
-        await _flowProvider.RemoveFlow(flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
+        await _flowProvider.RemoveFlow(flowDefinitionInfoViewModel.Id);
         await LoadFlows();
     }
 
@@ -305,17 +303,14 @@ public class FlowMakerMainViewModel : ViewModelBase, IScreen
         {
             return;
         }
-        await _flowProvider.RemoveConfig(
-               flowDefinitionInfoViewModel.ConfigName,
-               flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name);
+        await _flowProvider.RemoveConfig(flowDefinitionInfoViewModel.ConfigId);
         await LoadFlows();
     }
     public ReactiveCommand<ConfigDefinitionInfoViewModel, Unit> RunConfigCommand { get; }
     public async Task RunConfig(ConfigDefinitionInfoViewModel flowDefinitionInfoViewModel)
     {
-        await foreach (var item in _flowManager.Run(
-            flowDefinitionInfoViewModel.ConfigName,
-            flowDefinitionInfoViewModel.Category, flowDefinitionInfoViewModel.Name))
+        await foreach (var item in _flowManager.RunConfig(
+            flowDefinitionInfoViewModel.ConfigId))
         {
 
         }
@@ -584,8 +579,9 @@ public class FlowCategoryViewModel(string category) : ReactiveObject
     public ObservableCollection<FlowDefinitionInfoViewModel> Flows { get; set; } = [];
 
 }
-public class FlowDefinitionInfoViewModel(string category, string name) : ReactiveObject
+public class FlowDefinitionInfoViewModel(Guid id, string category, string name) : ReactiveObject
 {
+    public Guid Id { get; set; } = id;
     [Reactive]
     public string Category { get; set; } = category;
     [Reactive]
@@ -593,9 +589,9 @@ public class FlowDefinitionInfoViewModel(string category, string name) : Reactiv
     [Reactive]
     public ObservableCollection<ConfigDefinitionInfoViewModel> Configs { get; set; } = [];
 }
-public class ConfigDefinitionInfoViewModel(string category, string name, string configName) : FlowDefinitionInfoViewModel(category, name)
+public class ConfigDefinitionInfoViewModel(Guid configId, string configName, Guid id, string category, string name) : FlowDefinitionInfoViewModel(id, category, name)
 {
-
+    public Guid ConfigId { get; set; } = configId;
     [Reactive]
     public string ConfigName { get; set; } = configName;
 }

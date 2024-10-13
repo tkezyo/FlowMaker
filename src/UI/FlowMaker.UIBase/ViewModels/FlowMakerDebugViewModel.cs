@@ -32,6 +32,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public static string Category => "默认";
 
     public static string Name => "Debug";
+    public Guid? Id { get; set; }
+    public Guid? ConfigId { get; set; }
     [Input]
     [Description("流程类型")]
     [Reactive]
@@ -178,7 +180,7 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
 
         MessageBus.Current.Listen<MonitorMessage>().ObserveOn(RxApp.TaskpoolScheduler).Subscribe(c =>
         {
-            locker.Wait(async () =>
+            locker.Wait(() =>
             {
                 if (c.Context.FlowIds.Length > 1)
                 {
@@ -253,7 +255,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                                         {
                                             step.Stop(c.StepStatus.EndTime.Value);
                                         }
-                                     
                                     }
                                     else
                                     {
@@ -298,7 +299,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                 {
                     if (flow is not null)
                     {
-                        await Task.Delay(100);
                         var mid = _flowManager.GetRunnerService<IMiddleware<StepContext>>(id, MonitorMiddleware.Name);
                         if (mid is MonitorMiddleware monitor)
                         {
@@ -321,7 +321,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                         flow.Percent = 100;
                         flow.StepChange = [];
                     }
-                  
                 }
             });
         })
@@ -340,11 +339,11 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     }
     public async Task Load()
     {
-        if (string.IsNullOrEmpty(FlowCategory) || string.IsNullOrEmpty(FlowName))
+        if (!Id.HasValue)
         {
             return;
         }
-        var definition = await _flowProvider.LoadFlowDefinitionAsync(FlowCategory, FlowName);
+        var definition = await _flowProvider.LoadFlowDefinitionAsync(Id.Value);
         if (definition is null)
         {
             return;
@@ -367,16 +366,10 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
                     Step = item,
                     Parent = parent
                 };
-                if (item.Type == StepType.Normal)
+                if (!item.SubFlowId.HasValue)
                 {
                     Model.TotalCount++;
                     models.Add(step);
-                }
-                else if (item.Type == StepType.Embedded && flowDefinition is FlowDefinition fde)
-                {
-                    var embedded = fde.EmbeddedFlows.First(c => c.StepId == item.Id);
-                    models.Add(step);
-                    await SetFlowStepAsync(step.Steps, embedded, [.. parentId, step.Id], step);
                 }
                 else
                 {
@@ -425,9 +418,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         }
 
 
-        if (!string.IsNullOrEmpty(ConfigName))
+        if (ConfigId.HasValue)
         {
-            var config = await _flowProvider.LoadConfigDefinitionAsync(FlowCategory, FlowName, ConfigName);
+            var config = await _flowProvider.LoadConfigDefinitionAsync(ConfigId.Value);
             if (config is not null)
             {
                 Model.DisplayName = $"{FlowCategory}:{FlowName}:{ConfigName}";
@@ -528,11 +521,9 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             throw new Exception();
         }
-        var config = new ConfigDefinition
+        var config = new ConfigDefinition(monitorInfoViewModel.Category, monitorInfoViewModel.Name)
         {
-            Category = monitorInfoViewModel.Category,
             ConfigName = monitorInfoViewModel.ConfigName,
-            Name = monitorInfoViewModel.Name,
             LogView = monitorInfoViewModel.LogView,
             Timeout = monitorInfoViewModel.Timeout,
             ErrorStop = monitorInfoViewModel.ErrorStop,
@@ -741,10 +732,8 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
         {
             return;
         }
-        ConfigDefinition configDefinition = new()
+        ConfigDefinition configDefinition = new(model.Category, model.Name)
         {
-            Category = model.Category,
-            Name = model.Name,
             LogView = model.LogView,
             ConfigName = model.ConfigName,
             ErrorStop = model.ErrorStop,
@@ -787,12 +776,15 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     public async Task EditFlow()
     {
         var vm = Navigate<FlowMakerEditViewModel>(HostScreen);
-        await vm.Load(FlowCategory, FlowName);
+        await vm.Load(Id);
         var title = "牛马编辑器" + " " + FlowCategory + " " + FlowName;
+
         _messageBoxManager.Window.Handle(new ModalInfo(title, vm) { OwnerTitle = null }).ObserveOn(RxApp.MainThreadScheduler).Subscribe(c =>
         {
             //LoadFlows();
         });
+
+
     }
 
     public ReactiveCommand<MonitorStepInfoViewModel, Unit> RunSingleCommand { get; }
@@ -872,8 +864,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.Index = null;
         }
         ShowLog = true;
-        //PageType = PageTypes.Log;
-
     }
     [Reactive]
     public StepLogViewModel? SelectedStepOnce { get; set; }
@@ -890,8 +880,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.Index = monitorStepInfoViewModel.Index;
         }
         ShowLog = true;
-        // PageType = PageTypes.Log;
-
     }
 
     public ReactiveCommand<Unit, Unit> ShowAllLogCommand { get; }
@@ -906,14 +894,11 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
             DataDisplay.Index = null;
         }
         ShowLog = true;
-        //PageType = PageTypes.Log;
     }
     public ReactiveCommand<Unit, Unit> CloseLogCommand { get; }
     public void CloseLog()
     {
         ShowLog = false;
-
-        //PageType = PageTypes.Log;
     }
 
     [Reactive]
@@ -925,8 +910,6 @@ public partial class FlowMakerDebugViewModel : ViewModelBase, ICustomPageViewMod
     [Reactive]
     public PageTypes PageType { get; set; }
     public ReactiveCommand<Unit, bool> ShowEditCommand { get; }
-
-
 
     public async ValueTask DisposeAsync()
     {
@@ -1048,7 +1031,7 @@ public class FlowGlobeDataViewModel(FlowGlobeData flowGlobeData) : ReactiveObjec
     /// 类型
     /// </summary>
     [Reactive]
-    public string Type { get; set; } = flowGlobeData.Type;
+    public FlowDataType Type { get; set; } = flowGlobeData.Type;
     /// <summary>
     /// 值
     /// </summary>
@@ -1077,10 +1060,10 @@ public enum PageTypes
     Edit
 }
 
-public class FlowConfigDataInputViewModel(string name, string displayName, string type, string? value = null) : ReactiveObject
+public class FlowConfigDataInputViewModel(string name, string displayName, FlowDataType type, string? value = null) : ReactiveObject
 {
     [Reactive]
-    public string Type { get; set; } = type;
+    public FlowDataType Type { get; set; } = type;
     [Reactive]
     public string Name { get; set; } = name;
     /// <summary>

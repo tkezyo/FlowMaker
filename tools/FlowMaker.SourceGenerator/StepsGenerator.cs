@@ -12,6 +12,15 @@ namespace FlowMaker.SourceGenerator
     [Generator]
     public class StepsGenerator : IIncrementalGenerator
     {
+        private static readonly DiagnosticDescriptor unsupportedTypeDiagnosticDescriptor = new(
+             id: "FM0001",
+             title: "不支持的参数类型",
+             messageFormat: "不支持类型:{0}",
+             category: "FlowMaker",
+             defaultSeverity: DiagnosticSeverity.Error,
+             isEnabledByDefault: true,
+             description: "支持的类型有Number,String,Boolean,DateTime,DateOnly,TimeOnly."
+         );
         private bool Condition(SyntaxNode node, CancellationToken cancellationToken)
         {
             if (node is ClassDeclarationSyntax cds)
@@ -126,7 +135,8 @@ namespace FlowMaker.SourceGenerator
                                 Name = parameter.Name,
                                 Type = parameter.Type,
                                 DefaultValue = parameter.HasExplicitDefaultValue ? parameter.ExplicitDefaultValue?.ToString() : null,
-                                Description = parameter.GetAttributes().FirstOrDefault(v => v.AttributeClass?.Name == "DescriptionAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString()
+                                Description = parameter.GetAttributes().FirstOrDefault(v => v.AttributeClass?.Name == "DescriptionAttribute")?.ConstructorArguments.FirstOrDefault().Value?.ToString(),
+                                Parameter = parameter
                             };
                             if (string.IsNullOrEmpty(input.Description))
                             {
@@ -146,7 +156,7 @@ namespace FlowMaker.SourceGenerator
                                 var output = new Output
                                 {
                                     Name = tupleElement.Name,
-                                    Type = tupleElement.Type
+                                    Type = tupleElement.Type,
                                 };
                                 outputs.Add(output);
                             }
@@ -219,13 +229,13 @@ namespace FlowMaker.SourceGenerator
                             inputPropStringBuilder.AppendLine($"    [OptionProvider({item.Option.Name}InstanceProvider.FullName)]");
                             inputPropStringBuilder.AppendLine($"    public string InstanceProvider {{ get; set; }}");
                             defStringBuilder.AppendLine($$"""
-        var InstanceProviderProp = new DataDefinition("InstanceProvider", "实例", "string", "");
+        var InstanceProviderProp = new DataDefinition("InstanceProvider", "实例", FlowDataType.String, "");
         InstanceProviderProp.IsInput = true;
         InstanceProviderProp.OptionProviderName = {{item.Option.Name}}InstanceProvider.Type + ":" + {{item.Option.Name}}InstanceProvider.Name;;
 """);
 
                             inputStringBuilder.AppendLine($$"""
-        InstanceProvider = await IDataConverterInject.GetValue<string>(stepContext.Step.Inputs.First(v=> v.Name == nameof(InstanceProvider)), serviceProvider, stepContext.FlowContext, s => s?.ToString(), cancellationToken);
+        InstanceProvider = IStepInject.GetValue<string>(stepContext.Step.Inputs.First(v=> v.Name == nameof(InstanceProvider)), stepContext.FlowContext, s => s?.ToString(), nameof(InstanceProvider));
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof(InstanceProvider), JsonSerializer.Serialize(InstanceProvider)));
 """);
                             props.Add("InstanceProviderProp");
@@ -250,34 +260,57 @@ namespace FlowMaker.SourceGenerator
                             inputPropStringBuilder.AppendLine($"    public {input.Type.ToDisplayString()} {input.Name} {{ get; set; }}");
 
 
+                            var realType = GetRealType(input.Type);
+                            var flowDataType = "FlowDataType.Number";
+                            //验证是否是字符串,数字,布尔,枚举转换为数字,时间,日期
+                            if (realType.SpecialType == SpecialType.System_String)
+                            {
+                                flowDataType = "FlowDataType.String";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_Int32 ||
+                                 realType.SpecialType == SpecialType.System_Int64 ||
+                                 realType.SpecialType == SpecialType.System_Double ||
+                                 realType.SpecialType == SpecialType.System_Byte ||
+                                 realType.SpecialType == SpecialType.System_Single ||
+                                 realType.SpecialType == SpecialType.System_Decimal ||
+                                 realType.SpecialType == SpecialType.System_Int16 ||
+                                 realType.SpecialType == SpecialType.System_UInt16 ||
+                                 realType.SpecialType == SpecialType.System_UInt32 ||
+                                 realType.SpecialType == SpecialType.System_UInt64 ||
+                                 realType.SpecialType == SpecialType.System_SByte ||
+                                 //或者是枚举
+                                 realType.TypeKind == TypeKind.Enum)
+                            {
+                                flowDataType = "FlowDataType.Number";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_Boolean)
+                            {
+                                flowDataType = "FlowDataType.Boolean";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_DateTime)
+                            {
+                                flowDataType = "FlowDataType.DateTime";
+                            }
+                            else
+                            {
+                                c.ReportDiagnostic(Diagnostic.Create(unsupportedTypeDiagnosticDescriptor, input.Parameter.Locations[0], input.Type.ToDisplayString()));
+                                //类型错误
+                            }
+
                             defStringBuilder.AppendLine($$"""
-        var {{input.Name}}Prop = new DataDefinition("{{input.Name}}", "{{input.Description}}", "{{input.Type.ToDisplayString()}}", "{{input.DefaultValue}}");
+        var {{input.Name}}Prop = new DataDefinition("{{input.Name}}", "{{input.Description}}", {{flowDataType}}, "{{input.DefaultValue}}");
         {{input.Name}}Prop.IsInput = true;
 """);
 
                             bool isArray = false;
-                            string subType = string.Empty;
-
 
                             if (input.Type.TypeKind == TypeKind.Array && input.Type is IArrayTypeSymbol arrayTypeSymbol)
                             {
-                                string GetSubType(IArrayTypeSymbol arrayType)
-                                {
-                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
-                                    {
-                                        return GetSubType(subArrayType);
-                                    }
-                                    else
-                                    {
-                                        return arrayType.ElementType.ToDisplayString();
-                                    }
-                                }
-                                subType = GetSubType(arrayTypeSymbol);
+                                isArray = true;
                                 var rank = arrayTypeSymbol.ToDisplayString().Count(c => c == '[');
                                 defStringBuilder.AppendLine($$"""
         {{input.Name}}Prop.IsArray = true;        
         {{input.Name}}Prop.Rank = {{rank}};        
-        {{input.Name}}Prop.SubType = "{{subType}}";
 """);
                             }//如果是布尔类型
                             if (input.Type.SpecialType == SpecialType.System_Boolean)
@@ -295,11 +328,11 @@ namespace FlowMaker.SourceGenerator
         var {{input.Name}}Input = stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}}));
         if ({{input.Name}}Input.Mode == InputMode.Array)
         {
-            {{input.Name}} = ({{input.Type.ToDisplayString()}})IDataConverterInject.Reshape<{{subType}}>({{input.Name}}Input.Dims, await IDataConverterInject.GetArrayValue<{{subType}}>({{input.Name}}Input, serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{subType}}>(s), cancellationToken));
+            {{input.Name}} = IStepInject.ConvertToArray<{{input.Type.ToDisplayString()}}>(IStepInject.Reshape<{{realType.ToDisplayString()}}>({{input.Name}}Input.Dims, IStepInject.GetArrayValue<{{realType.ToDisplayString()}}>({{input.Name}}Input, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{realType.ToDisplayString()}}>(s))));
         }
         else
         {
-            {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>({{input.Name}}Input, serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
+            {{input.Name}} = IStepInject.GetValue<{{input.Type.ToDisplayString()}}>({{input.Name}}Input, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), nameof({{input.Name}}));
         }
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
 """);
@@ -309,14 +342,14 @@ namespace FlowMaker.SourceGenerator
                                 if (input.Type.SpecialType == SpecialType.System_String)
                                 {
                                     inputStringBuilder.AppendLine($$"""
-        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, stepContext.FlowContext, s => s?.ToString(), cancellationToken);
+        {{input.Name}} = IStepInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), stepContext.FlowContext, s => s?.ToString(), nameof({{input.Name}}));
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
 """);
                                 }
                                 else
                                 {
                                     inputStringBuilder.AppendLine($$"""
-        {{input.Name}} = await IDataConverterInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), serviceProvider, stepContext.FlowContext, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), cancellationToken);
+        {{input.Name}} = IStepInject.GetValue<{{input.Type.ToDisplayString()}}>(stepContext.Step.Inputs.First(v=> v.Name == nameof({{input.Name}})), stepContext.FlowContext, s => JsonSerializer.Deserialize<{{input.Type.ToDisplayString()}}>(s), nameof({{input.Name}}));
         stepContext.StepStatus.Inputs.Add(new NameValue(nameof({{input.Name}}), JsonSerializer.Serialize({{input.Name}})));
 """);
                                 }
@@ -336,7 +369,7 @@ namespace FlowMaker.SourceGenerator
                                         enumDisplayName = enumDisplayNameAttr.ConstructorArguments[0].Value.ToString();
                                     }
                                     defStringBuilder.AppendLine($$"""
-        {{input.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", $"{(int){{typeSymbol.Name}}.{{enumValue.Name}}}"));
+        {{input.Name}}Prop.Options.Add(new OptionDefinition("{{enumDisplayName}}", $"{({{typeSymbol.EnumUnderlyingType.ToDisplayString()}}){{typeSymbol.Name}}.{{enumValue.Name}}}"));
 """);
                                 }
                             }
@@ -351,35 +384,59 @@ namespace FlowMaker.SourceGenerator
                             outputPropStringBuilder.AppendLine("    [Output]");
                             outputPropStringBuilder.AppendLine($"    public {output.Type} {output.Name} {{ get; set; }}");
 
+                            var realType = GetRealType(output.Type);
+                            var flowDataType = "FlowDataType.Number";
+                            //验证是否是字符串,数字,布尔,枚举转换为数字,时间,日期
+                            if (realType.SpecialType == SpecialType.System_String)
+                            {
+                                flowDataType = "FlowDataType.String";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_Int32 ||
+                                 realType.SpecialType == SpecialType.System_Int64 ||
+                                 realType.SpecialType == SpecialType.System_Double ||
+                                 realType.SpecialType == SpecialType.System_Byte ||
+                                 realType.SpecialType == SpecialType.System_Single ||
+                                 realType.SpecialType == SpecialType.System_Decimal ||
+                                 realType.SpecialType == SpecialType.System_Int16 ||
+                                 realType.SpecialType == SpecialType.System_UInt16 ||
+                                 realType.SpecialType == SpecialType.System_UInt32 ||
+                                 realType.SpecialType == SpecialType.System_UInt64 ||
+                                 realType.SpecialType == SpecialType.System_SByte ||
+                                 //或者是枚举
+                                 realType.TypeKind == TypeKind.Enum)
+                            {
+                                flowDataType = "FlowDataType.Number";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_Boolean)
+                            {
+                                flowDataType = "FlowDataType.Boolean";
+                            }
+                            else if (realType.SpecialType == SpecialType.System_DateTime)
+                            {
+                                flowDataType = "FlowDataType.DateTime";
+                            }
+                            else
+                            {
+                                c.ReportDiagnostic(Diagnostic.Create(unsupportedTypeDiagnosticDescriptor, output.Type.Locations[0], output.Type.ToDisplayString()));
+                                //类型错误
+                            }
+
                             defStringBuilder.AppendLine($$"""
-        var {{output.Name}}Prop = new DataDefinition("{{output.Name}}", "{{output.Name}}", "{{output.Type}}", "");
+        var {{output.Name}}Prop = new DataDefinition("{{output.Name}}", "{{output.Name}}", {{flowDataType}}, "");
         {{output.Name}}Prop.IsOutput = true;
 """);
                             if (output.Type.TypeKind == TypeKind.Array && output.Type is IArrayTypeSymbol arrayTypeSymbol)
                             {
-                                string GetSubType(IArrayTypeSymbol arrayType)
-                                {
-                                    if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
-                                    {
-                                        return GetSubType(subArrayType);
-                                    }
-                                    else
-                                    {
-                                        return arrayType.ElementType.ToDisplayString();
-                                    }
-                                }
-                                var subType = GetSubType(arrayTypeSymbol);
                                 var rank = arrayTypeSymbol.ToDisplayString().Count(c => c == '[');
                                 defStringBuilder.AppendLine($$"""
         {{output.Name}}Prop.IsArray = true;        
         {{output.Name}}Prop.Rank = {{rank}};        
-        {{output.Name}}Prop.SubType = "{{subType}}";
 """);
                             }
 
 
                             outputStringBuilder.AppendLine($$"""
-        await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{output.Name}})), {{output.Name}}, serviceProvider, stepContext.FlowContext, cancellationToken);
+        IStepInject.SetValue(stepContext.Step.Outputs.First(v=> v.Name == nameof({{output.Name}})), {{output.Name}}, stepContext.FlowContext);
         stepContext.StepStatus.Outputs.Add(new NameValue(nameof({{output.Name}}), JsonSerializer.Serialize({{output.Name}})));
 """);
 
@@ -423,7 +480,7 @@ namespace FlowMaker.SourceGenerator
                         extensionBuilder.AppendLine($$"""
                                     serviceDescriptors.AddFlowStep<{{item.Option.Name}}_{{methodSymbol.Name}}>();
                             """);
-                       
+
 
                         if (!isInterface)
                         {
@@ -551,8 +608,8 @@ public partial class {{item.Option.Name}}_{{methodSymbol.Name}}(IServiceProvider
                 }
                 """;
                 }
-             
-                
+
+
 
                 var source = new StringBuilder();
                 source.AppendLine($$"""
@@ -588,6 +645,21 @@ public static partial class FlowMakerExtension
             });
 
         }
+        ITypeSymbol GetRealType(ITypeSymbol type)
+        {
+            if (type is IArrayTypeSymbol arrayType)
+            {
+                if (arrayType.ElementType is IArrayTypeSymbol subArrayType)
+                {
+                    return GetRealType(subArrayType);
+                }
+                else
+                {
+                    return arrayType.ElementType;
+                }
+            }
+            return type;
+        }
     }
 
     public class Input
@@ -596,6 +668,7 @@ public static partial class FlowMakerExtension
         public ITypeSymbol Type { get; set; }
         public string DefaultValue { get; set; }
         public string Description { get; set; }
+        public IParameterSymbol Parameter { get; set; }
 
 
     }

@@ -22,6 +22,10 @@ using System.Windows.Controls;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using FlowMaker.Persistence.EntityFramework;
+using FlowMaker.Persistence.SQLite;
+using Test1.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace Test1
 {
@@ -32,12 +36,14 @@ namespace Test1
             AddDepend<Test1Module>();
             AddDepend<FlowMakerWpfModule>();
             AddDepend<FlowMakerUIBaseModule>();
+            AddDepend<FlowMakerPersistenceSQLiteModule>();
         }
         public override Task ConfigureServices(IHostApplicationBuilder hostApplicationBuilder)
         {
 
             hostApplicationBuilder.Services.AddSingleton<App>();
             hostApplicationBuilder.Services.AddTransient<MainWindow>();
+            hostApplicationBuilder.Services.AddTransient<UIDbContext>();
             hostApplicationBuilder.Services.AddHostedService<WpfHostedService<App, MainWindow>>();
             hostApplicationBuilder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
@@ -83,7 +89,6 @@ namespace Test1
             });
             hostApplicationBuilder.Services.Configure<FlowMakerOption>(options =>
             {
-                options.FlowRootDir = "D:\\FlowMaker\\Flow";
                 options.DebugPageRootDir = "D:\\FlowMaker\\DebugPage";
                 options.Section = "设备1";
                 options.AutoRun = false;
@@ -94,7 +99,19 @@ namespace Test1
                 //options.DefaultMiddlewares.Add(new NameValue("调试", "debug"));
             });
 
+            hostApplicationBuilder.Services.Configure<SQLiteOptions>(o =>
+            {
+                o.ConnectString = "Data Source=FlowMaker.db";
+            });
             return Task.CompletedTask;
+        }
+
+        public override Task PostConfigureServices(IServiceProvider serviceProvider)
+        {
+            using var db = serviceProvider.GetRequiredService<UIDbContext>();
+            db.Database.Migrate();
+
+            return base.PostConfigureServices(serviceProvider);
         }
     }
 }

@@ -22,6 +22,11 @@
 		<PackageReference Include="Serilog.Sinks.Map" Version="2.0.0" />
 		<PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
 		<PackageReference Include="SharpVectors.Wpf" Version="1.8.4.2" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -42,6 +47,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\src\Providers\FlowMaker.Persistence.SQLite\FlowMaker.Persistence.SQLite.csproj" />
 	  <ProjectReference Include="..\..\src\UI\FlowMaker.WPF\FlowMaker.WPF.csproj" />
 	  <ProjectReference OutputItemType="Analyzer" ReferenceOutputAssembly="false" Include="..\..\tools\FlowMaker.SourceGenerator\FlowMaker.SourceGenerator.csproj" />
 	  <ProjectReference Include="..\Test1\Test1.csproj" />

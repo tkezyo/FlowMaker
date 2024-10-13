@@ -2,9 +2,8 @@
 
 namespace FlowMaker.Middlewares;
 
-public class StepGroupTrackingMiddleware(IServiceProvider serviceProvider) : IMiddleware<StepGroupContext>
+public class StepGroupTrackingMiddleware : IMiddleware<StepGroupContext>
 {
-
     public static string Name => "状态管理";
     public async Task InvokeAsync(MiddlewareDelegate<StepGroupContext> next, StepGroupContext context, CancellationToken cancellationToken)
     {
@@ -13,10 +12,10 @@ public class StepGroupTrackingMiddleware(IServiceProvider serviceProvider) : IMi
             context.Status.StartTime = DateTime.Now;
             context.Status.State = StepGroupState.Start;
 
-            var repeat = await IDataConverterInject.GetValue(context.Step.Repeat, serviceProvider, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
-            var retry = await IDataConverterInject.GetValue(context.Step.Retry, serviceProvider, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
-            var isFinally = await IDataConverterInject.GetValue(context.Step.Finally, serviceProvider, context.FlowContext, s => bool.TryParse(s, out var r) && r, cancellationToken);
-            var errorHandling = await IDataConverterInject.GetValue(context.Step.ErrorHandling, serviceProvider, context.FlowContext, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip, cancellationToken);
+            var repeat = IStepInject.GetValue(context.Step.Repeat, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0);
+            var retry = IStepInject.GetValue(context.Step.Retry, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0);
+            var isFinally = IStepInject.GetValue(context.Step.Finally, context.FlowContext, s => bool.TryParse(s, out var r) && r);
+            var errorHandling = IStepInject.GetValue(context.Step.ErrorHandling, context.FlowContext, s => Enum.TryParse<ErrorHandling>(s, out var r) ? r : ErrorHandling.Skip);
 
             context.Status.Repeat = repeat;
             context.Status.Retry = retry;

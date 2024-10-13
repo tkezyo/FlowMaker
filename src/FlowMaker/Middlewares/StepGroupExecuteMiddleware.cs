@@ -24,16 +24,20 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
             }
             else
             {
-                foreach (var item2 in context.Step.Ifs)
+                foreach (var item2 in context.Step.Conditions)
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
                         return;
                     }
-                    (bool result, string reason) = await CheckStep(context.FlowContext, context.Step, item2.Key, cancellationToken);
-                    if (result != item2.Value)
+                    if (!item2.Execute)
                     {
-                        skipReason = reason;
+                        continue;
+                    }
+                    var result = CheckStep(context.FlowContext, item2.Name);
+                    if (result != item2.IsTrue)
+                    {
+                        skipReason = item2.Name;
                         state = StepGroupState.Skip;
                         break;
                     }
@@ -47,7 +51,7 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
             }
             while (true)
             {
-                StepStatus once = new(i, errorIndex, context.FlowContext.Index, Log, c => context.Status.OnceLogs.AddOrUpdate(c));
+                StepStatus once = new(i, errorIndex, context.FlowContext.Index, Log, c => context.Status.Logs.AddOrUpdate(c));
                 if (state == StepGroupState.Skip)
                 {
                     once.State = StepState.Skip;
@@ -55,16 +59,16 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
                 }
                 List<string> additionalConditions = [];
                 once.ExtraData.Add(StepStatus.AdditionalConditions, additionalConditions);
-                foreach (var item2 in context.Step.AdditionalConditions)
+                foreach (var item2 in context.Step.Conditions)
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
                         return;
                     }
-                    (bool result, string name) = await CheckStep(context.FlowContext, context.Step, item2.Key, cancellationToken);
-                    if (result == item2.Value)
+                    var result = CheckStep(context.FlowContext, item2.Name);
+                    if (result == item2.IsTrue)
                     {
-                        additionalConditions.Add(name);
+                        additionalConditions.Add(item2.Name);
                     }
                 }
                 try
@@ -100,10 +104,17 @@ public class StepGroupExecuteMiddleware(IServiceProvider serviceProvider) : IMid
         }
 
     }
-    protected async Task<(bool, string)> CheckStep(FlowContext flowContext, FlowStep flowStep, Guid convertId, CancellationToken cancellationToken)
+    protected bool CheckStep(FlowContext flowContext, string key)
     {
-        var checker = flowContext.Checkers.FirstOrDefault(c => c.Id == convertId) ?? flowStep.Checkers.FirstOrDefault(c => c.Id == convertId) ?? throw new Exception();
-        var result = await IDataConverterInject.GetValue(checker, serviceProvider, flowContext, s => bool.TryParse(s, out var r) && r, cancellationToken);
-        return (result, checker.Name);
+        var entity = flowContext.Data.Lookup(key);
+        if (entity == null)
+        {
+            if (bool.TryParse(entity.Value.Value, out var r))
+            {
+                return r;
+            }
+        }
+
+        return false;
     }
 }

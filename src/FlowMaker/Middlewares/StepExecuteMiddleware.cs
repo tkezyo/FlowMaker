@@ -12,7 +12,7 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
     private readonly FlowMakerOption _flowMakerOption = option.Value;
     public async Task InvokeAsync(MiddlewareDelegate<StepContext> next, StepContext context, CancellationToken cancellationToken)
     {
-        var timeOut = await IDataConverterInject.GetValue(context.Step.TimeOut, serviceProvider, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0, cancellationToken);
+        var timeOut = IStepInject.GetValue(context.Step.Timeout, context.FlowContext, s => int.TryParse(s, out var r) ? r : 0);
         //超时策略
         if (timeOut > 0)
         {
@@ -39,7 +39,7 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
             return;
         }
 
-        if (stepContext.Step.Type == StepType.Normal)
+        if (!stepContext.Step.SubFlowId.HasValue)
         {
             var stepDefinition = _flowMakerOption.GetStep(stepContext.Step.Category, stepContext.Step.Name)
                 ?? throw new Exception($"未找到{stepContext.Step.Category}，{stepContext.Step.Name}定义");
@@ -47,49 +47,22 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
             var stepObj = serviceProvider.GetRequiredKeyedService<IStepInject>(stepDefinition.Category + ":" + stepDefinition.Name);
             await stepObj.WrapAsync(stepContext, serviceProvider, cancellationToken);
         }
-        else if (stepContext.Step.Type == StepType.Embedded)
-        {
-            var subFlowDefinition = await flowProvider.LoadFlowDefinitionAsync(stepContext.Step.Category, stepContext.Step.Name);
-            var embeddedFlow = subFlowDefinition.EmbeddedFlows.First(c => c.StepId == stepContext.Step.Id);
-
-            var config = new ConfigDefinition { ConfigName = null, Category = stepContext.Step.Category, Name = stepContext.Step.Name };
-
-            var context = flowManager.GetFlowContext([.. stepContext.FlowContext.FlowIds, stepContext.Step.Id]);
-
-            if (context is null)
-            {
-                config.FlowMiddlewares = stepContext.FlowContext.FlowMiddlewares;
-                config.StepGroupMiddlewares = stepContext.FlowContext.StepGroupMiddlewares;
-                config.StepMiddlewares = stepContext.FlowContext.StepMiddlewares;
-                context = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents, stepContext.FlowContext.Data);
-                context.Init();
-                //throw new Exception("未找到上下文");
-            }
-
-            //TODO  这里需要从FlowManager获取
-           
-
-            var builder = new MiddlewareBuilder<FlowContext>(serviceProvider);
-
-            foreach (var item in context.FlowMiddlewares)
-            {
-                builder.Use(item);
-            }
-
-            var application = builder.Build();
-
-            await application.Invoke(context, cancellationToken);
-
-            foreach (var item in context.Result.Data)
-            {
-                await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v => v.Name == item.Name), item.Value, serviceProvider, stepContext.FlowContext, cancellationToken);
-            }
-        }
         else
         {
-            var subFlowDefinition = await flowProvider.LoadFlowDefinitionAsync(stepContext.Step.Category, stepContext.Step.Name);
 
-            var config = new ConfigDefinition { ConfigName = null, Category = stepContext.Step.Category, Name = stepContext.Step.Name };
+            if (!stepContext.Step.SubFlowId.HasValue)
+            {
+                throw new Exception("SubFlowId 为空");
+            }
+
+            var subFlowDefinition = await flowProvider.LoadFlowDefinitionAsync(stepContext.Step.SubFlowId.Value);
+
+            if (subFlowDefinition is null)
+            {
+                throw new Exception("未找到SubFlow定义");
+            }
+
+            var config = new ConfigDefinition(stepContext.Step.Category, stepContext.Step.Name);
             foreach (var item in subFlowDefinition.Data)
             {
                 if (!item.IsInput)
@@ -97,7 +70,7 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
                     continue;
                 }
 
-                var value = await IDataConverterInject.GetValue(stepContext.Step.Inputs.First(v => v.Name == item.Name), serviceProvider, stepContext.FlowContext, item.DefaultValue, cancellationToken);
+                var value = IStepInject.GetValue(stepContext.Step.Inputs.First(v => v.Name == item.Name), stepContext.FlowContext, item.DefaultValue);
                 config.Data.Add(new NameValue(item.Name, value));
             }
             config.FlowMiddlewares = stepContext.FlowContext.FlowMiddlewares;
@@ -111,10 +84,10 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
                 config.FlowMiddlewares = stepContext.FlowContext.FlowMiddlewares;
                 config.StepGroupMiddlewares = stepContext.FlowContext.StepGroupMiddlewares;
                 config.StepMiddlewares = stepContext.FlowContext.StepMiddlewares;
-                context = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents);
+                context = new(subFlowDefinition, config, [.. stepContext.FlowContext.FlowIds, stepContext.Step.Id], stepContext.CurrentIndex, stepContext.ErrorIndex, stepContext.FlowContext.Index, stepContext.FlowContext.Logs, stepContext.FlowContext.WaitEvents);
                 context.Init();
             }
-          
+
 
             var builder = new MiddlewareBuilder<FlowContext>(serviceProvider);
 
@@ -129,7 +102,7 @@ public class StepExecuteMiddleware(IServiceProvider serviceProvider, IOptions<Fl
 
             foreach (var item in context.Result.Data)
             {
-                await IDataConverterInject.SetValue(stepContext.Step.Outputs.First(v => v.Name == item.Name), item.Value, serviceProvider, stepContext.FlowContext, cancellationToken);
+                IStepInject.SetValue(stepContext.Step.Outputs.First(v => v.Name == item.Name), item.Value, stepContext.FlowContext);
             }
         }
     }

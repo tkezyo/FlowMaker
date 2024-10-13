@@ -7,7 +7,7 @@ using Ty;
 
 namespace FlowMaker;
 
-public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition configDefinition, List<FlowInput> checkers, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null, SourceList<EventLog>? eventLog = null) : IDisposable
+public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition configDefinition, Guid[] flowIds, int currentIndex, int errorIndex, string? parentIndex, SourceList<LogInfo>? logger = null, SourceCache<WaitEvent, string>? waitEvents = null, SourceCache<FlowGlobeData, string>? data = null, SourceList<EventLog>? eventLog = null) : IDisposable
 {
     public string Id { get; set; } = string.Join(",", flowIds);
     /// <summary>
@@ -69,10 +69,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
 
 
     public IFlowDefinition FlowDefinition { get; set; } = flowDefinition;
-    /// <summary>
-    /// 检查项
-    /// </summary>
-    public List<FlowInput> Checkers { get; set; } = checkers;
+
 
     /// <summary>
     /// 触发某事件时需要执行的Step
@@ -99,26 +96,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
     private void InitExecuteStepIds()
     {
         ExecuteStepIds.Clear();
-        if (FlowDefinition is EmbeddedFlowDefinition embeddedFlowDefinition)
-        {
-            //遍历子流程，如果是串行执行，则在他的WaitEvents中添加依赖的流程Id，如果是并行执行，则在他的WaitEvents中添加上一个串行流程Id
-            FlowStep? last = null;
-            foreach (var item in FlowDefinition.Steps)
-            {
-                if (last is not null)
-                {
-                    item.WaitEvents.Add(new FlowEvent
-                    {
-                        Type = EventType.PreStep,
-                        StepId = last?.Id
-                    });
-                }
-                if (!item.Parallel)
-                {
-                    last = item;
-                }
-            }
-        }
+       
 
         foreach (var item in FlowDefinition.Steps)
         {
@@ -140,28 +118,22 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
                         ExecuteStepIds.Add(key, list);
                     }
                     WaitEvents.AddOrUpdate(new WaitEvent(flowInput.Value, true));
-                    list.Add(item.Id);
+                    if (!list.Contains(item.Id))
+                    {
+                        list.Add(item.Id);
+                    }
                     foreach (var subInput in flowInput.Inputs)
                     {
                         Register(subInput);
                     }
                 }
             }
-            foreach (var wait in item.Ifs.Keys.Union(item.AdditionalConditions.Keys))
-            {
-                var checker = Checkers.FirstOrDefault(c => c.Id == wait) ?? item.Checkers.FirstOrDefault(c => c.Id == wait);
-                if (checker is null)
-                {
-                    continue;
-                }
-                Register(checker);
-            }
 
             foreach (var input in item.Inputs)
             {
                 Register(input);
             }
-            Register(item.TimeOut);
+            Register(item.Timeout);
             Register(item.Repeat);
             Register(item.Retry);
             Register(item.ErrorHandling);
@@ -193,7 +165,10 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
                     list = [];
                     ExecuteStepIds.Add(key, list);
                 }
-                list.Add(item.Id);
+                if (!list.Contains(item.Id))
+                {
+                    list.Add(item.Id);
+                }
             }
 
             if (waitEvent.Count == 0)
@@ -203,7 +178,10 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
                     list = [];
                     ExecuteStepIds.Add(EventType.StartFlow.ToString(), list);
                 }
-                list.Add(item.Id);
+                if (!list.Contains(item.Id))
+                {
+                    list.Add(item.Id);
+                }
                 continue;
             }
         }
@@ -329,7 +307,7 @@ public class FlowContext(IFlowDefinition flowDefinition, ConfigDefinition config
         foreach (var item in StepState.Items)
         {
             //item.OnceLogs.Clear();
-            item.OnceLogs.Dispose();
+            item.Logs.Dispose();
         }
 
         StepState.Dispose();
@@ -369,6 +347,8 @@ public class StepStatus(int currentIndex, int errorIndex, string parentIndex, Ac
 
     public DateTime? EndTime { get; set; }
 
+
+    //TODO 使用SourceCache, 显示在界面上
     /// <summary>
     /// 输入
     /// </summary>
@@ -412,12 +392,12 @@ public class StepGroupStatus
     /// 需要等待的事件
     /// </summary>
     public List<string> Waits { get; set; } = [];
-    public SourceCache<StepStatus, string> OnceLogs { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
+    public SourceCache<StepStatus, string> Logs { get; set; } = new(c => $"{c.CurrentIndex}.{c.ErrorIndex}");
 }
 
 
 
-public record class FlowGlobeData(string Name, string Type, string? Value = null, bool IsInput = false, bool IsOutput = false)
+public record class FlowGlobeData(string Name, FlowDataType Type, string? Value = null, bool IsInput = false, bool IsOutput = false)
 {
     public string? Value { get; set; } = Value;
 }

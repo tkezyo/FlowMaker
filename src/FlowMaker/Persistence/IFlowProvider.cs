@@ -2,15 +2,16 @@
 
 public interface IFlowProvider
 {
-    string[] LoadCategories();
-    IEnumerable<FlowDefinitionFileInfo> LoadFlows(string category);
+    Task<string[]> LoadCategories();
+    Task<List<FlowDefinitionListModel>> LoadFlowNamesByCategory(string category);
+    Task<List<FlowDefinitionListModel>> LoadFlowAndConfig();
 
     Task SaveFlow(FlowDefinition flowDefinition);
-    Task RemoveFlow(string category, string name);
-    Task<FlowDefinition> LoadFlowDefinitionAsync(string? category, string? name);
+    Task RemoveFlow(Guid id);
+    Task<FlowDefinition?> LoadFlowDefinitionAsync(Guid id);
     Task<IStepDefinition?> GetStepDefinitionAsync(string category, string name);
 
-    Task<ConfigDefinition?> LoadConfigDefinitionAsync(string? category, string? name, string configName);
+    Task<ConfigDefinition?> LoadConfigDefinitionAsync(Guid id);
     Task SaveConfig(ConfigDefinition configDefinition);
-    Task RemoveConfig(string configName, string category, string name);
+    Task RemoveConfig(Guid id);
 }

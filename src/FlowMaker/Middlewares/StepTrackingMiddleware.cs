@@ -20,10 +20,10 @@ public class StepTrackingMiddleware : IMiddleware<StepContext>
         }
         catch (Exception e)
         {
+            context.Log(e.Message);
             context.StepStatus.EndTime = DateTime.Now;
             context.StepStatus.State = StepState.Error;
             context.StepStatus.Update.Invoke(context.StepStatus);
-
             throw new Exception("Step failed", e);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime;
 
 namespace FlowMaker;
 
@@ -7,7 +8,7 @@ public class FlowStep
 {
     public FlowStep()
     {
-        TimeOut = new FlowInput("TimeOut");
+        Timeout = new FlowInput("TimeOut");
         Retry = new FlowInput("Retry");
         Repeat = new FlowInput("Repeat");
         ErrorHandling = new FlowInput("ErrorHandling");
@@ -21,6 +22,23 @@ public class FlowStep
     /// 显示名称
     /// </summary>
     public required string DisplayName { get; set; }
+    [SetsRequiredMembers]
+    public FlowStep(string displayName, string category, string name) : this()
+    {
+        Id = Guid.NewGuid();
+        DisplayName = displayName;
+        Category = category;
+        Name = name;
+    }
+    [SetsRequiredMembers]
+    public FlowStep(Guid id, string displayName, string category, string name) : this()
+    {
+        Id = id;
+        DisplayName = displayName;
+        Category = category;
+        Name = name;
+    }
+
     /// <summary>
     /// 步骤的类别
     /// </summary>
@@ -30,15 +48,8 @@ public class FlowStep
     /// </summary>
     public required string Name { get; set; }
 
+    public Guid? SubFlowId { get; set; }
 
-    /// <summary>
-    /// 并行执行-仅在非甘特图模式下有效
-    /// </summary>
-    public bool Parallel { get; set; }
-    /// <summary>
-    /// 子流程
-    /// </summary>
-    public StepType Type { get; set; }
     /// <summary>
     /// 输入
     /// </summary>
@@ -51,7 +62,7 @@ public class FlowStep
     /// <summary>
     /// 超时,秒 double
     /// </summary>
-    public FlowInput TimeOut { get; set; }
+    public FlowInput Timeout { get; set; }
 
     /// <summary>
     /// 重试 int
@@ -74,15 +85,7 @@ public class FlowStep
     /// <summary>
     /// 是否可执行，同时可作为Break的条件, 可能来自于全局的 checker或自己的 checker
     /// </summary>
-    public Dictionary<Guid, bool> Ifs { get; set; } = [];
-    /// <summary>
-    /// 附加条件,不是用来判断是否执行的，而是添加到附加属性中的
-    /// </summary>
-    public Dictionary<Guid, bool> AdditionalConditions { get; set; } = [];
-    /// <summary>
-    /// 用于Ifs的判断
-    /// </summary>
-    public List<FlowInput> Checkers { get; set; } = [];
+    public List<FlowCondition> Conditions { get; set; } = [];
     /// <summary>
     /// 等待事件
     /// </summary>
@@ -101,24 +104,17 @@ public class FlowEvent
     public string? EventDataType { get; set; }
 }
 
-/// <summary>
-/// 步骤类型
-/// </summary>
-public enum StepType
+public class FlowCondition
 {
+    public required string Name { get; set; }
     /// <summary>
-    /// 普通步骤
+    /// 是否执行,如果是false,则不执行步骤
     /// </summary>
-    Normal,
-    /// <summary>
-    /// 子流程
-    /// </summary>
-    SubFlow,
-    /// <summary>
-    /// 嵌入的子流程
-    /// </summary>
-    Embedded,
+    public bool Execute { get; set; }
+    public bool IsTrue { get; set; }
 }
+
+
 
 public class FlowInput
 {
@@ -134,15 +130,15 @@ public class FlowInput
 
     public required string Name { get; set; }
     public required Guid Id { get; set; }
-    public string? ConverterCategory { get; set; }
-    public string? ConverterName { get; set; }
-
     public InputMode Mode { get; set; }
     public int[] Dims { get; set; } = [];
     /// <summary>
     /// Globe模式下为全局变量, 普通或选项为具体的值,Event为事件名称
     /// </summary>
     public string? Value { get; set; }
+    /// <summary>
+    /// 用于数组模式下的数据
+    /// </summary>
     public List<FlowInput> Inputs { get; set; } = [];
 }
 public enum InputMode
@@ -150,31 +146,24 @@ public enum InputMode
     Normal,
     Array,
     Option,
-    Globe,
-    Converter,
+    Global,
     Event
 }
 public class FlowOutput
 {
     public required string Name { get; set; }
 
-    public string? ConverterCategory { get; set; }
-    public string? ConverterName { get; set; }
-    public string? InputKey { get; set; }
-
     public OutputMode Mode { get; set; }
 
-    public string? ConvertToType { get; set; }
-    public required string Type { get; set; }
+    public FlowDataType Type { get; set; }
 
-    public string? GlobeDataName { get; set; }
-    public List<FlowInput> Inputs { get; set; } = [];
+    public string? GlobalDataName { get; set; }
 }
 public enum OutputMode
 {
     Drop,
-    Globe,
-    GlobeWithConverter,
+    Global,
+
 }
 
 public class FlowResult(int currentIndex, int errorIndex)
@@ -198,7 +187,7 @@ public class FlowResultData
     public required string Name { get; set; }
     public required string DisplayName { get; set; }
     public string? Value { get; set; }
-    public required string Type { get; set; }
+    public FlowDataType Type { get; set; }
 }
 [Flags]
 public enum ErrorHandling

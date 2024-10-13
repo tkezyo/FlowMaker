@@ -37,8 +37,11 @@ public partial class Flow1 : IStep
     [Output]
     public int Prop3 { get; set; }
 
-    [Input]
+    //[Input]
+    // [Output]
     public Data1? Data { get; set; }
+
+
 
     /// <summary>
     /// 执行的命令
@@ -57,34 +60,4 @@ public partial class Flow1 : IStep
 public class Data1
 {
 
-}
-
-public partial class ValueConverter : IDataConverter<int>
-{
-    public static string Category => "Test1";
-
-    public static string Name => "转换器1";
-
-    [Input]
-    public int Prop1 { get; set; }
-    [Input]
-    public int Prop2 { get; set; }
-
-    public Task<int> Convert(FlowContext? context, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(Prop1 + Prop2);
-    }
-}
-
-public partial class BoolConverter : IDataConverter<bool>
-{
-    public static string Category => "Test1";
-
-    public static string Name => "Bool";
-
-
-    public Task<bool> Convert(FlowContext? context, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(true);
-    }
 }

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Xml.Linq;
 using Ty;
 
@@ -25,10 +24,19 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
     #region Run
 
-    public async IAsyncEnumerable<FlowResult> Run(string configName, string flowCategory, string flowName)
+    public async IAsyncEnumerable<FlowResult> RunConfig(Guid configId)
     {
-        var config = await _flowProvider.LoadConfigDefinitionAsync(flowCategory, flowName, configName) ?? throw new InvalidOperationException("未找到配置");
+        var config = await _flowProvider.LoadConfigDefinitionAsync(configId) ?? throw new InvalidOperationException("未找到配置");
         var id = await Init(config, false);
+        await foreach (var item in Run(id))
+        {
+            yield return item;
+        }
+    }
+
+    public async IAsyncEnumerable<FlowResult> Run(ConfigDefinition configDefinition)
+    {
+        var id = await Init(configDefinition, false);
         await foreach (var item in Run(id))
         {
             yield return item;
@@ -38,16 +46,26 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async IAsyncEnumerable<FlowResult> Run(Guid id)
     {
         var status = _status[id];
-
         var testName = DateTime.Now.ToString("yyyyMMdd") + id;
-
-        var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.Category, status.Config.Name);
+        var flow = await _flowProvider.LoadFlowDefinitionAsync(status.Config.FlowId);
         if (flow is null)
         {
             _logger.LogError("未找到流程:{TestName}", testName);
 
             throw new InvalidOperationException("未找到流程");
         }
+        await foreach (var item in Run(id, flow))
+        {
+            yield return item;
+        }
+    }
+
+    public async IAsyncEnumerable<FlowResult> Run(Guid id, FlowDefinition flow)
+    {
+        var status = _status[id];
+
+        var testName = DateTime.Now.ToString("yyyyMMdd") + id;
+
         _logger.LogInformation("流程开始:{TestName}", testName);
         bool needThrow = false;
 
@@ -66,7 +84,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             while (!status.Cancel.IsCancellationRequested)
             {
                 bool needBreak = false;
-                FlowContext flowContext = new(flow, status.Config, flow.Checkers, [id], i, errorTimes, null, null);
+                FlowContext flowContext = new(flow, status.Config, [id], i, errorTimes, null, null);
                 flowContext.Init();
                 _status[id].Contexts.TryAdd(flowContext.Id, flowContext);
 
@@ -198,23 +216,24 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
 
 
     private readonly ConcurrentDictionary<Guid, RunnerStatus> _status = [];
-    public async Task<Guid> Init(ConfigDefinition configDefinition, bool singleRun)
+    public async Task<Guid> Init(ConfigDefinition configDefinition, bool singleRun = false)
+    {
+        var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.FlowId);
+        if (flow is null)
+        {
+            throw new InvalidOperationException("未找到流程");
+        }
+        return await Init(configDefinition, flow, singleRun);
+    }
+    public async Task<Guid> Init(ConfigDefinition configDefinition, FlowDefinition flowDefinition, bool singleRun = false)
     {
         Guid id = Guid.NewGuid();
         var scope = serviceProvider.CreateScope();
 
         var options = scope.ServiceProvider.GetRequiredService<IOptions<FlowMakerOption>>();
-        var flowProvider = scope.ServiceProvider.GetRequiredService<IFlowProvider>();
         var testName = DateTime.Now.ToString("yyyyMMdd") + id;
-        var flow = await _flowProvider.LoadFlowDefinitionAsync(configDefinition.Category, configDefinition.Name);
-        if (flow is null)
-        {
-            _logger.LogError("未找到流程:{TestName}", testName);
 
-            throw new InvalidOperationException("未找到流程");
-        }
-
-        FlowContext flowContext = new(flow, configDefinition, flow.Checkers, [id], 1, 0, null, null);
+        FlowContext flowContext = new(flowDefinition, configDefinition, [id], 1, 0, null, null);
         _status[id] = new RunnerStatus(configDefinition, scope)
         {
             Cancel = new(),
@@ -230,25 +249,15 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
             }
             foreach (var step in context.FlowDefinition.Steps)
             {
-                if (step.Type == StepType.Embedded)
+                if (step.SubFlowId.HasValue)
                 {
-                    var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.Category, step.Name);
-                    var embeddedFlow = subFlowDefinition.EmbeddedFlows.First(c => c.StepId == step.Id);
+                    var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.SubFlowId.Value);
+                    if (subFlowDefinition is null)
+                    {
+                        throw new Exception("未找到子流程");
+                    }
 
-                    var config = new ConfigDefinition { ConfigName = null, Category = step.Category, Name = step.Name };
-                    config.FlowMiddlewares = context.FlowMiddlewares;
-                    config.StepGroupMiddlewares = context.StepGroupMiddlewares;
-                    config.StepMiddlewares = context.StepMiddlewares;
-
-                    FlowContext subContext = new(embeddedFlow, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
-                    await SetContextAsync(subContext);
-                    _status[id].Contexts.TryAdd(string.Join(",", subContext.FlowIds), subContext);
-                }
-                else if (step.Type == StepType.SubFlow)
-                {
-                    var subFlowDefinition = await _flowProvider.LoadFlowDefinitionAsync(step.Category, step.Name);
-
-                    var config = new ConfigDefinition { ConfigName = null, Category = step.Category, Name = step.Name };
+                    var config = new ConfigDefinition(step.Category, step.Name);
                     foreach (var item in subFlowDefinition.Data)
                     {
                         if (!item.IsInput)
@@ -256,13 +265,13 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                             continue;
                         }
 
-                        var value = await IDataConverterInject.GetValue(step.Inputs.First(v => v.Name == item.Name), serviceProvider, context, item.DefaultValue, default);
+                        var value = IStepInject.GetValue(step.Inputs.First(v => v.Name == item.Name), context, item.DefaultValue);
                         config.Data.Add(new NameValue(item.Name, value));
                     }
                     config.FlowMiddlewares = context.FlowMiddlewares;
                     config.StepGroupMiddlewares = context.StepGroupMiddlewares;
                     config.StepMiddlewares = context.StepMiddlewares;
-                    FlowContext subContext = new(subFlowDefinition, config, subFlowDefinition.Checkers, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
+                    FlowContext subContext = new(subFlowDefinition, config, [.. context.FlowIds, step.Id], 1, 0, context.Index, context.Logs, context.WaitEvents, context.Data);
                     await SetContextAsync(subContext);
                     _status[id].Contexts.TryAdd(string.Join(",", subContext.FlowIds), subContext);
                 }
@@ -280,7 +289,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
     public async Task ExecuteSingleFlow(Guid id)
     {
         var status = _status[id];
-
+        await Task.CompletedTask;
         //foreach (var item in status.Runners)
         //{
         //    if (!status.Contexts.TryGetValue(item.Key, out var flowContext))
@@ -324,7 +333,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                     return;
                 }
 
-                var config = new ConfigDefinition { ConfigName = null, Category = flowStep.Category, Name = flowStep.Name };
+                var config = new ConfigDefinition(flowStep.Category, flowStep.Name);
                 config.FlowMiddlewares = parentContext.FlowMiddlewares;
                 config.StepGroupMiddlewares = parentContext.StepGroupMiddlewares;
                 config.StepMiddlewares = parentContext.StepMiddlewares;
@@ -336,7 +345,7 @@ public class FlowManager(IServiceProvider serviceProvider, IFlowProvider flowPro
                         continue;
                     }
 
-                    var value = await IDataConverterInject.GetValue(parentStep.Inputs.First(v => v.Name == item.Name), status.ServiceScope.ServiceProvider, flowContext, item.DefaultValue, default);
+                    var value = IStepInject.GetValue(parentStep.Inputs.First(v => v.Name == item.Name), flowContext, item.DefaultValue);
                     config.Data.Add(new NameValue(item.Name, value));
                 }
                 flowContext.ConfigDefinition = config;

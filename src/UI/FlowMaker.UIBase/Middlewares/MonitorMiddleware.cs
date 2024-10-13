@@ -63,7 +63,7 @@ public class MonitorMiddleware(IFlowProvider flowProvider, MonitorModel monitorM
         if (context.FlowIds.Length == 1)
         {
 
-            var definition = await _flowProvider.LoadFlowDefinitionAsync(context.ConfigDefinition.Category, context.ConfigDefinition.Name);
+            var definition = await _flowProvider.LoadFlowDefinitionAsync(context.ConfigDefinition.FlowId);
             if (definition is null)
             {
                 return;
@@ -75,15 +75,9 @@ public class MonitorMiddleware(IFlowProvider flowProvider, MonitorModel monitorM
             {
                 foreach (var item in flowDefinition.Steps)
                 {
-                    if (item.Type == StepType.Normal)
+                    if (!item.SubFlowId.HasValue)
                     {
                         Model.TotalCount++;
-                    }
-                    else if (item.Type == StepType.Embedded && flowDefinition is FlowDefinition fde)
-                    {
-                        var stepDefinition = fde.EmbeddedFlows.First(c => c.StepId == item.Id);
-
-                        await SetFlowStepAsync(stepDefinition);
                     }
                     else
                     {
