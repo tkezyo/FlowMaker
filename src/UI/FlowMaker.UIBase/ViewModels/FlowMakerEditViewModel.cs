@@ -46,14 +46,14 @@ public class FlowMakerEditViewModel : ViewModelBase
         ShowSubFlowCommand = ReactiveCommand.CreateFromTask<FlowStepViewModel>(ShowSubFlowAsync);
 
         InitConditionCommand = ReactiveCommand.Create(InitCondition);
-        AddConfitionCommand = ReactiveCommand.Create(AddConfition);
+        AddConditionCommand = ReactiveCommand.Create(AddCondition);
         RemoveConditionCommand = ReactiveCommand.Create<FlowIfViewModel>(RemoveCondition);
 
 
         _messageBoxManager = messageBoxManager;
         _serviceProvider = serviceProvider;
         _flowProvider = flowProvider;
-        GlobeDatas.ToObservableChangeSet().SubscribeMany(c =>
+        GlobeData.ToObservableChangeSet().SubscribeMany(c =>
         {
             return c.WhenValueChanged(v => v.Type, notifyOnInitialValue: false).WhereNotNull().Throttle(TimeSpan.FromMilliseconds(200)).DistinctUntilChanged().ObserveOn(RxApp.MainThreadScheduler).Subscribe(v =>
             {
@@ -154,7 +154,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             Name = Name,
         };
 
-        foreach (var item in GlobeDatas)
+        foreach (var item in GlobeData)
         {
             var data = new DataDefinition(item.Name ?? "", item.DisplayName ?? "", item.Type, item.DefaultValue)
             {
@@ -255,7 +255,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     public async Task Load(Guid? id)
     {
         Steps.Clear();
-        GlobeDatas.Clear();
+        GlobeData.Clear();
         Id = id;
         if (!id.HasValue)
         {
@@ -292,8 +292,8 @@ public class FlowMakerEditViewModel : ViewModelBase
             {
                 data.Options.Add(new FlowStepOptionViewModel(option.DisplayName, option.Name));
             }
-            GlobeDatas.Add(data);
-            data.Type = item.Type;//data添加到GlobeDatas后,再赋值Type可以初始化选项集
+            GlobeData.Add(data);
+            data.Type = item.Type;//data添加到GlobeData后,再赋值Type可以初始化选项集
         }
 
         foreach (var item in flowDefinition.Steps)
@@ -367,7 +367,7 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
             else
             {
-                var data = GlobeDatas.FirstOrDefault(c => c.Name == item.Name);
+                var data = GlobeData.FirstOrDefault(c => c.Name == item.Name);
                 flowStepViewModel.Conditions.Add(new FlowIfViewModel { Name = item.Name, IsTrue = item.IsTrue, Execute = item.Execute, DisplayName = data?.DisplayName });
             }
         }
@@ -377,8 +377,6 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
 
     #region Steps
-
-
 
     [Reactive]
     public bool ShowEdit { get; set; }
@@ -427,7 +425,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     }
     private static ObservableCollection<FlowStepViewModel>? GetParent(FlowStepViewModel flowStepViewModel, ObservableCollection<FlowStepViewModel> all)
     {
-        //从steps中找到这个元素,那么返回steps,如果找不到,那么递归找
+        //从 steps 中找到这个元素,那么返回 steps ,如果找不到,那么递归找
         var parent = all.Contains(flowStepViewModel);
         if (parent)
         {
@@ -455,9 +453,9 @@ public class FlowMakerEditViewModel : ViewModelBase
 
         var temp = FlowStep;
         ChangePre((FlowStep, CurrentSteps));
-        var deletes = GlobeDatas.Where(c => c.FromStepId == temp.Id);
+        var deletes = GlobeData.Where(c => c.FromStepId == temp.Id);
 
-        GlobeDatas.RemoveMany(deletes);
+        GlobeData.RemoveMany(deletes);
         var steps = GetParent(temp, Steps);
         steps?.Remove(temp);
         Render(Steps);
@@ -554,10 +552,10 @@ public class FlowMakerEditViewModel : ViewModelBase
         {
             if (item.Mode != OutputMode.Drop)
             {
-                var output = GlobeDatas.FirstOrDefault(c => c.FromStepId == FlowStep.Id && c.FromStepPropName == item.Name);
+                var output = GlobeData.FirstOrDefault(c => c.FromStepId == FlowStep.Id && c.FromStepPropName == item.Name);
                 if (output is null)
                 {
-                    GlobeDatas.Add(new StepDataDefinitionViewModel
+                    GlobeData.Add(new StepDataDefinitionViewModel
                     {
                         Name = item.GlobalDataName,
                         DisplayName = item.GlobalDataName,
@@ -578,10 +576,10 @@ public class FlowMakerEditViewModel : ViewModelBase
             }
             else
             {
-                var output = GlobeDatas.FirstOrDefault(c => c.FromStepId == FlowStep.Id && c.FromStepPropName == item.Name);
+                var output = GlobeData.FirstOrDefault(c => c.FromStepId == FlowStep.Id && c.FromStepPropName == item.Name);
                 if (output is not null)
                 {
-                    GlobeDatas.Remove(output);
+                    GlobeData.Remove(output);
                 }
             }
         }
@@ -704,11 +702,11 @@ public class FlowMakerEditViewModel : ViewModelBase
                 TimeSpan maxSpan = TimeSpan.FromSeconds(0);
                 for (int i = 0; i < item.PreSteps.Count; i++)
                 {
-                    var preaction = item.PreSteps[i];
-                    var action = Steps.FirstOrDefault(c => c.Id == preaction);
+                    var preAction = item.PreSteps[i];
+                    var action = Steps.FirstOrDefault(c => c.Id == preAction);
                     if (action is null)
                     {
-                        item.PreSteps.Remove(preaction);
+                        item.PreSteps.Remove(preAction);
                         continue;
                     }
 
@@ -811,10 +809,10 @@ public class FlowMakerEditViewModel : ViewModelBase
         while (total.Count != 0)
         {
             var has = temp.Select(c => c.Item2).Distinct().ToList();
-            var orderd = total.Except(has);
+            var ordered = total.Except(has);
             total = has;
-            temp = temp.Where(c => !orderd.Contains(c.Item1)).ToList();
-            result.AddRange(ganttActions.Where(c => orderd.Contains(c.Id)).ToList());
+            temp = temp.Where(c => !ordered.Contains(c.Item1)).ToList();
+            result.AddRange(ganttActions.Where(c => ordered.Contains(c.Id)).ToList());
         }
 
         return result;
@@ -851,17 +849,17 @@ public class FlowMakerEditViewModel : ViewModelBase
 
     #region Condition
     public StepDataDefinitionViewModel? SelectConditionData { get; set; }
-    public ObservableCollection<StepDataDefinitionViewModel> ConditionDatas { get; set; } = [];
+    public ObservableCollection<StepDataDefinitionViewModel> ConditionData { get; set; } = [];
     public ReactiveCommand<Unit, Unit> InitConditionCommand { get; set; }
 
     public void InitCondition()
     {
-        ConditionDatas.Clear();
-        foreach (var item in GlobeDatas)
+        ConditionData.Clear();
+        foreach (var item in GlobeData)
         {
             if (item.Type == FlowDataType.Boolean)
             {
-                ConditionDatas.Add(item);
+                ConditionData.Add(item);
             }
         }
         if (FlowStep is null)
@@ -870,13 +868,13 @@ public class FlowMakerEditViewModel : ViewModelBase
         }
         foreach (var item in FlowStep.Conditions)
         {
-            var data = GlobeDatas.FirstOrDefault(c => c.Name == item.Name);
+            var data = GlobeData.FirstOrDefault(c => c.Name == item.Name);
             item.DisplayName = data?.DisplayName;
         }
     }
 
-    public ReactiveCommand<Unit, Unit> AddConfitionCommand { get; set; }
-    public void AddConfition()
+    public ReactiveCommand<Unit, Unit> AddConditionCommand { get; set; }
+    public void AddCondition()
     {
         if (FlowStep is null || SelectConditionData is null || string.IsNullOrWhiteSpace(SelectConditionData.Name))
         {
@@ -900,18 +898,18 @@ public class FlowMakerEditViewModel : ViewModelBase
 
     #region GlobalDatas
     [Reactive]
-    public ObservableCollection<StepDataDefinitionViewModel> GlobeDatas { get; set; } = [];
+    public ObservableCollection<StepDataDefinitionViewModel> GlobeData { get; set; } = [];
 
     public ReactiveCommand<Unit, Unit> CreateGlobalDataCommand { get; }
     public void CreateGlobalData()
     {
-        GlobeDatas.Add(new StepDataDefinitionViewModel());
+        GlobeData.Add(new StepDataDefinitionViewModel());
     }
 
     public ReactiveCommand<StepDataDefinitionViewModel, Unit> RemoveGlobalDataCommand { get; }
     public void RemoveGlobalData(StepDataDefinitionViewModel stepDataDefinitionViewModel)
     {
-        GlobeDatas.Remove(stepDataDefinitionViewModel);
+        GlobeData.Remove(stepDataDefinitionViewModel);
     }
     [Reactive]
     public StepDataDefinitionViewModel? CurrentGlobalData { get; set; }
@@ -998,7 +996,7 @@ public class FlowMakerEditViewModel : ViewModelBase
     {
         flowStepInputViewModel.GlobalDataDefinitions.Clear();
 
-        foreach (var item in GlobeDatas)
+        foreach (var item in GlobeData)
         {
             if (item.Type == flowStepInputViewModel.Type)
             {
@@ -1461,7 +1459,7 @@ public class FlowStepViewModel : ReactiveObject
         _flowMakerEditViewModel = flowMakerEditViewModel;
         ErrorHandling = new FlowStepInputViewModel("ErrorHandling", "错误处理", FlowDataType.Number, 0, _flowMakerEditViewModel)
         {
-            Value = "Skip",
+            Value = "0",
             Id = Guid.NewGuid(),
             Mode = InputMode.Option,
             Options = [new FlowStepOptionViewModel("跳过", "0"), new FlowStepOptionViewModel("停止", "1"), new FlowStepOptionViewModel("立即停止", "2")],

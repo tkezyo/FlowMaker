@@ -236,7 +236,7 @@ Visibility="{Binding IsChecked,Converter={StaticResource Boolean2VisibilityConve
                 <TextBlock Text="默认值"/>
                 <TextBlock Text="操作"/>
             </UniformGrid>
-            <ItemsControl ItemsSource="{Binding GlobeDatas}" Grid.Row="1">
+            <ItemsControl ItemsSource="{Binding GlobeData}" Grid.Row="1">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <UniformGrid Columns="10" >
@@ -357,8 +357,8 @@ Visibility="{Binding OptionProviderName,Converter={StaticResource String2Visibil
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <ComboBox ItemsSource="{Binding ConditionDatas}" SelectedItem="{Binding SelectConditionData}" DisplayMemberPath="DisplayName" Style="{StaticResource ComboBoxExtend.Small}" Grid.Column="0"/>
-                            <Button Content="添加" Command="{Binding AddConfitionCommand}" Style="{StaticResource ButtonPrimary.Small}" Grid.Column="1"/>
+                            <ComboBox ItemsSource="{Binding ConditionData}" SelectedItem="{Binding SelectConditionData}" DisplayMemberPath="DisplayName" Style="{StaticResource ComboBoxExtend.Small}" Grid.Column="0"/>
+                            <Button Content="添加" Command="{Binding AddConditionCommand}" Style="{StaticResource ButtonPrimary.Small}" Grid.Column="1"/>
                         </Grid>
                         <ItemsControl ItemsSource="{Binding FlowStep.Conditions}">
                             <ItemsControl.ItemTemplate>
