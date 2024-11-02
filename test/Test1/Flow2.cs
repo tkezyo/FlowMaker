@@ -36,8 +36,8 @@ public partial class Flow2
     {
         public class Integer
         {
-            public const string Min1 = "0";
-            public const string Max1 = "0";
+            public const int Min1 = 0;
+            public const int Max1 = 0;
         }
     }
 
@@ -45,19 +45,19 @@ public partial class Flow2
 
 public static class Flow2Extension
 {
-    public static IStepCreater<Flow2> NextFlow2(this IFlowCreater flow, string displayName)
+    public static IStepCreator<Flow2> NextFlow2(this IFlowCreator flow, string displayName)
     {
-        return new StepCreater<Flow2>(flow.FlowDefinition, displayName);
+        return flow.SetNextStep<Flow2>(displayName);
     }
 
-    public static IInputCreater<int, Flow2> SetInteger(this IStepCreater<Flow2> flow)
+    public static IInputCreator<int, Flow2> SetInteger(this IStepCreator<Flow2> flow)
     {
-        return new InputCreater<int, Flow2>(flow.FlowDefinition, flow.FlowStep, nameof(Flow2.Integer));
+        return flow.SetInput<int>(nameof(Flow2.Integer));
     }
 
-    public static IInputCreater<int[][], Flow2> SetArray(this IStepCreater<Flow2> flow, int dim1, int dim2)
+    public static IInputArrayCreator<int, int[][], Flow2> SetArray(this IStepCreator<Flow2> flow, int dim1, int dim2)
     {
-        return new InputCreater<int[][], Flow2>(flow.FlowDefinition, flow.FlowStep, nameof(Flow2.Integer)).WithArray(dim1, dim2);
+        return flow.SetArrayInput<int, int[][]>(nameof(Flow2.Array), dim1, dim2);
     }
 }
 

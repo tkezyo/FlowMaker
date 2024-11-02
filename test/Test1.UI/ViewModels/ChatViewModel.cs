@@ -34,13 +34,14 @@ namespace Test1.ViewModels
 
         public static ConfigDefinition ConfigDefinition()
         {
-            return new ConfigCreater("流程分类", "流程1", "")
+            return new ConfigCreator("流程分类", "流程1", "")
                 .Build();
         }
 
         public static FlowDefinition Test()
         {
-            var r = new FlowCreater("流程分类", "流程1")
+            var r = new FlowCreator("流程分类", "流程1")
+                    
                      .NextFlow2("步骤1")
                          .SetInteger()
                          .WithValue(Flow2.Options.Integer.Min1)
@@ -49,21 +50,21 @@ namespace Test1.ViewModels
 
                          .SetArray(1, 2)
                              .GetArray(1, 2).WithGlobal("")
-                             .GetArray(1, 1).WithValue("")
+                             .GetArray(1, 1).WithValue(1)
 
                          .SetArray(1, 2)
-                             .GetArray(1, 1).WithValue("")
+                             .GetArray(1, 1).WithValue(3)
 
-                         .SetTimeout().WithValue("12")
+                         .SetTimeout(12)
 
                          .SetPreStep("123")
 
                      .NextFlow2("步骤2")
                          .SetInteger().WithValue(Flow2.Options.Integer.Min1)
 
-                         .SetArray(1, 3).WithArray(1, 2)
+                         .SetArray(1, 3)
                          .SetPreStep("123")
-                         .SetTimeout().WithValue("12")
+                         .SetTimeout().WithValue(12)
 
 
                      .Build()
