@@ -9,7 +9,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\FlowMaker.Persistence.EntityFramework\FlowMaker.Persistence.EntityFramework.csproj" />
 		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.10" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite.Core" Version="8.0.10" />
 	</ItemGroup>
 
 </Project>

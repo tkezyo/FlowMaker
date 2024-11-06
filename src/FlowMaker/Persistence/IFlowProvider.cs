@@ -15,3 +15,4 @@ public interface IFlowProvider
     Task SaveConfig(ConfigDefinition configDefinition);
     Task RemoveConfig(Guid id);
 }
+

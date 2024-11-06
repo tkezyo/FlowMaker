@@ -14,7 +14,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Ty;
-using Ty.Module.Configs;
+using Ty.Configs;
 using Ty.Services;
 using Ty.ViewModels;
 using Ty.ViewModels.CustomPages;

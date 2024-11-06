@@ -1,7 +1,7 @@
 ﻿using FlowMaker;
 using FlowMaker.Fluent;
 using System.ComponentModel;
-using Ty.Module.Configs;
+using Ty;
 
 namespace Test1;
 

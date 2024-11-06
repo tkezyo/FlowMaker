@@ -33,7 +33,7 @@ namespace Test1
 
             try
             {
-                var host = await IModule.CreateApplicationHost<Test1UIModule>(args) ?? throw new Exception();
+                var host = await ApplicationHostBuilder.CreateApplicationHost<Test1UIModule>(args) ?? throw new Exception();
 
                 Thread thread = new(async () =>
                 {

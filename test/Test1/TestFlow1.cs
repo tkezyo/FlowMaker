@@ -1,7 +1,7 @@
 ﻿using FlowMaker;
 using Microsoft.Extensions.Logging;
 using Ty;
-using Ty.Module.Configs;
+using Ty.Configs;
 
 namespace Test1
 {

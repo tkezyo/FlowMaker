@@ -3,7 +3,7 @@ using FlowMaker.Fluent;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ty;
-using Ty.Module.Configs;
+using Ty.Configs;
 
 namespace Test1
 {

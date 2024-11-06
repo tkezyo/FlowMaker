@@ -16,8 +16,8 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.4.0" />
-		<PackageReference Include="Ty.AvaloniaBase" Version="0.28.0" />
+		<PackageReference Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.4.1" />
+		<PackageReference Include="Ty.AvaloniaBase" Version="0.33.0" />
 	</ItemGroup>
 
 

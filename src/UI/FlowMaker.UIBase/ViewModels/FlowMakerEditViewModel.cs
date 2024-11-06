@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 using System.Reactive;
 using System.Reactive.Linq;
 using Ty;
-using Ty.Module.Configs;
+using Ty.Configs;
 using Ty.Services;
 using Ty.ViewModels;
 

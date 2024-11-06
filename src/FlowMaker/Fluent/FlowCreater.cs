@@ -28,6 +28,7 @@ public interface IStepCreator<T> : IFlowCreator
     IInputArrayCreator<TValue, TInput, T> SetArrayInput<TValue, TInput>(string displayName, params int[] dim);
 
     IStepCreator<T> SetPreStep(string displayName);
+    IStepCreator<T> SetWaitEvent(string eventName);
     IInputCreator<int, T> SetRepeat(int? times = null);
     IInputCreator<int, T> SetRetry(int? times = null);
     IInputCreator<double, T> SetTimeout(double? timeout = null);
@@ -209,6 +210,12 @@ public class StepCreator<T>(FlowDefinition flowDefinition, FlowStep flowStep) : 
     public IInputArrayCreator<TValue, TInput, T> SetArrayInput<TValue, TInput>(string displayName, params int[] dim)
     {
         return new InputArrayCreator<TValue, TInput, T>(FlowDefinition, FlowStep, new FlowInput(displayName), dim);
+    }
+
+    public IStepCreator<T> SetWaitEvent(string eventName)
+    {
+        FlowStep.WaitEvents.Add(new FlowEvent { Type = EventType.Event, EventName = eventName });
+        return this;
     }
 }
 
